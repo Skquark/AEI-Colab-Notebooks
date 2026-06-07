@@ -6,6 +6,142 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `Audio_PostProcessor_Colab.ipynb` — new **AI Enhance** tab (6th of 10),
+  powered by [`resemble-enhance`](https://github.com/resemble-ai/resemble-enhance)
+  (Resemble AI, MIT). 44.1 kHz PyTorch speech model that does **denoise +
+  bandwidth extension + artifact reduction** in one pass. This is the only
+  tool in the suite that can restore high-frequency content lost in thin
+  / compressed TTS output, and is a strict superset of the spectral-gate
+  `noisereduce` approach used in the Denoise tab. 4 hyperparameters exposed:
+  - **CFM ODE solver**: Midpoint (default) / RK4 / Euler
+  - **CFM NFE** (function evaluations): 1-128, default 64. Higher = better
+    quality, slower.
+  - **CFM prior temperature (tau)**: 0-1, default 0.5. Lower = closer to
+    training distribution.
+  - **Denoiser strength (lambd)**: 0-1, default 0.5. 0 = no denoise, 1 =
+    aggressive.
+  - **denoise_first** checkbox: runs the standalone denoiser first, then
+    enhances (2-pass, slowest, highest quality for very noisy input).
+  Outputs BEFORE/AFTER audio players, peak/RMS/LUFS stats, full log, and a
+  download link. GPU auto-detected (1-5s per minute of audio on GPU, 10-60s
+  on CPU). 32 new Gradio components in the AI Enhance tab.
+- `Audio_PostProcessor_Colab.ipynb` — new **Studio Polish** preset (5th in
+  Quick Process), wrapping the AI Enhance pipeline: HPF 80 Hz + Resemble
+  Enhance (default params) + LUFS -16 + peak -1. Best for thin / compressed
+  TTS output or noisy speech.
+- `Audio_PostProcessor_Colab.ipynb` — `process_audio()` now supports a
+  `resemble_enhance` step in the pipeline dict, sandwiched between highpass
+  and denoise. The denoise step can still run after the AI enhance (as a
+  spectral post-polish) or be skipped.
+- `Audio_PostProcessor_Colab.ipynb` — `resemble-enhance` added to STEP 1
+  installs (resilient to install failure — AI Enhance tab is disabled if
+  the import fails). Lazy import in STEP 3 with 8-tuple `_ensure()` return.
+- `Audio_PostProcessor_Colab.ipynb` — **Denoise tab** now supports two
+  backends via a radio button:
+  - **Spectral gate** (`noisereduce`, default, fast, no model, good for
+    steady hum/hiss)
+  - **Resemble denoiser** (44.1 kHz AI model from `resemble-enhance`, same
+    engine as the AI Enhance tab but denoise-only — no bandwidth extension).
+    Slow (1-5s/min on GPU, 10-60s on CPU) but better for speech.
+  Backend-specific options (`run_dir`, `device`) live in a hidden `gr.Group`
+  that shows when Resemble is selected, so the default UI is uncluttered.
+  Shares the same `run_dir` and `device` settings as the AI Enhance tab.
+  Resamples to 44.1 kHz mono internally (model native). `ui_denoise()` now
+  dispatches based on the radio choice. Model status Markdown refreshed on
+  click. 3 new `dn_*` Gradio components (`dn_backend`, `dn_run_dir`,
+  `dn_device`). Tab description + Help tab + welcome message updated.
+- `Audio_PostProcessor_Colab.ipynb` — `res_enhance()` and `res_denoise()`
+  now accept `run_dir` (custom checkpoint folder) and `device` (override
+  the auto-detected device). The `run_dir` hook is the only extensibility
+  point in `resemble-enhance`; it accepts a folder containing
+  `hparams.yaml` + `ds/G/default/mp_rank_00_model_states.pt`. By setting
+  `HF_HOME` to Google Drive in STEP 1, the 713 MB default checkpoint
+  persists across Colab sessions — no re-download. Custom fine-tunes can
+  be loaded by pointing `run_dir` at their folder.
+- `Audio_PostProcessor_Colab.ipynb` — **AI Enhance tab** now has two
+  sub-modes:
+  - **Single file** (original): upload → get enhanced output
+  - **Batch (directory)**: process every audio file in a folder with one
+    click. Pattern filter (`*.wav` / `*.flac` / etc.), recursive subdirectory
+    walk, per-file progress, OK/Failed/Total/Time summary,
+    subdirectory-preserving output. Per-file failures are caught and logged;
+    one bad file does not abort the batch. Backed by new
+    `batch_res_enhance()` in STEP 3 (reuses `res_enhance()` internally).
+  - **Model source accordion**: `run_dir` text field for custom checkpoints,
+    `device` dropdown (`auto` / `cuda` / `cpu`). Both are shared between
+    Single file and Batch sub-modes.
+  30 new Gradio components (`bae_*` prefix) added to the Batch sub-tab.
+  12 new info= tooltips. Cell size from 108 KB to 122 KB.
+- `Audio_PostProcessor_Colab.ipynb` — new **Effects Chain** tab (4th of 10),
+  powered by [`pedalboard`](https://github.com/spotify/pedalboard) (Spotify
+  Audio Intelligence Lab, GPL-3.0). 16 studio-quality audio effects exposed
+  in the UI across 5 accordion groups:
+  - **Filters**: HighpassFilter, LowpassFilter, LadderFilter (Moog-style
+    4-mode: LPF12/LPF24/BPF12/HPF12, with cutoff + resonance)
+  - **Dynamics**: Gain, Compressor (threshold/ratio/attack/release),
+    Limiter (threshold/release)
+  - **Time & Space**: Reverb (room/damping/wet/dry/width),
+    Delay (time/feedback/mix), Chorus (rate/depth/mix), Phaser
+    (rate/depth/frequency/feedback/mix)
+  - **Distortion & Pitch**: Distortion (drive dB), Clipping (threshold),
+    PitchShift (semitones ±24)
+  - **Lo-Fi**: Bitcrush (bit depth 1-16), Resample (target SR 1-44.1 kHz),
+    MP3Compressor (VBR quality 0-10)
+  4 chain presets ship out of the box:
+  - **Podcast Voice** — HPF 80 Hz + Compressor -20 dB / 3:1 + Gain +3 dB + Limiter -1 dB
+  - **Vocal Cleaning** — HPF 100 Hz + Compressor -22 dB / 4:1 + Limiter -1 dB
+  - **Music Mastering** — Compressor -15 dB / 2.5:1 + Gain +2 dB + Limiter -0.5 dB
+  - **Lo-Fi Tape** — HPF + LPF 8 kHz + Bitcrush 10-bit + Chorus + Reverb
+  All 16 effects also available individually via the sliders — every
+  parameter exposed. The 4 chain presets and the custom-slider mode share
+  the same `apply_effects_chain()` core, which builds a `pedalboard.Pedalboard`
+  list and runs it. `pedalboard` is GPL-3.0; used as a `pip install`-ed
+  dependency, so the notebook code remains MIT and commercial use of the
+  processed audio is fine. UI grew from 18 to 37 info= tooltips, cell size
+  from 62 KB to 82 KB.
+- `Audio_PostProcessor_Colab.ipynb` — the second **post-processing** notebook
+  in the suite (after the Mesh Optimizer), wrapping a curated audio
+  processing stack: [`pydub`](https://github.com/jiaaro/pydub) (MIT) for
+  format conversion + silence detect, [`imageio-ffmpeg`](https://github.com/imageio/imageio-ffmpeg)
+  (BSD-4) for the static ffmpeg binary, [`soundfile`](https://github.com/bastibe/python-soundfile)
+  (BSD-3, libsndfile) for fast WAV/FLAC/OGG/AIFF round-trips,
+  [`librosa`](https://github.com/librosa/librosa) (ISC) for DSP analysis,
+  [`pyloudnorm`](https://github.com/csteinmetz1/pyloudnorm) (MIT) for
+  ITU-R BS.1770-4 LUFS / LKFS broadcast-standard normalization, and
+  [`noisereduce`](https://github.com/timsainb/noisereduce) (MIT) for
+  spectral-gating noise reduction. All CPU-only, no GPU required.
+
+  Takes the **raw audio output** from any TTS / VC / voice-cloning
+  pipeline (Qwen3-TTS, VoxCPM2, Higgs, MisoTTS, MOSS, dots.tts, Fish,
+  Kokoro, OpenVoice V2, etc.) and turns it into a clean, ready-to-publish
+  audio file. Ten tabs:
+  - **Quick Process** — 5 one-click presets: Podcast (-16 LUFS), Music
+    (-14 LUFS, preserves bass), Speech (-23 LUFS, broadcast-ready),
+    Broadcast (strict EBU R128 / ATSC A/85), **Studio Polish (AI)**
+  - **Trim & Split** — trim to time range, split by silence, split into
+    N-second chunks, detect silence ranges
+  - **Normalize** — peak / LUFS (ITU-R BS.1770-4) / no-op re-encode
+  - **Effects Chain** — 16 pedalboard VST-style effects with 4 chain presets
+  - **Format Convert** — 8 formats (WAV/MP3/FLAC/OGG/Opus/M4A/AAC/AIFF)
+    with bitrate (32-320 kbps) and sample rate (8 kHz - 96 kHz)
+  - **AI Enhance** — Resemble Enhance 44.1 kHz AI model (denoise + bandwidth
+    extension + artifact reduction). GPU auto-detected.
+  - **Denoise** — spectral gate with strength slider
+  - **Batch** — apply any preset to every audio in a directory
+  - **Compare** — before/after waveform + stats (peak, RMS, LUFS, duration)
+  - **Help** — when-to-use, format cheatsheet, LUFS targets, citation
+  - **8 export formats**: WAV (lossless), FLAC (lossless), AIFF (lossless),
+    MP3 (universal), OGG Vorbis, Opus (streaming), M4A/AAC (Apple)
+  - **Loudness normalization**: ITU-R BS.1770-4 LUFS / LKFS, broadcast
+    standard, supports any target from -30 to -6 LUFS
+- `Mesh_Optimizer_Colab.ipynb` — new **Transform & Normalize** tab (7th tab).
+  Scale (uniform or per-axis), recenter to origin, flip X/Y/Z axes, normalize
+  to a target bbox extent (e.g. 1.0 for unit cube, 2.0 for [-1,1]), snap
+  vertices to a grid step, and re-orient between Y-up (Blender/Unity/glTF),
+  Z-up (Blender default/3ds Max), and X-up conventions. Useful before feeding
+  meshes into other AI tools (Cube/Hunyuan3D) or for fitting into a known
+  bounding box. 18 new Gradio components, 1 new `ui_transform()` handler,
+  README tab list updated.
 - `Mesh_Optimizer_Colab.ipynb` — first **post-processing** notebook in
   the suite, wrapping a curated stack: [`trimesh`](https://github.com/mikedh/trimesh)
   (3.6k★, MIT) for I/O + repair + smoothing, [`pyfqmr`](https://github.com/Kramer84/pyfqmr-Fast-quadric-Mesh-Reduction)
@@ -17,7 +153,8 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   Takes the **raw, often-broken mesh output** from Pixal3D, Hunyuan3D,
   Cube 3D, or any other 3D pipeline, and turns it into a clean, game-ready
-  asset. Six tabs:
+  asset. (See the new **Transform & Normalize** tab documented at the top
+  of this [Unreleased] section.) Original six tabs:
   - **Quick Optimize** — 4 one-click presets: Game-Ready (50% decimate
     + Taubin smooth + UV), Print-Ready (quad remesh + UV), Low-Poly
     (10% decimate + Humphrey smooth), Lossless (clean only)

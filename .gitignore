@@ -27,5 +27,8 @@ pixal3d_wheels/
 .cache/
 tts_cache/
 
+# OpenCode config (local MCP servers, per-user settings)
+opencode.json
+
 # Jupyter
 .ipynb_checkpoints/

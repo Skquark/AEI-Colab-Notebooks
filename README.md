@@ -32,6 +32,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Kokoro-82M](#kokoro-82m)
 - [TTS Model Loader](#tts-model-loader)
 - [TTS Voice Library](#tts-voice-library)
+- [Audio Post-Processor — trim / normalize / denoise / convert](#audio-post-processor--post-process-for-podcast-music-and-broadcast)
 
 ### Voice Conversion
 - [OpenVoice V2](#openvoice-v2)
@@ -274,13 +275,14 @@ Eight pipeline stages (all optional, all tunable):
 
 Plus five export formats: `.glb` (Unity/Unreal/Three.js), `.obj + .mtl` (Blender/Maya), `.stl` (3D print), `.ply` (Meshlab/CloudCompare), `.3mf` (Windows 3D Builder).
 
-Six tabs:
+Seven tabs:
 
 - **Quick Optimize** — 4 one-click presets: Game-Ready (50% decimate + Taubin smooth + UV), Print-Ready (quad remesh + UV), Low-Poly (10% decimate + Humphrey smooth), Lossless (clean only)
 - **Custom Pipeline** — full control over every stage, accordion-grouped UI
 - **Inspect** — face/vertex counts, watertight check, manifold check, volume, area, bbox
 - **Batch** — apply any preset to every mesh in a directory, outputs a zip
 - **Compare** — before/after stats side-by-side with delta percentages
+- **Transform & Normalize** — scale, recenter, flip axes, normalize to target extent, snap to grid, re-orient Y-up/Z-up/X-up. Useful before feeding meshes into other AI tools (Cube/Hunyuan3D) or for fitting into a unit cube
 - **Help** — when-to-use table, format cheatsheet, citation
 
 > "pyfqmr's quadric edge-collapse is the only decimation algorithm that gives Blender-quality results in Python." — see the [sp4cerat/Fast-Quadric-Mesh-Simplification](https://github.com/sp4cerat/Fast-Quadric-Mesh-Simplification) paper for the underlying math.
@@ -433,7 +435,7 @@ A matching lineup of self-contained Colab notebooks for state-of-the-art text-to
 
 ### Quick Start
 
-1. **Run `TTS_Model_Loader.ipynb` first** to pre-download model weights to Google Drive (~40–45 GB for the full suite, resumable, per-notebook toggles)
+1. **Run `TTS_Model_Loader.ipynb` first** to pre-download model weights to Google Drive (~50–70 GB for the full TTS suite; most users only need 1-2 models, so typical real usage is 5-20 GB; per-notebook toggles, resumable)
 2. **Run `TTS_Voice_Library.ipynb`** to grab a curated set of reference voice clips with transcripts (used by the voice-cloning tabs)
 3. Open any of the model notebooks below — they auto-load from the Drive cache and skip the weight-download step
 
@@ -578,7 +580,7 @@ Pre-downloads all the model weights, code packages, and reference voice clips us
 - **Resumable** — interrupted downloads pick up where they left off
 - **Per-notebook toggles** — pick the models you actually need
 - **Drive-cached** at `/content/drive/MyDrive/AEI_TTS_Cache/` so the cache survives Colab session resets
-- **Total storage**: ~35–40 GB for the full suite
+- **Total storage**: ~50–70 GB for the full TTS suite (most users only need 1-2 models, so typical real usage is 5-20 GB). Toggle off the models you don't need in the loader UI.
 
 **Run this first**, before any model notebook.
 
@@ -611,6 +613,77 @@ Curated reference voice clips with transcripts, ready to drop into the voice-clo
 | **Kokoro-82M** | Kokoro-82M | 82M | 9 | Apache 2.0 |
 | **OpenVoice V2** | OpenVoiceV2 | — | 7 (cross-lingual VC) | MIT |
 | **Mesh Optimizer** | trimesh + pyfqmr + pymeshlab + Open3D | — | — | MIT (all deps) |
+| **Audio Post-Processor** | pydub + imageio-ffmpeg + soundfile + librosa + pyloudnorm + noisereduce + resemble-enhance | — | — | MIT/BSD/ISC (all deps) |
+
+---
+
+## Audio Post-Processor — post-process for podcast, music, and broadcast
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Audio_PostProcessor_Colab.ipynb)
+
+The companion to every TTS / VC / voice-cloning pipeline: takes the **raw audio output** from Qwen3-TTS, VoxCPM2, Higgs, MisoTTS, MOSS, dots.tts, Fish, Kokoro, OpenVoice V2, or any other source, and turns it into a **clean, ready-to-publish** audio file: trimmed, denoised, loudness-normalized (LUFS), and in the format you need (WAV / MP3 / FLAC / OGG / Opus / M4A / AAC / AIFF).
+
+**Stack**: [`pydub`](https://github.com/jiaaro/pydub) (MIT) for format conversion + silence detect · [`imageio-ffmpeg`](https://github.com/imageio/imageio-ffmpeg) (BSD-4) for the static ffmpeg binary · [`soundfile`](https://github.com/bastibe/python-soundfile) (BSD-3, libsndfile) for fast WAV/FLAC/OGG/AIFF round-trips · [`librosa`](https://github.com/librosa/librosa) (ISC) for DSP analysis · [`pyloudnorm`](https://github.com/csteinmetz1/pyloudnorm) (MIT) for ITU-R BS.1770-4 LUFS / LKFS broadcast-standard normalization · [`noisereduce`](https://github.com/timsainb/noisereduce) (MIT) for spectral-gating noise reduction · [`pedalboard`](https://github.com/spotify/pedalboard) (GPL-3.0, by Spotify Audio Intelligence Lab) for studio-quality VST-style effects (compressor, limiter, reverb, delay, chorus, phaser, distortion, pitch shift, bitcrush, resample, MP3 simulation) · [`resemble-enhance`](https://github.com/resemble-ai/resemble-enhance) (MIT, by Resemble AI) for AI speech denoising + bandwidth extension (44.1 kHz PyTorch model, **optional GPU acceleration**, CPU supported). **Most tabs CPU-only; AI Enhance benefits from GPU but works on CPU.**
+
+> **License notes**:
+> - `pedalboard` is GPL-3.0. This notebook is MIT. The `pedalboard` library is used as a `pip install`-ed dependency, not as a linked/embedded library, so the GPL's copyleft provisions don't extend to the notebook code. You can use the notebook and the resulting audio commercially; the `pedalboard` source itself remains under GPL-3.0 (relevant only if you redistribute `pedalboard`'s source or a modified version of it).
+> - `resemble-enhance` is MIT. The AI speech model (`Enhancer` + `Denoiser`) is also MIT. ~500 MB of model weights are downloaded on first use and cached locally.
+
+### Eight pipeline stages (all optional, all tunable)
+
+1. **Load** — auto-detect format from extension. 8 input formats.
+2. **High-pass filter** — cut rumble & mic handling noise (configurable cutoff, default 0=off).
+3. **Denoise** — two backends: spectral gate (`noisereduce`, fast, no model) or Resemble AI denoiser (slow, better for speech). Tunable strength for the spectral gate.
+4. **LUFS normalize** — broadcast-standard ITU-R BS.1770-4 loudness target (default -16 LUFS for podcast).
+5. **Peak limit** — guard against clipping (default -1 dBFS).
+6. **Trim** — keep only the time range you need.
+7. **Split** — split by silence, or into N-second chunks.
+8. **Export** — 8 output formats with configurable bitrate & sample rate.
+
+Plus a full **Effects Chain** powered by `pedalboard` (Spotify Audio Intelligence Lab, GPL-3.0): **Gain**, **Compressor**, **Limiter**, **HighpassFilter**, **LowpassFilter**, **LadderFilter** (Moog-style 4-mode), **Reverb**, **Delay**, **Chorus**, **Phaser**, **Distortion**, **Clipping**, **PitchShift**, **Bitcrush**, **Resample**, **MP3Compressor** — every parameter exposed in the UI.
+
+### 5 quick-process presets
+
+| Preset | Best for | Output LUFS | Peak | Denoise |
+| --- | --- | --- | --- | --- |
+| **Podcast** | Two-speaker voice | -16 LUFS | -1 dBFS | 0.5 |
+| **Music** | Music (preserves bass) | -14 LUFS | -1 dBFS | 0.3 |
+| **Speech** | Broadcast-ready voice | -23 LUFS | -2 dBFS | 0.7 |
+| **Broadcast** | EBU R128 / ATSC A/85 | -23 LUFS | -1 dBFS | 0.4 |
+| **Studio Polish** *(AI)* | Thin / compressed TTS or noisy speech | -16 LUFS | -1 dBFS | Resemble Enhance (44.1 kHz) |
+
+Plus 8 export formats: `.wav` (lossless), `.flac` (lossless compressed), `.aiff` (lossless), `.mp3` (universal), `.ogg` (open-source), `.opus` (streaming), `.m4a` (Apple), `.aac` (raw ADTS).
+
+### Ten tabs
+
+- **Quick Process** — 5 one-click presets: Podcast, Music, Speech, Broadcast, **Studio Polish (AI)**
+- **Trim & Split** — trim to time range, split by silence, split into N-second chunks, detect silence ranges
+- **Normalize** — peak / LUFS (ITU-R BS.1770-4) / no-op re-encode
+- **Effects Chain** — 16 pedalboard effects in 4 accordion groups (Filters / Dynamics / Time & Space / Distortion & Pitch / Lo-Fi), 4 chain presets (Podcast Voice, Vocal Cleaning, Music Mastering, Lo-Fi Tape), or build a custom chain with every parameter exposed
+- **Format Convert** — 8 formats with configurable bitrate (32-320 kbps) and sample rate (8 kHz - 96 kHz), mono/stereo
+- **AI Enhance** — Resemble Enhance (Resemble AI, MIT): 44.1 kHz AI speech model that does **denoise + bandwidth extension + artifact reduction** in one pass. 4 hyperparameters exposed (CFM solver Midpoint/RK4/Euler, NFE 1-128, prior temperature tau, denoiser strength lambd, optional 2-pass denoise-first). Before/after audio + stats. GPU auto-detected, falls back to CPU. **Two sub-modes**:
+  - **Single file** — upload one file, get enhanced output with before/after comparison
+  - **Batch (directory)** — process every audio file in a folder with one click. Pattern filter (`*.wav` / `*.flac` / etc.), recursive subdirectory walk, per-file progress, OK/Failed/Total/Time summary, subdirectory-preserving output. Failures are caught per file so one bad file doesn't abort the batch.
+  - **Model source accordion** — `run_dir` text field lets you point at a custom fine-tuned checkpoint (folder must contain `hparams.yaml` + `ds/G/default/mp_rank_00_model_states.pt`); leave `<default>` to use the upstream Resemble AI weights (~713 MB, auto-downloaded, cached in `HF_HOME`).
+  - **Device dropdown** — `auto` (default, GPU if available), `cuda` (force GPU), `cpu` (force CPU).
+- **Denoise** — two backends:
+  - **Spectral gate** (`noisereduce`): fast, no model download, good for steady hum/hiss. Strength slider 0-1.
+  - **Resemble denoiser** (44.1 kHz AI model, Resemble AI MIT): same engine as the AI Enhance tab, denoise-only path, no bandwidth extension. Slow (1-5s/min on GPU, 10-60s on CPU) but better for speech. Shares the **run_dir** and **device** settings with the AI Enhance tab. Resamples to 44.1 kHz mono internally.
+  - Backend radio + collapsible Resemble options group (visible only when Resemble is selected)
+- **Batch** — apply any preset to every audio file in a directory, output zip
+- **Compare** — before/after waveform + stats (peak, RMS, LUFS, duration) with delta
+- **Help** — when-to-use, format cheatsheet, LUFS targets, citation
+
+### Loudness targets cheat-sheet
+
+| Target LUFS | Use case |
+| --- | --- |
+| -14 LUFS | Spotify, YouTube, Apple Music (music default) |
+| -16 LUFS | Podcast, audiobook default |
+| -18 LUFS | AES streaming recommendation |
+| -23 LUFS | EBU R128 / ATSC A/85 broadcast standard |
+| -24 LUFS | ATSC A/85 (digital TV, US) |
+| -27 LUFS | Cinematic / film dialog reference |
 
 ---
 
@@ -624,7 +697,7 @@ Two Python scripts in `tools/` keep the notebooks consistent:
 Both run from the repo root with no dependencies:
 
 ```bash
-python3 tools/validate.py    # OK: all 25 notebook(s) parse cleanly.
+python3 tools/validate.py    # OK: all 26 notebook(s) parse cleanly.
 python3 tools/qa_check.py    # OK: all authored notebooks pass the polish audit.
 ```
 
@@ -636,7 +709,7 @@ A GitHub Actions workflow at `.github/workflows/qa.yml` runs both on every push 
 
 Most Colab AI notebooks require paid tokens, subscription services, or lengthy manual compilation of CUDA dependencies. This project precompiles everything into ready-to-install wheels and hosts them on GitHub — so you can open a notebook, run all cells, and get results immediately, on any supported GPU, completely free.
 
-The 3D pipeline (Pixal3D) was the first notebook in the series. The TTS suite, video generators, and voice-conversion tools have all been added since, with the same "open-and-run" philosophy across every modality.
+The 3D pipeline (Pixal3D) was the first notebook in the series. The TTS suite, video generators, voice-conversion tools, and post-processing helpers (the **Mesh Optimizer** for transform/normalize/repair of any generated 3D asset, and the **Audio Post-Processor** for trim/normalize/denoise/convert of any generated audio) have all been added since, with the same "open-and-run" philosophy across every modality.
 
 ---
 
@@ -662,6 +735,7 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | Hunyuan3D-2.1 | [Tencent-Hunyuan/Hunyuan3D-2.1](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) | [tencent/Hunyuan3D-2.1](https://huggingface.co/tencent/Hunyuan3D-2.1) | [arXiv 2506.15442](https://arxiv.org/abs/2506.15442) |
 | Hunyuan3D 3.0 (API) | [Tencent Cloud](https://www.tencentcloud.com/document/product/1665/119114) (Cloud API v3) | — | — |
 | Mesh Optimizer | [mikedh/trimesh](https://github.com/mikedh/trimesh) · [Kramer84/pyfqmr](https://github.com/Kramer84/pyfqmr-Fast-quadric-Mesh-Reduction) · [cnr-isti-vclab/PyMeshLab](https://github.com/cnr-isti-vclab/PyMeshLab) · [isl-org/Open3D](https://github.com/isl-org/Open3D) | — | — |
+| Audio Post-Processor | [jiaaro/pydub](https://github.com/jiaaro/pydub) · [imageio/imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) · [bastibe/python-soundfile](https://github.com/bastibe/python-soundfile) · [librosa/librosa](https://github.com/librosa/librosa) · [csteinmetz1/pyloudnorm](https://github.com/csteinmetz1/pyloudnorm) · [timsainb/noisereduce](https://github.com/timsainb/noisereduce) · [spotify/pedalboard](https://github.com/spotify/pedalboard) · [resemble-ai/resemble-enhance](https://github.com/resemble-ai/resemble-enhance) | — | — |
 
 ### TTS Models
 
@@ -706,5 +780,8 @@ Notebooks in this repository are provided for educational and personal use. Indi
   - Weights: [OpenRAIL-M](https://huggingface.co/Roblox/cubepart#license) — no high-risk downstream use (e.g. no facial recognition, no biometric ID, no surveillance)
 - **Mesh Optimizer** (the `Mesh_Optimizer_Colab.ipynb`):
   - All four deps are MIT: [trimesh](https://github.com/mikedh/trimesh), [pyfqmr](https://github.com/Kramer84/pyfqmr-Fast-quadric-Mesh-Reduction), [PyMeshLab](https://github.com/cnr-isti-vclab/PyMeshLab) (Python wrapper, MIT — the underlying MeshLab C++ engine is GPL), [Open3D](https://github.com/isl-org/Open3D). Suitable for commercial use of generated/optimized meshes.
+- **Audio Post-Processor** (the `Audio_PostProcessor_Colab.ipynb`):
+  - Seven permissive deps: [pydub](https://github.com/jiaaro/pydub) (MIT), [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) (BSD-4), [python-soundfile](https://github.com/bastibe/python-soundfile) (BSD-3, libsndfile is LGPL), [librosa](https://github.com/librosa/librosa) (ISC), [pyloudnorm](https://github.com/csteinmetz1/pyloudnorm) (MIT), [noisereduce](https://github.com/timsainb/noisereduce) (MIT), [resemble-enhance](https://github.com/resemble-ai/resemble-enhance) (MIT, by Resemble AI; model weights also MIT).
+  - Plus [pedalboard](https://github.com/spotify/pedalboard) (GPL-3.0) for the Effects Chain tab. Used as a `pip install`-ed dependency, not linked/embedded, so the GPL doesn't extend to the notebook's MIT code. Commercial use of processed audio is fine.
 
 Generated 3D assets are not moderated by Roblox safety systems. Use of the model weights is subject to the Cube repo's license terms; users are solely responsible for the outputs they generate.
