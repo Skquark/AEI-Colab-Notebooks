@@ -6,13 +6,39 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `Mesh_Optimizer_Colab.ipynb` — first **post-processing** notebook in
+  the suite, wrapping a curated stack: [`trimesh`](https://github.com/mikedh/trimesh)
+  (3.6k★, MIT) for I/O + repair + smoothing, [`pyfqmr`](https://github.com/Kramer84/pyfqmr-Fast-quadric-Mesh-Reduction)
+  (MIT, 100 KB wheel) for fast quadric edge-collapse decimation (the
+  sp4cerat algorithm — the only one in Python that gives Blender-quality
+  results), [`pymeshlab`](https://pymeshlab.readthedocs.io) (MIT) for
+  advanced MeshLab filters (UV unwrap, hole filling), and [`Open3D`](https://www.open3d.org)
+  (MIT) for point-cloud ops + alignment. All CPU-only, no GPU required.
+
+  Takes the **raw, often-broken mesh output** from Pixal3D, Hunyuan3D,
+  Cube 3D, or any other 3D pipeline, and turns it into a clean, game-ready
+  asset. Six tabs:
+  - **Quick Optimize** — 4 one-click presets: Game-Ready (50% decimate
+    + Taubin smooth + UV), Print-Ready (quad remesh + UV), Low-Poly
+    (10% decimate + Humphrey smooth), Lossless (clean only)
+  - **Custom Pipeline** — full control over every stage, accordion-grouped
+  - **Inspect** — face/vertex counts, watertight check, manifold check,
+    volume, area, bbox
+  - **Batch** — apply any preset to every mesh in a directory
+  - **Compare** — before/after stats side-by-side with delta percentages
+  - **Help** — when-to-use table, format cheatsheet, citation
+  - **5 export formats**: `.glb` (Unity/Unreal/Three.js), `.obj + .mtl`
+    (Blender/Maya), `.stl` (3D print), `.ply` (Meshlab/CloudCompare), `.3mf`
+  - **8 input formats**: STL, PLY, OBJ, GLB, GLTF, 3MF, OFF, COLLADA
+
+### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around
   [openbmb/VoxCPM2](https://huggingface.co/openbmb/VoxCPM2), a
   **tokenizer-free** 2B-param TTS from OpenBMB (Tsinghua / ModelBest
   inc). Models speech in a continuous latent space, enabling four
   flagship capabilities: plain TTS, **Voice Design** (description in
-  parens, no ref audio), **Controllable Voice Clone** (ref audio
-  short-clip), and **Ultimate Clone** (ref + transcript + prompt for
+  parens, no ref audio), **Controllable Cloning** (ref audio
+  short-clip), and **Ultimate Cloning** (ref + transcript + prompt for
   max fidelity). 30 languages + 9 Chinese dialects, 48 kHz output,
   ~8 GB VRAM, Apache-2.0 (commercial-OK). 27.3k★ on GitHub.
   Eight tabs:

@@ -15,6 +15,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Hunyuan3D 3.0 — Tencent Cloud API](#hunyuan3d-30--tencent-cloud-api-wrapper)
 - [Hunyuan3D-2.1 — Tencent PBR 3D Pipeline *(flagship)*](#hunyuan3d-21--tencent-pbr-3d-pipeline-flagship)
 - [Hunyuan3D-2 — Tencent Image / Text-to-3D](#hunyuan3d-2--tencent-image--text-to-3d)
+- [Mesh Optimizer — post-process for game-ready assets](#mesh-optimizer--post-process-for-game-ready-assets)
 - [Notebook Generator — scaffold new model notebooks](#notebook-generator--scaffold-new-model-notebooks)
 
 ### Text-to-Speech
@@ -249,6 +250,40 @@ Default variant in the UI: **`2mini-turbo`** (smallest, fastest, safest for T4).
 ### License
 
 Model weights: [Tencent Hunyuan Community License](https://huggingface.co/tencent/Hunyuan3D-2/blob/main/LICENSE.txt) — non-commercial research use. Code: [Tencent-Hunyuan/Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) is MIT-licensed.
+
+---
+
+## Mesh Optimizer — post-process for game-ready assets
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Mesh_Optimizer_Colab.ipynb)
+
+The companion to all our 3D generation notebooks: takes the **raw, often-broken mesh output** from Pixal3D, Hunyuan3D, Cube 3D, or any other 3D pipeline, and turns it into a **clean, game-ready asset** ready for Unity / Unreal / Godot / Three.js / 3D printing.
+
+**Stack**: [`trimesh`](https://github.com/mikedh/trimesh) (3.6k★, MIT) for I/O + repair + smoothing · [`pyfqmr`](https://github.com/Kramer84/pyfqmr) (MIT, 100 KB) for fast quadric decimation (sp4cerat's gold-standard algorithm) · [`pymeshlab`](https://pymeshlab.readthedocs.io) (MIT) for advanced MeshLab filters (UV unwrap, hole filling) · [`Open3D`](https://www.open3d.org) (MIT) for point-cloud ops + alignment. **All CPU-only. No GPU required.**
+
+Eight pipeline stages (all optional, all tunable):
+
+1. **Load** — STL, PLY, OBJ, GLB, GLTF, 3MF, OFF, COLLADA via trimesh auto-detect
+2. **Clean** — merge duplicate vertices, remove degenerate faces, fix normals
+3. **Fill holes** — pymeshlab `close_holes` (configurable max hole size)
+4. **Decimate** — quadric edge-collapse to target face count (lossy or lossless)
+5. **Smooth** — Laplacian / Taubin (volume-preserving) / Humphrey (shrinkage-reducing) / HC
+6. **Remesh** — isotropic uniform remeshing via pymeshlab
+7. **Recompute normals** — for proper shading after smoothing
+8. **UV Unwrap** — for textured meshes (skips if already unwrapped)
+
+Plus five export formats: `.glb` (Unity/Unreal/Three.js), `.obj + .mtl` (Blender/Maya), `.stl` (3D print), `.ply` (Meshlab/CloudCompare), `.3mf` (Windows 3D Builder).
+
+Six tabs:
+
+- **Quick Optimize** — 4 one-click presets: Game-Ready (50% decimate + Taubin smooth + UV), Print-Ready (quad remesh + UV), Low-Poly (10% decimate + Humphrey smooth), Lossless (clean only)
+- **Custom Pipeline** — full control over every stage, accordion-grouped UI
+- **Inspect** — face/vertex counts, watertight check, manifold check, volume, area, bbox
+- **Batch** — apply any preset to every mesh in a directory, outputs a zip
+- **Compare** — before/after stats side-by-side with delta percentages
+- **Help** — when-to-use table, format cheatsheet, citation
+
+> "pyfqmr's quadric edge-collapse is the only decimation algorithm that gives Blender-quality results in Python." — see the [sp4cerat/Fast-Quadric-Mesh-Simplification](https://github.com/sp4cerat/Fast-Quadric-Mesh-Simplification) paper for the underlying math.
 
 ---
 
@@ -574,6 +609,8 @@ Curated reference voice clips with transcripts, ready to drop into the voice-clo
 | **Fish S2 Pro** | Fish S2 Pro | 4B + 400M (Dual-AR) | 80+ | Fish Audio Research (non-commercial) |
 | **VoxCPM2** | VoxCPM2 | 2B | 30 (+ 9 ZH dialects) | Apache 2.0 |
 | **Kokoro-82M** | Kokoro-82M | 82M | 9 | Apache 2.0 |
+| **OpenVoice V2** | OpenVoiceV2 | — | 7 (cross-lingual VC) | MIT |
+| **Mesh Optimizer** | trimesh + pyfqmr + pymeshlab + Open3D | — | — | MIT (all deps) |
 
 ---
 
@@ -587,7 +624,7 @@ Two Python scripts in `tools/` keep the notebooks consistent:
 Both run from the repo root with no dependencies:
 
 ```bash
-python3 tools/validate.py    # OK: all 24 notebook(s) parse cleanly.
+python3 tools/validate.py    # OK: all 25 notebook(s) parse cleanly.
 python3 tools/qa_check.py    # OK: all authored notebooks pass the polish audit.
 ```
 
@@ -624,6 +661,7 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | Hunyuan3D-2 | [Tencent-Hunyuan/Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) | [tencent/Hunyuan3D-2](https://huggingface.co/tencent/Hunyuan3D-2) | [arXiv 2501.12202](https://arxiv.org/abs/2501.12202) |
 | Hunyuan3D-2.1 | [Tencent-Hunyuan/Hunyuan3D-2.1](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) | [tencent/Hunyuan3D-2.1](https://huggingface.co/tencent/Hunyuan3D-2.1) | [arXiv 2506.15442](https://arxiv.org/abs/2506.15442) |
 | Hunyuan3D 3.0 (API) | [Tencent Cloud](https://www.tencentcloud.com/document/product/1665/119114) (Cloud API v3) | — | — |
+| Mesh Optimizer | [mikedh/trimesh](https://github.com/mikedh/trimesh) · [Kramer84/pyfqmr](https://github.com/Kramer84/pyfqmr-Fast-quadric-Mesh-Reduction) · [cnr-isti-vclab/PyMeshLab](https://github.com/cnr-isti-vclab/PyMeshLab) · [isl-org/Open3D](https://github.com/isl-org/Open3D) | — | — |
 
 ### TTS Models
 
@@ -666,5 +704,7 @@ Notebooks in this repository are provided for educational and personal use. Indi
 - **Cube 3D + CubePart** (the `Cube_3D_Colab.ipynb`):
   - Code: MIT (the [Roblox/cube](https://github.com/Roblox/cube) repo)
   - Weights: [OpenRAIL-M](https://huggingface.co/Roblox/cubepart#license) — no high-risk downstream use (e.g. no facial recognition, no biometric ID, no surveillance)
+- **Mesh Optimizer** (the `Mesh_Optimizer_Colab.ipynb`):
+  - All four deps are MIT: [trimesh](https://github.com/mikedh/trimesh), [pyfqmr](https://github.com/Kramer84/pyfqmr-Fast-quadric-Mesh-Reduction), [PyMeshLab](https://github.com/cnr-isti-vclab/PyMeshLab) (Python wrapper, MIT — the underlying MeshLab C++ engine is GPL), [Open3D](https://github.com/isl-org/Open3D). Suitable for commercial use of generated/optimized meshes.
 
 Generated 3D assets are not moderated by Roblox safety systems. Use of the model weights is subject to the Cube repo's license terms; users are solely responsible for the outputs they generate.
