@@ -1,4 +1,31 @@
-*.whl
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Build artifacts
+*.whl
+*.egg-info/
+build/
+dist/
+
+# Local Pixal3D wheel cache (download via Pixal3D_Wheel_Builder.ipynb)
+pixal3d_wheels/
+
+# Local TTS Model Loader cache (lives in Google Drive when in Colab; this is for local testing)
+.cache/
+tts_cache/
+
+# Jupyter
+.ipynb_checkpoints/

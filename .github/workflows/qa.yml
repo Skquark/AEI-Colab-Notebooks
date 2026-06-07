@@ -1,0 +1,105 @@
+# GitHub Actions workflow: notebook QA
+#
+# Runs the two project tools on every push to main and every PR.
+# - tools/validate.py   -- fast AST-parse check on every code cell
+# - tools/qa_check.py   -- full polish audit (info tooltips, try/except,
+#                          concurrency_limit, clear_output, demo.load, etc.)
+# - size report         -- per-notebook KB breakdown as a job summary
+#
+# Both tools exit non-zero on any finding in an authored notebook.
+# The 2 pre-existing Pixal3D notebooks are explicitly excluded from the
+# fail check inside tools/qa_check.py (they're tagged "(pre)" in the output).
+
+name: QA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel in-progress runs of this same workflow on the same branch.
+concurrency:
+  group: qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1. Fast AST-parse check on every code cell. ~5 s.
+  # ------------------------------------------------------------------
+  validate:
+    name: Validate (AST parse every code cell)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run tools/validate.py
+        run: python3 tools/validate.py
+
+  # ------------------------------------------------------------------
+  # 2. Full polish audit. ~5 s.
+  # ------------------------------------------------------------------
+  qa-audit:
+    name: QA audit (info tooltips, concurrency, etc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run tools/qa_check.py
+        run: python3 tools/qa_check.py
+
+  # ------------------------------------------------------------------
+  # 3. Per-notebook size report. Posts a table to the job summary.
+  # ------------------------------------------------------------------
+  size-report:
+    name: Notebook size report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate size report
+        run: |
+          python3 - << 'PYEOF'
+          import os, json
+          rows = []
+          for f in sorted(os.listdir('.')):
+              if not f.endswith('.ipynb'):
+                  continue
+              with open(f) as fh:
+                  nb = json.load(fh)
+              size_kb = os.path.getsize(f) / 1024
+              n_code = sum(1 for c in nb['cells'] if c['cell_type'] == 'code')
+              n_md = sum(1 for c in nb['cells'] if c['cell_type'] == 'markdown')
+              rows.append((f, len(nb['cells']), n_code, n_md, size_kb))
+
+          total_kb = sum(r[4] for r in rows)
+          print('| Notebook | Cells | Code | MD | KB |')
+          print('|----------|------:|-----:|---:|---:|')
+          for f, cells, code, md, sz in rows:
+              print(f'| {f} | {cells} | {code} | {md} | {sz:.1f} |')
+          print(f'| **TOTAL** | | | | **{total_kb:.1f}** |')
+
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as fh:
+              fh.write('### Notebook sizes\n\n')
+              fh.write('| Notebook | Cells | Code | MD | KB |\n')
+              fh.write('|----------|------:|-----:|---:|---:|\n')
+              for f, cells, code, md, sz in rows:
+                  fh.write(f'| {f} | {cells} | {code} | {md} | {sz:.1f} |\n')
+              fh.write(f'| **TOTAL** | | | | **{total_kb:.1f}** |\n')
+          PYEOF
