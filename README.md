@@ -2,7 +2,7 @@
 
 [![QA](https://github.com/Skquark/AEI-Colab-Notebooks/actions/workflows/qa.yml/badge.svg)](https://github.com/Skquark/AEI-Colab-Notebooks/actions/workflows/qa.yml)
 
-Free, self-contained Google Colab notebooks for AI-powered 3D generation, image editing, video creation, and text-to-speech. No sign-ups. No tokens. Just works.
+Free, self-contained Google Colab notebooks for AI-powered 3D generation, video creation, text-to-speech, and voice conversion. No sign-ups. No tokens. Just works.
 
 See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to add a notebook. [CHANGELOG.md](CHANGELOG.md) for what's changed. [Model Cards & Upstream Attribution](#model-cards--upstream-attribution) for credits.
 
@@ -394,11 +394,11 @@ Apache 2.0 — the model weights are yours to use commercially. The cloud API is
 
 ## Text-to-Speech
 
-A matching lineup of self-contained Colab notebooks for state-of-the-art text-to-speech — **eleven models** covering English, Chinese, French, German, Spanish, Japanese, Korean, 11 Indian languages, 30 multilingual (VoxCPM2), and 80+ others. Every notebook follows the same 7-step pattern: **Install → Pre-cache → Core functions → Gradio UI → Keep-alive → Quick test → Batch synthesis**. No token or sign-up needed for any notebook except `IndicF5` (HF-gated). See [OpenVoice V2](#openvoice-v2) below for **voice conversion** (audio → audio with a cloned voice), which complements the TTS suite.
+A matching lineup of self-contained Colab notebooks for state-of-the-art text-to-speech — **eleven models** covering English, Chinese, French, German, Spanish, Japanese, Korean, 11 Indian languages, 30 languages (VoxCPM2), and 80+ others. Every notebook follows the same 7-step pattern: **Install → Pre-cache → Core functions → Gradio UI → Keep-alive → Quick test → Batch synthesis**. No token or sign-up needed for any notebook except `IndicF5` (HF-gated). See [OpenVoice V2](#openvoice-v2) below for **voice conversion** (audio → audio with a cloned voice), which complements the TTS suite.
 
 ### Quick Start
 
-1. **Run `TTS_Model_Loader.ipynb` first** to pre-download model weights to Google Drive (~35–40 GB for the full suite, resumable, per-notebook toggles)
+1. **Run `TTS_Model_Loader.ipynb` first** to pre-download model weights to Google Drive (~40–45 GB for the full suite, resumable, per-notebook toggles)
 2. **Run `TTS_Voice_Library.ipynb`** to grab a curated set of reference voice clips with transcripts (used by the voice-cloning tabs)
 3. Open any of the model notebooks below — they auto-load from the Drive cache and skip the weight-download step
 
@@ -572,6 +572,7 @@ Curated reference voice clips with transcripts, ready to drop into the voice-clo
 | **MOSS-TTS v1.5** | MOSS-TTS v1.5 | 8B | 31 | Apache 2.0 |
 | **dots.tts-soar** | dots.tts-soar | 2B | 24+ | Apache 2.0 |
 | **Fish S2 Pro** | Fish S2 Pro | 4B + 400M (Dual-AR) | 80+ | Fish Audio Research (non-commercial) |
+| **VoxCPM2** | VoxCPM2 | 2B | 30 (+ 9 ZH dialects) | Apache 2.0 |
 | **Kokoro-82M** | Kokoro-82M | 82M | 9 | Apache 2.0 |
 
 ---
@@ -598,7 +599,7 @@ A GitHub Actions workflow at `.github/workflows/qa.yml` runs both on every push 
 
 Most Colab AI notebooks require paid tokens, subscription services, or lengthy manual compilation of CUDA dependencies. This project precompiles everything into ready-to-install wheels and hosts them on GitHub — so you can open a notebook, run all cells, and get results immediately, on any supported GPU, completely free.
 
-The 3D pipeline (Pixal3D) was the first notebook in the series. The TTS suite was added in 2026 to bring the same "open-and-run" philosophy to state-of-the-art speech synthesis.
+The 3D pipeline (Pixal3D) was the first notebook in the series. The TTS suite, video generators, and voice-conversion tools have all been added since, with the same "open-and-run" philosophy across every modality.
 
 ---
 

@@ -87,6 +87,17 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ([arXiv 2605.10922](https://arxiv.org/abs/2605.10922))
 - README: removed redundant trailing "Apache 2.0." in the Kokoro-82M
   section (already stated at the top of the paragraph)
+- README: tagline no longer mentions "image editing" (we don't have any)
+  — now reads "3D generation, video creation, text-to-speech, and voice
+  conversion"
+- README: **Why This Exists** updated to mention all 4 modalities
+  (3D + TTS + video + voice conversion) instead of just 3D + TTS
+- README: TTS loader size estimate bumped from 35-40 GB to 40-45 GB
+  (added VoxCPM2 + OpenVoice V2 weights)
+- README: Notebook Overview table now includes the **VoxCPM2** row
+  (was missing despite the per-notebook section existing)
+- README: "30 multilingual (VoxCPM2)" → "30 languages (VoxCPM2)" in
+  the TTS intro for clarity
 
 ### Added (prior in this cycle)
 - `Wan2.2_S2V_Colab.ipynb` — a self-contained Colab wrapper around
