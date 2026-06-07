@@ -103,52 +103,77 @@ def audit(path):
     code_cells = [c for c in cells if c['cell_type'] == 'code']
     md_cells = [c for c in cells if c['cell_type'] == 'markdown']
     src = '\n'.join(''.join(c['source']) for c in cells)
+    # Code-only source for checks that should ignore markdown prose (pip install,
+    # gradio pin, tqdm check, etc.). Markdown can mention 'pip install' or 'gradio' in
+    # text without implying an unpinned install.
+    code_src = '\n'.join(''.join(c['source']) for c in code_cells)
 
     findings = []
     n_info = src.count("info='") + src.count('info="')
     n_try = len(re.findall(r'\btry\s*:', src))
     n_exc = len(re.findall(r'\bexcept\b', src))
 
-    if 'pip install' in src and 'tqdm' not in src and 'tqdm.auto' not in src:
-        if 'from tqdm' not in src and 'tqdm.notebook' not in src:
+    # pip install detection: look for actual install commands, not prose mentions.
+    # Matches: subprocess pip install, !pip install, %pip install, pip.main(), etc.
+    pip_install_re = re.compile(
+        r"(subprocess\.[A-Za-z_]+\(([^)]*['\"]pip['\"][^)]*['\"]install['\"][^)]*)\)|"
+        r"^[ \t]*[!%]\s*pip[ \t]+install|"
+        r"pip\.main\(|"
+        r"^pip[ \t]+install)",
+        re.MULTILINE,
+    )
+    pip_install_calls = pip_install_re.findall(code_src)
+    has_pip_install = bool(pip_install_calls)
+    # Check whether any actual pip install command installs gradio without a version pin.
+    has_unpinned_gradio_install = False
+    for call_args, _ in pip_install_calls:
+        if not call_args:
+            # !pip / %pip magic — conservatively assume they may include gradio
+            has_unpinned_gradio_install = 'gradio' in code_src
+            break
+        if re.search(r"\bgradio\b(?!=)(?!>)", call_args):
+            has_unpinned_gradio_install = True
+            break
+
+    if has_pip_install and 'tqdm' not in code_src and 'tqdm.auto' not in code_src:
+        if 'from tqdm' not in code_src and 'tqdm.notebook' not in code_src:
             findings.append('no tqdm in pip install / downloads')
 
-    if n_info == 0 and 'gr.' in src:
+    if n_info == 0 and 'gr.' in code_src:
         findings.append('zero info= tooltips on Gradio widgets')
 
     em = src.count('\u2014')
     if em > 0 and em < 3:
         findings.append(f'only {em} em-dash(es) — possibly inconsistent')
 
-    if 'snapshot_download' in src or 'hf_hub_download' in src or 'pipeline.from_pretrained' in src:
-        if 'HF_HOME' not in src and 'CACHE_ROOT' not in src:
-            if 'AEI_TTS_Cache' not in src:
+    if 'snapshot_download' in code_src or 'hf_hub_download' in code_src or 'pipeline.from_pretrained' in code_src:
+        if 'HF_HOME' not in code_src and 'CACHE_ROOT' not in code_src:
+            if 'AEI_TTS_Cache' not in code_src:
                 findings.append('downloads from HF without Drive cache prologue')
 
-    if 'demo.queue' in src and 'concurrency_limit' not in src:
+    if 'demo.queue' in code_src and 'concurrency_limit' not in code_src:
         findings.append('demo.queue without concurrency_limit')
 
-    if 'demo.launch' in src:
-        idx_launch = src.find('demo.launch')
-        if 'clear_output()' not in src[:idx_launch + 200]:
+    if 'demo.launch' in code_src:
+        idx_launch = code_src.find('demo.launch')
+        if 'clear_output()' not in code_src[:idx_launch + 200]:
             findings.append('demo.launch without prior clear_output()')
 
-    if 'gr.Blocks' in src and 'demo.load' not in src and 'tab_ip.select' not in src:
+    if 'gr.Blocks' in code_src and 'demo.load' not in code_src and 'tab_ip.select' not in code_src:
         findings.append('no demo.load welcome or tab swap')
 
-    if 'CACHE_ROOT' in src and 'os.environ.setdefault' not in src and 'os.environ[' not in src:
+    if 'CACHE_ROOT' in code_src and 'os.environ.setdefault' not in code_src and 'os.environ[' not in code_src:
         findings.append('CACHE_ROOT defined but not exported to env')
 
-    if 'step7' in src.lower() or 'Step 7' in src:
-        if 'for ' in src and 'try:' not in src:
+    if 'step7' in code_src.lower() or 'Step 7' in code_src:
+        if 'for ' in code_src and 'try:' not in code_src:
             findings.append('Step 7 batch loop without per-iteration try/except')
 
-    if 'step6' in src.lower() and 'FileLink' not in src and 'display(' in src:
+    if 'step6' in code_src.lower() and 'FileLink' not in code_src and 'display(' in code_src:
         findings.append('Step 6 quick test with display() but no FileLink import')
 
-    if 'pip install' in src and 'gradio' in src:
-        if 'gradio==' not in src and 'gradio>=' not in src:
-            findings.append('gradio installed without version pin')
+    if has_unpinned_gradio_install:
+        findings.append('gradio installed without version pin')
 
     return {
         'cells':           len(cells),
@@ -158,12 +183,12 @@ def audit(path):
         'info_tooltips':   n_info,
         'try_pairs':       (n_try, n_exc),
         'em_dash_count':   em,
-        'hf_home':         'HF_HOME' in src,
-        'clear_output':    'clear_output()' in src,
-        'concurrency':     'concurrency_limit' in src,
-        'demo_load':       'demo.load' in src,
-        'queue':           'demo.queue' in src,
-        'filelink':        'FileLink' in src,
+        'hf_home':         'HF_HOME' in code_src,
+        'clear_output':    'clear_output()' in code_src,
+        'concurrency':     'concurrency_limit' in code_src,
+        'demo_load':       'demo.load' in code_src,
+        'queue':           'demo.queue' in code_src,
+        'filelink':        'FileLink' in code_src,
         'findings':        findings,
     }
 
