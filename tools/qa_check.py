@@ -115,6 +115,7 @@ def audit(path):
 
     # pip install detection: look for actual install commands, not prose mentions.
     # Matches: subprocess pip install, !pip install, %pip install, pip.main(), etc.
+    # Outer group (1) = the whole match, inner group (2) = the call args (for subprocess only).
     pip_install_re = re.compile(
         r"(subprocess\.[A-Za-z_]+\(([^)]*['\"]pip['\"][^)]*['\"]install['\"][^)]*)\)|"
         r"^[ \t]*[!%]\s*pip[ \t]+install|"
@@ -125,15 +126,21 @@ def audit(path):
     pip_install_calls = pip_install_re.findall(code_src)
     has_pip_install = bool(pip_install_calls)
     # Check whether any actual pip install command installs gradio without a version pin.
+    # We use finditer for full match context: only fire for subprocess calls (where
+    # we have the call args to inspect). For !pip / %pip / pip.main(), we conservatively
+    # check the whole source for an unpinned gradio.
     has_unpinned_gradio_install = False
-    for call_args, _ in pip_install_calls:
-        if not call_args:
-            # !pip / %pip magic — conservatively assume they may include gradio
-            has_unpinned_gradio_install = 'gradio' in code_src
-            break
-        if re.search(r"\bgradio\b(?!=)(?!>)", call_args):
-            has_unpinned_gradio_install = True
-            break
+    for match in pip_install_re.finditer(code_src):
+        if match.group(2):
+            # subprocess call: inspect the call args
+            if re.search(r"\bgradio\b(?!=)(?!>)", match.group(2)):
+                has_unpinned_gradio_install = True
+                break
+        else:
+            # !pip / %pip / pip.main() / ^pip install — check the source
+            if 'gradio' in code_src and 'gradio==' not in code_src and 'gradio>=' not in code_src:
+                has_unpinned_gradio_install = True
+                break
 
     if has_pip_install and 'tqdm' not in code_src and 'tqdm.auto' not in code_src:
         if 'from tqdm' not in code_src and 'tqdm.notebook' not in code_src:
