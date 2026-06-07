@@ -6,6 +6,28 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around
+  [openbmb/VoxCPM2](https://huggingface.co/openbmb/VoxCPM2), a
+  **tokenizer-free** 2B-param TTS from OpenBMB (Tsinghua / ModelBest
+  inc). Models speech in a continuous latent space, enabling four
+  flagship capabilities: plain TTS, **Voice Design** (description in
+  parens, no ref audio), **Controllable Voice Clone** (ref audio
+  short-clip), and **Ultimate Clone** (ref + transcript + prompt for
+  max fidelity). 30 languages + 9 Chinese dialects, 48 kHz output,
+  ~8 GB VRAM, Apache-2.0 (commercial-OK). 27.3k★ on GitHub.
+  Eight tabs:
+  - **TTS** — plain text → speech, voice inferred from content
+  - **Voice Design** — `(description)text` syntax
+  - **Voice Clone** — ref audio (5-30s) → cloned voice
+  - **Ultimate Clone** — ref + transcript + prompt for max sim
+  - **Streaming** — long texts chunked and concatenated
+  - **Batch** — one .wav per line as a zip
+  - **VRAM** — free loaded model
+  - **Help** — 30 languages, 4 modes, tuning knobs, benchmarks
+  - **Two model versions**: VoxCPM2 (default, 2B, 30 langs, 48 kHz)
+    and VoxCPM-0.5B (legacy, 0.5B, ZH/EN, 16 kHz)
+  - **Optional text normalization** (WeTextProcessing) and
+    **optional ZipEnhancer denoiser** for noisy refs
 - `OpenVoice-V2_Colab.ipynb` — first voice-conversion (audio → audio)
   notebook in the suite, wrapping
   [myshell-ai/OpenVoiceV2](https://huggingface.co/myshell-ai/OpenVoiceV2).

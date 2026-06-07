@@ -27,6 +27,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [MOSS-TTS v1.5](#moss-tts-v15)
 - [dots.tts-soar](#dotstts-soar)
 - [Fish S2 Pro](#fish-s2-pro)
+- [VoxCPM2](#voxcpm2)
 - [Kokoro-82M](#kokoro-82m)
 - [TTS Model Loader](#tts-model-loader)
 - [TTS Voice Library](#tts-voice-library)
@@ -393,7 +394,7 @@ Apache 2.0 — the model weights are yours to use commercially. The cloud API is
 
 ## Text-to-Speech
 
-A matching lineup of self-contained Colab notebooks for state-of-the-art text-to-speech — **ten models** covering English, Chinese, French, German, Spanish, Japanese, Korean, 11 Indian languages, and 80+ others. Every notebook follows the same 7-step pattern: **Install → Pre-cache → Core functions → Gradio UI → Keep-alive → Quick test → Batch synthesis**. No token or sign-up needed for any notebook except `IndicF5` (HF-gated). See [OpenVoice V2](#openvoice-v2) below for **voice conversion** (audio → audio with a cloned voice), which complements the TTS suite.
+A matching lineup of self-contained Colab notebooks for state-of-the-art text-to-speech — **eleven models** covering English, Chinese, French, German, Spanish, Japanese, Korean, 11 Indian languages, 30 multilingual (VoxCPM2), and 80+ others. Every notebook follows the same 7-step pattern: **Install → Pre-cache → Core functions → Gradio UI → Keep-alive → Quick test → Batch synthesis**. No token or sign-up needed for any notebook except `IndicF5` (HF-gated). See [OpenVoice V2](#openvoice-v2) below for **voice conversion** (audio → audio with a cloned voice), which complements the TTS suite.
 
 ### Quick Start
 
@@ -405,9 +406,9 @@ A matching lineup of self-contained Colab notebooks for state-of-the-art text-to
 
 | GPU | VRAM | Notebooks that fit | Notes |
 |-----|------|--------------------|-------|
-| **A100** | 40 GB | All 10 | Recommended flagship target |
-| **L4** | 24 GB | All 10 (MisoTTS, Fish S2 Pro need bf16 + careful memory) | Best price/perf for cloning |
-| **T4** | 16 GB | 8 of 10 (excludes MisoTTS, Fish S2 Pro) | Qwen3 auto-falls back to 0.6B variant |
+| **A100** | 40 GB | All 11 | Recommended flagship target |
+| **L4** | 24 GB | All 11 (MisoTTS, Fish S2 Pro need bf16 + careful memory) | Best price/perf for cloning |
+| **T4** | 16 GB | 9 of 11 (excludes MisoTTS, Fish S2 Pro) | Qwen3 auto-falls back to 0.6B variant |
 | **CPU** | — | Supertonic-3, Kokoro-82M | 99M ONNX / 82M StyleTTS — runs anywhere |
 
 ### Qwen3-TTS
@@ -484,6 +485,29 @@ Auto-picks the 0.6B variant for T4 (16 GB) and the 1.7B variant for L4/A100.
 - **Help** — pronunciation syntax `[word](/IPA/)`, voice codes, language codes, citation
 
 **Custom pronunciation** via Markdown-link syntax: `[Kokoro](/kˈOkəɹO/)` → the grapheme `Kokoro` is replaced with the IPA inside the parens. **Voice blending**: pass `af_bella,am_michael` to average two voices.
+
+### VoxCPM2
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/VoxCPM2_Colab.ipynb)
+
+`openbmb/VoxCPM2` (2B) — **tokenizer-free** TTS from [OpenBMB](https://github.com/OpenBMB/VoxCPM) (Tsinghua / ModelBest inc), built on a [MiniCPM-4](https://huggingface.co/openbmb/MiniCPM4-0.5B) backbone. Models speech in a **continuous latent space** (no discrete tokens), enabling four flagship capabilities: **plain TTS** with content-aware prosody, **Voice Design** from a text description alone, **Controllable Cloning** from a short reference clip, and **Ultimate Cloning** that preserves every vocal nuance. **30 languages** natively + 9 Chinese dialects, **48 kHz studio-quality** output, ~8 GB VRAM. Apache-2.0 — free for commercial use. 27.3k★.
+
+Eight tabs:
+
+- **TTS** — plain text → speech, voice inferred from content. Works in all 30 languages.
+- **Voice Design** — type a description in parens (e.g. `(A young woman, gentle)Hello!`) → model creates a matching voice from scratch, no ref audio needed.
+- **Voice Clone** — short ref clip (5-30 s) → clone the timbre. V2 only.
+- **Ultimate Clone** — ref audio + transcript + prompt audio → preserve every vocal nuance. V2 only.
+- **Streaming** — long texts streamed chunk-by-chunk (RTF ~0.3 on RTX 4090).
+- **Batch** — one .wav per line, downloaded as a zip.
+- **VRAM** — free loaded model.
+- **Help** — 30 languages, 4 modes, tuning knobs, benchmarks, citation.
+
+**Two model versions in one notebook**:
+- **VoxCPM2** (default, 2B, 30 langs, 48 kHz, ~8 GB VRAM) — recommended
+- **VoxCPM-0.5B** (legacy, 0.5B, ZH/EN only, 16 kHz, ~5 GB VRAM) — for T4/edge devices
+
+**Optional text normalization** (WeTextProcessing) for natural handling of numbers and abbreviations. **Optional ZipEnhancer denoiser** for noisy reference audio. Achieves the **highest average SIM** of any open-source TTS on the MiniMax Multilingual benchmark across 20+ languages.
 
 ## Voice Conversion
 
@@ -562,7 +586,7 @@ Two Python scripts in `tools/` keep the notebooks consistent:
 Both run from the repo root with no dependencies:
 
 ```bash
-python3 tools/validate.py    # OK: all 23 notebook(s) parse cleanly.
+python3 tools/validate.py    # OK: all 24 notebook(s) parse cleanly.
 python3 tools/qa_check.py    # OK: all authored notebooks pass the polish audit.
 ```
 
@@ -613,6 +637,7 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | MOSS-TTS v1.5 | [OpenMOSS/MOSS-TTS](https://github.com/OpenMOSS/MOSS-TTS) | [OpenMOSS-Team/MOSS-TTS-v1.5](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5) | — |
 | dots.tts-soar | [rednote-hilab/dots.tts](https://github.com/rednote-hilab/dots.tts) | [rednote-hilab/dots.tts-soar](https://huggingface.co/rednote-hilab/dots.tts-soar) | — |
 | Fish S2 Pro | [fishaudio/fish-speech](https://github.com/fishaudio/fish-speech) | [fishaudio/s2-pro](https://huggingface.co/fishaudio/s2-pro) | — |
+| VoxCPM2 | [OpenBMB/VoxCPM](https://github.com/OpenBMB/VoxCPM) | [openbmb/VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) | [arXiv 2509.24650](https://arxiv.org/abs/2509.24650) |
 | Kokoro-82M | [hexgrad/kokoro](https://github.com/hexgrad/kokoro) | [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) | [arXiv 2306.07691](https://arxiv.org/abs/2306.07691) (StyleTTS 2) · [arXiv 2203.02395](https://arxiv.org/abs/2203.02395) (iSTFTNet) |
 
 ### Voice Conversion Models
@@ -633,7 +658,7 @@ Notebooks in this repository are provided for educational and personal use. Indi
 
 - **Pixal3D pipeline**: MIT
 - **TTS models** (per notebook):
-  - Apache 2.0: Qwen3-TTS, Dia, MOSS-TTS, dots.tts-soar, Kokoro-82M, Supertonic-3 *code* (model weights are OpenRAIL-M)
+  - Apache 2.0: Qwen3-TTS, Dia, MOSS-TTS, dots.tts-soar, **VoxCPM2**, Kokoro-82M, Supertonic-3 *code* (model weights are OpenRAIL-M)
   - MIT: IndicF5, **OpenVoice V2**
   - Research / Non-Commercial: Higgs-Audio, Fish S2 Pro
   - Other (see model card): MisoTTS

@@ -42,6 +42,7 @@ NOTEBOOKS = [
     ('Supertonic-3_Colab.ipynb',     'authored'),
     ('TTS_Model_Loader.ipynb',       'authored'),
     ('TTS_Voice_Library.ipynb',      'authored'),
+    ('VoxCPM2_Colab.ipynb',          'authored'),
     ('Wan2.2_Animate_Colab.ipynb',    'authored'),
     ('Wan2.2_Colab.ipynb',           'authored'),
     ('Wan2.2_S2V_Colab.ipynb',        'authored'),
