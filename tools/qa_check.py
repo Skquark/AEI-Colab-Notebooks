@@ -35,6 +35,7 @@ NOTEBOOKS = [
     ('MOSS-TTS_Colab.ipynb',         'authored'),
     ('MisoTTS_Colab.ipynb',          'authored'),
     ('Notebook_Generator.ipynb',      'authored'),
+    ('OpenVoice-V2_Colab.ipynb',      'authored'),
     ('Pixal3D_Colab.ipynb',          'preexisting'),
     ('Pixal3D_Wheel_Builder.ipynb',  'preexisting'),
     ('Qwen3-TTS_Colab.ipynb',        'authored'),

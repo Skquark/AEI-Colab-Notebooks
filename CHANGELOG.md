@@ -6,6 +6,34 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `OpenVoice-V2_Colab.ipynb` — first voice-conversion (audio → audio)
+  notebook in the suite, wrapping
+  [myshell-ai/OpenVoiceV2](https://huggingface.co/myshell-ai/OpenVoiceV2).
+  MIT-licensed instant voice cloning by **MIT + MyShell**, 36.6k★.
+  VITS-based tone-color converter that takes a 5-30 s reference clip
+  and applies its **timbre** to any source audio, with native
+  multilingual support for English, Spanish, French, Chinese, Japanese,
+  Korean (via MeloTTS as the base speaker). Six tabs:
+  - **Convert** — audio in + ref audio in → audio out. `tau` slider
+    controls how strongly the target timbre overrides the source.
+  - **TTS + Convert** — type text in any of 7 languages, get it spoken
+    in the reference voice.
+  - **Style Controls** — explainer on what OpenVoice can and can't do
+    (timbre vs. emotion vs. accent)
+  - **Batch** — convert every audio file in a directory with one ref
+    voice
+  - **VRAM** — release loaded V1/V2/MeloTTS models
+  - **Help** — multilingual notes, watermarking, comparison with
+    RVC/SoVITS
+  - **Two model versions in one notebook**: V2 (default, multilingual)
+    and V1 (simpler, EN/ZH only)
+  - **Every output is watermarked** with a 32-bit string at 16 kbps
+    via `wavmark` (default `@MyShell`)
+- **New "Voice Conversion" section in the README** — TTS is text→audio;
+  voice conversion is audio→audio. They're complementary, so the new
+  section lives just below the TTS suite.
+
+### Added (prior in this cycle)
 - `Kokoro-82M_Colab.ipynb` — self-contained Colab wrapper around
   [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), the
   Apache-2.0 82M-param TTS model. CPU-friendly, ~330 MB on disk,

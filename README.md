@@ -31,6 +31,9 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [TTS Model Loader](#tts-model-loader)
 - [TTS Voice Library](#tts-voice-library)
 
+### Voice Conversion
+- [OpenVoice V2](#openvoice-v2)
+
 ### Video
 - [Wan 2.2 — Text & Image-to-Video](#wan-22--text--image-to-video)
 - [Wan 2.2 Animate — Character Animation & Replacement](#wan-22-animate--character-animation--replacement)
@@ -390,7 +393,7 @@ Apache 2.0 — the model weights are yours to use commercially. The cloud API is
 
 ## Text-to-Speech
 
-A matching lineup of self-contained Colab notebooks for state-of-the-art text-to-speech — **ten models** covering English, Chinese, French, German, Spanish, Japanese, Korean, 11 Indian languages, and 80+ others. Every notebook follows the same 7-step pattern: **Install → Pre-cache → Core functions → Gradio UI → Keep-alive → Quick test → Batch synthesis**. No token or sign-up needed for any notebook except `IndicF5` (HF-gated).
+A matching lineup of self-contained Colab notebooks for state-of-the-art text-to-speech — **ten models** covering English, Chinese, French, German, Spanish, Japanese, Korean, 11 Indian languages, and 80+ others. Every notebook follows the same 7-step pattern: **Install → Pre-cache → Core functions → Gradio UI → Keep-alive → Quick test → Batch synthesis**. No token or sign-up needed for any notebook except `IndicF5` (HF-gated). See [OpenVoice V2](#openvoice-v2) below for **voice conversion** (audio → audio with a cloned voice), which complements the TTS suite.
 
 ### Quick Start
 
@@ -482,6 +485,31 @@ Auto-picks the 0.6B variant for T4 (16 GB) and the 1.7B variant for L4/A100.
 
 **Custom pronunciation** via Markdown-link syntax: `[Kokoro](/kˈOkəɹO/)` → the grapheme `Kokoro` is replaced with the IPA inside the parens. **Voice blending**: pass `af_bella,am_michael` to average two voices.
 
+## Voice Conversion
+
+A single dedicated voice-conversion notebook, since it's a fundamentally different task from TTS: take an **input audio** (any language, any speaker) and a short **reference audio** of the target voice, and output the input audio *as if it were spoken in the target voice*. Used for dubbing, character voicing, multilingual content, anonymization, and creative audio workflows.
+
+### OpenVoice V2
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/OpenVoice-V2_Colab.ipynb)
+
+`myshell-ai/OpenVoiceV2` — instant voice cloning by **MIT + MyShell**. VITS-based tone-color converter that takes a 5–30 s reference clip and applies its **timbre** to any source audio, with **native multilingual support for English, Spanish, French, Chinese, Japanese, Korean** (via MeloTTS as the base speaker). 36.6k★, MIT licensed — **free for commercial use**. Six tabs:
+
+- **Convert** — audio in + ref audio in → audio out. `tau` slider controls how strongly the target timbre overrides the source.
+- **TTS + Convert** — type text in any of 7 languages, get it spoken in the reference voice.
+- **Style Controls** — explainer on what OpenVoice can and can't do (timbre vs. emotion vs. accent)
+- **Batch** — convert every audio file in a directory with one ref voice
+- **VRAM** — release loaded V1/V2/MeloTTS models
+- **Help** — multilingual notes, watermarking, comparison with RVC/SoVITS
+
+**Two model versions in one notebook**:
+- **V2** (default) — multilingual, better quality, ~140 MB
+- **V1** — simpler, EN/ZH only, ~150 MB
+
+**Every output is watermarked** with a 32-bit string at 16 kbps via [`wavmark`](https://github.com/wavmark/wavmark) (default `@MyShell`). Disable by setting the Watermark field to an empty string. The watermark survives MP3 compression at 128 kbps.
+
+> "OpenVoice can accurately clone the reference tone color and generate speech in multiple languages and accents." — [arXiv 2312.01479](https://arxiv.org/abs/2312.01479)
+
 ### TTS Model Loader
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/TTS_Model_Loader.ipynb)
@@ -534,7 +562,7 @@ Two Python scripts in `tools/` keep the notebooks consistent:
 Both run from the repo root with no dependencies:
 
 ```bash
-python3 tools/validate.py    # OK: all 22 notebook(s) parse cleanly.
+python3 tools/validate.py    # OK: all 23 notebook(s) parse cleanly.
 python3 tools/qa_check.py    # OK: all authored notebooks pass the polish audit.
 ```
 
@@ -587,6 +615,12 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | Fish S2 Pro | [fishaudio/fish-speech](https://github.com/fishaudio/fish-speech) | [fishaudio/s2-pro](https://huggingface.co/fishaudio/s2-pro) | — |
 | Kokoro-82M | [hexgrad/kokoro](https://github.com/hexgrad/kokoro) | [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) | [arXiv 2306.07691](https://arxiv.org/abs/2306.07691) (StyleTTS 2) · [arXiv 2203.02395](https://arxiv.org/abs/2203.02395) (iSTFTNet) |
 
+### Voice Conversion Models
+
+| Notebook | Upstream repo | Hugging Face | Paper |
+|----------|---------------|--------------|-------|
+| OpenVoice V2 | [myshell-ai/OpenVoice](https://github.com/myshell-ai/OpenVoice) | [myshell-ai/OpenVoiceV2](https://huggingface.co/myshell-ai/OpenVoiceV2) | [arXiv 2312.01479](https://arxiv.org/abs/2312.01479) |
+
 ### Reference voices
 
 - [TTS_Voice_Library.ipynb](./TTS_Voice_Library.ipynb) — curated set of CC0 / CC-BY / public-domain reference clips with transcripts, for the voice-cloning tabs. All clips are from upstream sources; see the notebook for per-clip attribution.
@@ -600,7 +634,7 @@ Notebooks in this repository are provided for educational and personal use. Indi
 - **Pixal3D pipeline**: MIT
 - **TTS models** (per notebook):
   - Apache 2.0: Qwen3-TTS, Dia, MOSS-TTS, dots.tts-soar, Kokoro-82M, Supertonic-3 *code* (model weights are OpenRAIL-M)
-  - MIT: IndicF5
+  - MIT: IndicF5, **OpenVoice V2**
   - Research / Non-Commercial: Higgs-Audio, Fish S2 Pro
   - Other (see model card): MisoTTS
 - **Cube 3D + CubePart** (the `Cube_3D_Colab.ipynb`):
