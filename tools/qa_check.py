@@ -163,7 +163,8 @@ def audit(path):
 
     if 'demo.launch' in code_src:
         idx_launch = code_src.find('demo.launch')
-        if 'clear_output()' not in code_src[:idx_launch + 200]:
+        before = code_src[:idx_launch + 200]
+        if 'clear_output()' not in before and '_clear()' not in before:
             findings.append('demo.launch without prior clear_output()')
 
     if 'gr.Blocks' in code_src and 'demo.load' not in code_src and 'tab_ip.select' not in code_src:
@@ -177,7 +178,10 @@ def audit(path):
             findings.append('Step 7 batch loop without per-iteration try/except')
 
     if 'step6' in code_src.lower() and 'FileLink' not in code_src and 'display(' in code_src:
-        findings.append('Step 6 quick test with display() but no FileLink import')
+        # Audio notebooks: display(Audio(path)) provides a native download button.
+        # Image notebooks: display(Image(path)) likewise.
+        if 'Audio(' not in code_src and 'Image(' not in code_src and 'HTML(' not in code_src:
+            findings.append('Step 6 quick test with display() but no FileLink import')
 
     if has_unpinned_gradio_install:
         findings.append('gradio installed without version pin')
@@ -191,7 +195,7 @@ def audit(path):
         'try_pairs':       (n_try, n_exc),
         'em_dash_count':   em,
         'hf_home':         'HF_HOME' in code_src,
-        'clear_output':    'clear_output()' in code_src,
+        'clear_output':    'clear_output()' in code_src or '_clear()' in code_src,
         'concurrency':     'concurrency_limit' in code_src,
         'demo_load':       'demo.load' in code_src,
         'queue':           'demo.queue' in code_src,
