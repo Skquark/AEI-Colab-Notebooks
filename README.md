@@ -632,45 +632,48 @@ The companion to every TTS / VC / voice-cloning pipeline: takes the **raw audio 
 ### Eight pipeline stages (all optional, all tunable)
 
 1. **Load** — auto-detect format from extension. 8 input formats.
-2. **High-pass filter** — cut rumble & mic handling noise (configurable cutoff, default 0=off).
-3. **Denoise** — two backends: spectral gate (`noisereduce`, fast, no model) or Resemble AI denoiser (slow, better for speech). Tunable strength for the spectral gate.
-4. **LUFS normalize** — broadcast-standard ITU-R BS.1770-4 loudness target (default -16 LUFS for podcast).
-5. **Peak limit** — guard against clipping (default -1 dBFS).
-6. **Trim** — keep only the time range you need.
-7. **Split** — split by silence, or into N-second chunks.
+2. **Auto-trim silence** — remove leading/trailing silence from TTS output using pydub silence detection (configurable threshold in dBFS and minimum silence length in ms). Applied *first* so all subsequent steps operate only on the speech region. Default off; the **TTS Polish** preset enables it.
+3. **High-pass filter** — cut rumble & mic handling noise (configurable cutoff, default 0=off).
+4. **Denoise** — two backends: spectral gate (`noisereduce`, fast, no model) or Resemble AI denoiser (slow, better for speech). Tunable strength for the spectral gate.
+5. **AI Enhance (Resemble Enhance)** — optional 44.1 kHz PyTorch model that does denoise + bandwidth extension + artifact reduction in one pass. 4 hyperparameters exposed.
+6. **LUFS normalize** — broadcast-standard ITU-R BS.1770-4 loudness target (default -16 LUFS for podcast).
+7. **Peak limit** — guard against clipping (default -1 dBFS).
 8. **Export** — 8 output formats with configurable bitrate & sample rate.
 
 Plus a full **Effects Chain** powered by `pedalboard` (Spotify Audio Intelligence Lab, GPL-3.0): **Gain**, **Compressor**, **Limiter**, **HighpassFilter**, **LowpassFilter**, **LadderFilter** (Moog-style 4-mode), **Reverb**, **Delay**, **Chorus**, **Phaser**, **Distortion**, **Clipping**, **PitchShift**, **Bitcrush**, **Resample**, **MP3Compressor** — every parameter exposed in the UI.
 
-### 5 quick-process presets
+### 6 quick-process presets
 
-| Preset | Best for | Output LUFS | Peak | Denoise |
+| Preset | Best for | Output LUFS | Peak | Pipeline highlights |
 | --- | --- | --- | --- | --- |
-| **Podcast** | Two-speaker voice | -16 LUFS | -1 dBFS | 0.5 |
-| **Music** | Music (preserves bass) | -14 LUFS | -1 dBFS | 0.3 |
-| **Speech** | Broadcast-ready voice | -23 LUFS | -2 dBFS | 0.7 |
-| **Broadcast** | EBU R128 / ATSC A/85 | -23 LUFS | -1 dBFS | 0.4 |
+| **Podcast** | Two-speaker voice | -16 LUFS | -1 dBFS | Denoise 0.5 |
+| **Music** | Music (preserves bass) | -14 LUFS | -1 dBFS | Denoise 0.3 |
+| **Speech** | Broadcast-ready voice | -23 LUFS | -2 dBFS | Denoise 0.7, HPF 100 Hz |
+| **Broadcast** | EBU R128 / ATSC A/85 | -23 LUFS | -1 dBFS | Denoise 0.4 |
+| **TTS Polish** | TTS output (auto-trim leading/trailing silence, level-normalize) | -16 LUFS | -1 dBFS | Silence-trim (-40 dBFS, min 500 ms) + HPF 80 Hz, no AI |
 | **Studio Polish** *(AI)* | Thin / compressed TTS or noisy speech | -16 LUFS | -1 dBFS | Resemble Enhance (44.1 kHz) |
 
 Plus 8 export formats: `.wav` (lossless), `.flac` (lossless compressed), `.aiff` (lossless), `.mp3` (universal), `.ogg` (open-source), `.opus` (streaming), `.m4a` (Apple), `.aac` (raw ADTS).
 
 ### Ten tabs
 
-- **Quick Process** — 5 one-click presets: Podcast, Music, Speech, Broadcast, **Studio Polish (AI)**
+- **Quick Process** — 6 one-click presets: Podcast, Music, Speech, Broadcast, **TTS Polish** (auto-trim silence + LUFS, best for TTS output), **Studio Polish (AI)** (Resemble Enhance, slowest but best quality)
 - **Trim & Split** — trim to time range, split by silence, split into N-second chunks, detect silence ranges
 - **Normalize** — peak / LUFS (ITU-R BS.1770-4) / no-op re-encode
 - **Effects Chain** — 16 pedalboard effects in 4 accordion groups (Filters / Dynamics / Time & Space / Distortion & Pitch / Lo-Fi), 4 chain presets (Podcast Voice, Vocal Cleaning, Music Mastering, Lo-Fi Tape), or build a custom chain with every parameter exposed
 - **Format Convert** — 8 formats with configurable bitrate (32-320 kbps) and sample rate (8 kHz - 96 kHz), mono/stereo
-- **AI Enhance** — Resemble Enhance (Resemble AI, MIT): 44.1 kHz AI speech model that does **denoise + bandwidth extension + artifact reduction** in one pass. 4 hyperparameters exposed (CFM solver Midpoint/RK4/Euler, NFE 1-128, prior temperature tau, denoiser strength lambd, optional 2-pass denoise-first). Before/after audio + stats. GPU auto-detected, falls back to CPU. **Two sub-modes**:
+- **AI Enhance** — Resemble Enhance (Resemble AI, MIT): 44.1 kHz AI speech model that does **denoise + bandwidth extension + artifact reduction** in one pass. 4 hyperparameters exposed (CFM solver Midpoint/RK4/Euler, NFE 1-128, prior temperature tau, denoiser strength lambd, optional 2-pass denoise-first). Before/after audio + stats. GPU auto-detected, falls back to CPU.
   - **Single file** — upload one file, get enhanced output with before/after comparison
-  - **Batch (directory)** — process every audio file in a folder with one click. Pattern filter (`*.wav` / `*.flac` / etc.), recursive subdirectory walk, per-file progress, OK/Failed/Total/Time summary, subdirectory-preserving output. Failures are caught per file so one bad file doesn't abort the batch.
   - **Model source accordion** — `run_dir` text field lets you point at a custom fine-tuned checkpoint (folder must contain `hparams.yaml` + `ds/G/default/mp_rank_00_model_states.pt`); leave `<default>` to use the upstream Resemble AI weights (~713 MB, auto-downloaded, cached in `HF_HOME`).
   - **Device dropdown** — `auto` (default, GPU if available), `cuda` (force GPU), `cpu` (force CPU).
 - **Denoise** — two backends:
   - **Spectral gate** (`noisereduce`): fast, no model download, good for steady hum/hiss. Strength slider 0-1.
   - **Resemble denoiser** (44.1 kHz AI model, Resemble AI MIT): same engine as the AI Enhance tab, denoise-only path, no bandwidth extension. Slow (1-5s/min on GPU, 10-60s on CPU) but better for speech. Shares the **run_dir** and **device** settings with the AI Enhance tab. Resamples to 44.1 kHz mono internally.
   - Backend radio + collapsible Resemble options group (visible only when Resemble is selected)
-- **Batch** — apply any preset to every audio file in a directory, output zip
+- **Batch** — unified directory processing. Pick a **mode** via radio:
+  - **Quick Process preset** — apply any of the 6 presets to every audio file in a directory, download as a .zip
+  - **AI Enhance** — process every audio file in a folder with Resemble Enhance. Pattern filter, recursive subdirectory walk, per-file progress, OK/Failed/Total/Time summary, subdirectory-preserving output. Shares the model `run_dir` and `device` settings from the AI Enhance tab.
+  - Per-file failures are caught and logged; one bad file will not abort the batch.
 - **Compare** — before/after waveform + stats (peak, RMS, LUFS, duration) with delta
 - **Help** — when-to-use, format cheatsheet, LUFS targets, citation
 

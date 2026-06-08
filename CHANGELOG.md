@@ -167,6 +167,42 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - **5 export formats**: `.glb` (Unity/Unreal/Three.js), `.obj + .mtl`
     (Blender/Maya), `.stl` (3D print), `.ply` (Meshlab/CloudCompare), `.3mf`
   - **8 input formats**: STL, PLY, OBJ, GLB, GLTF, 3MF, OFF, COLLADA
+- `Audio_PostProcessor_Colab.ipynb` — new **TTS Polish** preset (6th in
+  Quick Process): auto-trim leading/trailing silence (pydub silence
+  detection, -40 dBFS threshold, 500 ms minimum silence) + HPF 80 Hz +
+  LUFS -16 + peak -1. CPU-only, no AI, best for TTS output that has
+  padding or inconsistent levels. The new silence-trim step runs
+  *first* in the pipeline so all subsequent stages (highpass, denoise,
+  LUFS) only operate on the speech region.
+- `Audio_PostProcessor_Colab.ipynb` — new `_trim_silence()` helper
+  function in STEP 3 using pydub's `silence.detect_nonsilent`, with
+  50ms head/tail padding to avoid clipping the first/last syllable.
+  Returns `(trimmed_samples, lead_seconds, trail_seconds)`.
+- `Audio_PostProcessor_Colab.ipynb` — `process_audio()` extended to
+  support the new `trim_silence` / `trim_silence_thresh` /
+  `trim_silence_min_ms` pipeline fields. Applied as stage [0] before
+  highpass; all other stages renumbered accordingly.
+- `Audio_PostProcessor_Colab.ipynb` — **unified Batch tab**. Previously
+  the Batch tab (Quick Process preset) and the AI Enhance > Batch
+  (directory) sub-tab were separate. Now consolidated into a single
+  Batch tab with a mode radio: **Quick Process preset** (applies any
+  of the 6 presets to every file, downloads a .zip) or **AI Enhance**
+  (Resemble Enhance on the whole folder, per-file progress, OK/Failed/
+  Total/Time summary). Common widgets (input dir, output dir, pattern,
+  recursive) are shared; preset/AI-specific widgets are grouped and
+  shown/hidden via `_toggle_mode` on radio change. Both `ui_batch` and
+  `ui_ai_enhance_batch` handlers are preserved internally and
+  dispatched from a thin `_unified_batch` wrapper. The AI Enhance tab
+  is now Single-file-only (Batch mode moved to the unified tab).
+  Tooltip count: 70 → 71. Tab count: 10 main + 2 AI Enhance sub-tabs
+  → 10 main + 1 AI Enhance sub-tab.
+- `Audio_PostProcessor_Colab.ipynb` — Step 6 (Quick Test) and Step 7
+  (Batch Processing) `@param` dropdowns updated to include
+  `tts_polish` and `studio_polish` in addition to the original 4
+  presets (now 6 options).
+- `Audio_PostProcessor_Colab.ipynb` — welcome message and Help tab
+  updated to mention the 6th preset (TTS Polish) and the unified
+  Batch tab.
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around
