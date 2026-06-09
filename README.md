@@ -15,6 +15,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Hunyuan3D 3.0 — Tencent Cloud API](#hunyuan3d-30--tencent-cloud-api-wrapper)
 - [Hunyuan3D-2.1 — Tencent PBR 3D Pipeline *(flagship)*](#hunyuan3d-21--tencent-pbr-3d-pipeline-flagship)
 - [Hunyuan3D-2 — Tencent Image / Text-to-3D](#hunyuan3d-2--tencent-image--text-to-3d)
+- [TripoSplat — Image to 3D Gaussians (TripoAI/VAST-AI)](#triposplat--image-to-3d-gaussians-mit)
 - [Mesh Optimizer — post-process for game-ready assets](#mesh-optimizer--post-process-for-game-ready-assets)
 - [Notebook Generator — scaffold new model notebooks](#notebook-generator--scaffold-new-model-notebooks)
 
@@ -251,6 +252,63 @@ Default variant in the UI: **`2mini-turbo`** (smallest, fastest, safest for T4).
 ### License
 
 Model weights: [Tencent Hunyuan Community License](https://huggingface.co/tencent/Hunyuan3D-2/blob/main/LICENSE.txt) — non-commercial research use. Code: [Tencent-Hunyuan/Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) is MIT-licensed.
+
+---
+
+## TripoSplat — Image to 3D Gaussians (MIT)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/TripoSplat_Colab.ipynb)
+
+[TripoAI / VAST-AI-Research TripoSplat](https://www.tripo3d.ai/research/triposplat) ([arXiv 2605.16355](https://arxiv.org/abs/2605.16355), [HF VAST-AI/TripoSplat](https://huggingface.co/VAST-AI/TripoSplat), [code](https://github.com/VAST-AI-Research/TripoSplat), **MIT** — model + code). Converts a **single 2D image** into a 3D Gaussian Splat scene that can be rendered in real-time by a 3DGS viewer. The first **fully-commercial-OK** image-to-3D model in the suite (Hunyuan3D weights are non-commercial).
+
+### Architecture (3.78 GB total)
+
+- **Image encoders**: DINOv3 ViT-H/16+ (1.68 GB) + Flux2 VAE encoder (336 MB) → fused 8192-token conditioning
+- **DiT flow model**: 24 blocks × 1024-dim × 16-head flow-matching transformer with RMSNorm-QK, RoPE, and share-mod (741 MB fp16)
+- **Octree + Gaussian decoder**: produces 32k → 262k Gaussians (multiple of 32) with per-Gaussian position, scale, rotation, opacity, and SH degree-0 color (576 MB)
+- **Background removal**: BiRefNet Swin-L (444 MB) — auto-removes BG if no alpha channel
+- **Sampler**: 20-step Euler flow matching with classifier-free guidance (default 3.0, shift 3.0)
+- **Total**: 3.78 GB across 5 safetensors
+
+### Output formats (6 in one click)
+
+| Format | Type | Viewer | Use case |
+| --- | --- | --- | --- |
+| **`.ply`** | 3DGS standard | [Antimatter15](https://antimatter15.com/splat/) | 3DGS renderers, gaussian-splat research |
+| **`.splat`** | 32-byte packed | [Antimatter15](https://antimatter15.com/splat/) | Web 3DGS viewers, smallest of the native formats |
+| **`.glb`** | binary glTF | Inline `<model-viewer>` (Three.js) | Game engines, AR/VR, real-time preview |
+| **`.obj`** | Wavefront | Any DCC | Universal mesh interchange |
+| **`.fbx`** | ASCII FBX 7.4 | Blender / Unity / Maya / Godot | Game pipelines, animation-ready (Y-up or Z-up) |
+| **`.ply` (mesh)** | Mesh as PLY | Mesh Optimizer handoff | Post-processing with `Mesh_Optimizer_Colab.ipynb` |
+
+The mesh formats are reconstructed from the Gaussian cloud via Poisson surface reconstruction (open3d), with optional alpha-shape fallback. Quality: 100k-300k points → 30k-300k triangle mesh, ~5-15 s on CPU. Default `opacity_threshold=0.05` filters invisible Gaussians before reconstruction.
+
+### Quick Start
+
+> Requires **Colab Runtime Version 2026.01** (ships torch 2.9.0+cu126). L4 GPU (22 GB) recommended; T4 (16 GB) is tight — use `num_gaussians ≤ 65536` and `steps ≤ 15`. First run: ~3-5 min to download weights, ~30-60 s per generation on L4.
+
+### GPU Support
+
+| GPU | VRAM | Gaussians | Steps | Time (approx) | Notes |
+|-----|------|-----------|-------|---------------|-------|
+| A100 | 40 GB | 262144 | 20 | ~30 s | Best quality. Default settings. |
+| L4 | 22 GB | 131072 | 20 | ~60 s | Recommended. Default 131k, push to 262k if VRAM allows. |
+| T4 | 16 GB | 65536 | 12 | ~90 s | Low-VRAM mode. Use `num_gaussians ≤ 65k` and `steps ≤ 12`. |
+
+The notebook auto-detects GPU and warns if VRAM is below 20 GB. Mesh reconstruction (Poisson) runs on CPU and is independent of VRAM.
+
+### Why this complements Hunyuan3D-2.1
+
+- **Output**: Gaussians (real-time rendering, perfect view interpolation) vs mesh (game-ready, PBR)
+- **Speed**: 30-60 s per image (TripoSplat) vs 60-180 s (Hunyuan3D-2.1 shape only)
+- **License**: MIT (commercial-OK) vs Hunyuan non-commercial
+- **Use TripoSplat for**: game-engine previews, AR/VR, real-time 3DGS demos, fast iteration
+- **Use Hunyuan3D-2.1 for**: textured PBR assets, high-fidelity meshes, print-ready
+- **Bridge them**: TripoSplat's mesh output (`.ply`) can be loaded by `Mesh_Optimizer_Colab.ipynb` for decimation, repair, retopology
+
+### License
+
+[MIT](https://huggingface.co/VAST-AI/TripoSplat) — model + code commercial-OK.
 
 ---
 
@@ -739,6 +797,7 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | Hunyuan3D-2 | [Tencent-Hunyuan/Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) | [tencent/Hunyuan3D-2](https://huggingface.co/tencent/Hunyuan3D-2) | [arXiv 2501.12202](https://arxiv.org/abs/2501.12202) |
 | Hunyuan3D-2.1 | [Tencent-Hunyuan/Hunyuan3D-2.1](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) | [tencent/Hunyuan3D-2.1](https://huggingface.co/tencent/Hunyuan3D-2.1) | [arXiv 2506.15442](https://arxiv.org/abs/2506.15442) |
 | Hunyuan3D 3.0 (API) | [Tencent Cloud](https://www.tencentcloud.com/document/product/1665/119114) (Cloud API v3) | — | — |
+| **TripoSplat** | [VAST-AI-Research/TripoSplat](https://github.com/VAST-AI-Research/TripoSplat) | [VAST-AI/TripoSplat](https://huggingface.co/VAST-AI/TripoSplat) | [arXiv 2605.16355](https://arxiv.org/abs/2605.16355) |
 | Mesh Optimizer | [mikedh/trimesh](https://github.com/mikedh/trimesh) · [Kramer84/pyfqmr](https://github.com/Kramer84/pyfqmr-Fast-quadric-Mesh-Reduction) · [cnr-isti-vclab/PyMeshLab](https://github.com/cnr-isti-vclab/PyMeshLab) · [isl-org/Open3D](https://github.com/isl-org/Open3D) | — | — |
 | Audio Post-Processor | [jiaaro/pydub](https://github.com/jiaaro/pydub) · [imageio/imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) · [bastibe/python-soundfile](https://github.com/bastibe/python-soundfile) · [librosa/librosa](https://github.com/librosa/librosa) · [csteinmetz1/pyloudnorm](https://github.com/csteinmetz1/pyloudnorm) · [timsainb/noisereduce](https://github.com/timsainb/noisereduce) · [spotify/pedalboard](https://github.com/spotify/pedalboard) · [resemble-ai/resemble-enhance](https://github.com/resemble-ai/resemble-enhance) | — | — |
 

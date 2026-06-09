@@ -230,6 +230,44 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   ufuncs), so the same notebook runs unchanged on current and
   future runtimes. See the README "MOSS-TTS v1.5" section for the
   full explanation and motivation.
+- `TripoSplat_Colab.ipynb` — new 3D model: image-to-3D Gaussians
+  by [TripoAI / VAST-AI-Research](https://www.tripo3d.ai/research/triposplat)
+  ([arXiv 2605.16355](https://arxiv.org/abs/2605.16355),
+  [HF VAST-AI/TripoSplat](https://huggingface.co/VAST-AI/TripoSplat),
+  [code](https://github.com/VAST-AI-Research/TripoSplat),
+  **MIT — commercial-OK**). 8B-param-equiv image-to-3DGS via
+  DINOv3 ViT-H/16+ + Flux2 VAE encoder → 24-block, 1024-dim
+  flow-matching DiT → Octree + Gaussian decoder (32k → 262k
+  Gaussians, multiple of 32). Background removal via BiRefNet
+  Swin-L. 3.78 GB total weights across 5 safetensors. 6 export
+  formats in one click:
+    - **Native 3DGS**: `.ply` (3DGS standard) and `.splat` (32-byte
+      packed, for web viewers like Antimatter15)
+    - **Reconstructed mesh**: `.glb` (binary glTF, open3d), `.obj`
+      (Wavefront text), `.fbx` (custom pure-Python ASCII FBX 7.4
+      writer, Y-up or Z-up, works in Blender / Unity / Maya / Godot)
+    - **Mesh-as-PLY** for hand-off to `Mesh_Optimizer_Colab.ipynb`
+  Mesh reconstruction uses Poisson surface reconstruction (open3d,
+  ~5-15s on CPU) with optional alpha-shape fallback. Filter by
+  opacity, subsample to 100k-300k points, KNN normals, decimation
+  to ≤300k faces. The custom FBX writer is a ~200-line pure-Python
+  implementation of the FBX 7.4 ASCII spec (no animations, no
+  bones, no cameras — just meshes). Better than the upstream HF
+  Space's default behavior: includes 6 export formats (Space only
+  exports .ply/.splat), exposes every sampling parameter (Space
+  hardcodes 20 steps, 3.0 cfg, 262k Gaussians), has Drive-cached
+  outputs at `/content/drive/MyDrive/AEI_3D_Out/TripoSplat/`, and
+  has the MOSS-TTS-style numpy 2.x umath patch applied defensively.
+  9-cell Pixal3D pattern: STEP 1 install + numpy patch, STEP 2
+  Drive cache, STEP 3 pipeline + 6-format export, STEP 4 single-page
+  Gradio UI with 15 tooltips and 11 try/except blocks, STEP 5
+  keep-alive, STEP 6 quick test (12 steps, 65k Gaussians), STEP 7
+  batch from a .txt list. QA-check passes (Y Y Y Y Y Y). Requires
+  Colab Runtime 2026.01 (torch 2.9.0+cu126). L4 GPU (22 GB)
+  recommended; T4 (16 GB) is tight — use `num_gaussians ≤ 65536`
+  and `steps ≤ 15`. See the README "TripoSplat" section for the
+  full architecture breakdown, the 6-format export table, and the
+  complement-to-Hunyuan3D-2.1 positioning.
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around
