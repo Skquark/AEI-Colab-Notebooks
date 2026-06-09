@@ -203,6 +203,33 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Audio_PostProcessor_Colab.ipynb` — welcome message and Help tab
   updated to mention the 6th preset (TTS Polish) and the unified
   Batch tab.
+- `MOSS-TTS_Colab.ipynb` — STEP 1 **numpy 2.x compatibility patch**:
+  Colab Runtime 2026.01 ships numpy 2.0.x where the string ufuncs
+  (`_center`, `_ljust`, `_rjust`, `_zfill`, `_strip_*`, `_lstrip_*`,
+  `_rstrip_*`, `_partition*`, `_rpartition*`, `_slice`,
+  `_expandtabs*`, `_replace`, `is*`, `find`/`index`,
+  `startswith`/`endswith`, `str_len`, etc.) are not yet exposed in
+  `numpy._core.umath`. The first import of `numpy._core.strings`
+  (triggered by `import torchaudio`, `import librosa`, `import
+  soundfile`, MOSS-TTS' `AutoProcessor`, or any access to
+  `np.strings`) then fails with `ImportError: cannot import name
+  '_center' from 'numpy._core.umath'`. MOSS-TTS pulls all of these
+  as transitive deps, so a fresh runtime is unusable. The patch
+  injects pure-Python ufuncs into `numpy._core.umath` for every
+  name `numpy/_core/strings.py` needs — real implementations for
+  the 19 most-called names (using Python `str` methods, not
+  `np.char`, to avoid the chicken-and-egg: importing `np.char`
+  itself triggers the very import we are trying to fix), and
+  passthrough stubs for the rest. The patch is applied right after
+  `import numpy` and before any `pip install` / `import
+  MOSS-TTS` / `import torchaudio`. MOSS-TTS itself never actually
+  calls any of these on string arrays during inference — the
+  patch is only needed so `from numpy._core.umath import ...` in
+  `numpy/_core/strings.py` succeeds at import time. The patch is a
+  no-op on newer numpy versions (numpy 2.0.2+ already has all the
+  ufuncs), so the same notebook runs unchanged on current and
+  future runtimes. See the README "MOSS-TTS v1.5" section for the
+  full explanation and motivation.
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around
