@@ -677,6 +677,41 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - MOSS-TTS Step 2 title cleaned up ("Pre-cache Models" instead of
   "Pre-cache Models and Example Reference Clips")
 
+### Changed
+- **Gradio pinned version bumped from `5.33.0` to `5.49.1` in 15 notebooks**
+  (16 occurrences). 5.49.1 is the last 5.x release (Oct 2025), includes bug
+  fixes and performance improvements, and remains fully API-compatible with
+  the 5.33 components we use (`gr.Blocks`, `gr.Image`, `gr.Audio`, `gr.Slider`,
+  `gr.Model3D`, `gr.Tabs`, `gr.Progress`, `default_concurrency_limit`, etc.).
+  No code changes needed beyond the version string. We deliberately stayed
+  on 5.x rather than jumping to 6.x — Gradio 6.x adds MCP/accessibility/render
+  perf features we don't use, and would conflict with Colab's default
+  preinstalled 5.33. We also chose 5.49.1 over the latest 5.50.0 because
+  5.50.0 is the first release of the backport branch (renamed
+  `concurrency_limit` → `default_concurrency_limit`) and 5.49.1 is the most
+  recent clean 5.x with our exact API. Notebooks affected:
+  `Audio_PostProcessor_Colab`, `Dia`, `dots.tts-soar`, `Higgs-Audio`,
+  `Hunyuan3D-2.1`, `Hunyuan3D-3`, `IndicF5`, `Kokoro-82M`, `MisoTTS`,
+  `MOSS-TTS`, `Notebook_Generator`, `OpenVoice-V2`, `Pixal3D_Colab`,
+  `Qwen3-TTS`, `Supertonic-3`, `TTS_Voice_Library`, `TripoSplat_Colab`,
+  `VoxCPM2`, `Wan2.2`.
+- **5 pre-existing `gr.X(...` syntax errors fixed** (the cells would have
+  failed to run in Colab anyway, but `validate.py` was masking them with a
+  too-permissive `_fix_empty` heuristic). One per notebook:
+  `Audio_PostProcessor_Colab` (q_log missing `)`),
+  `Kokoro-82M_Colab` (s_audio / s_log missing `,)`),
+  `OpenVoice-V2_Colab` (c_src missing `,` to continue multi-line arg),
+  `Qwen3-TTS_Colab` (clone_ref / clone_ref_text / clone_xv missing `,)`),
+  `VoxCPM2_Colab` (t1_audio / t3_ref / t3_version / t4_ref / t4_prompt /
+  t4_prompt_text / b_ref / t5_log each missing `,)`).
+- **`tools/validate.py` `_fix_empty()` hardened**: previously treated any
+  blank line as "missing body" and inserted a stray `pass` after control
+  flow lines, breaking otherwise-valid multi-line `def foo(\n  arg,\n):`
+  signatures. Now walks back through blank lines AND equal-indent signature
+  continuation lines to find the true header indent before deciding whether
+  a body is missing. Required for our `def synth(\n  ...\n):` style headers
+  in MisoTTS, VoxCPM2, Qwen3-TTS, etc. to validate cleanly.
+
 ## [1.0.0] — 2026-05-29
 
 ### Added

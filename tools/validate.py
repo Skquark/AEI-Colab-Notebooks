@@ -38,14 +38,44 @@ def _clean(src):
 
 
 def _fix_empty(src):
+    """Insert 'pass' after any control-flow line (ending in ':') that has no
+    indented body. A 'body' is defined as: a non-blank line below the control
+    line that is indented strictly more than the smallest-indent non-blank
+    line in the multi-line header (the 'def' / 'class' / 'if' / etc. line).
+    Blank lines between control lines and their bodies are allowed."""
     lines = src.split(chr(10))
     fixed = []
     for i, line in enumerate(lines):
-        if line.rstrip().endswith((':',)) and i + 1 < len(lines):
-            nxt = lines[i + 1] if i + 1 < len(lines) else ''
-            if not nxt.strip() or not (nxt[0] in (' ', '\t')):
+        stripped = line.rstrip()
+        if stripped.endswith((':',)) and i + 1 < len(lines):
+            # Walk back through blank lines and equal-or-greater-indent
+            # continuation lines (multi-line signatures) to find the effective
+            # header indent. Continue scanning through equal-indent lines
+            # (they're signature continuations) and stop only at a less-indent
+            # non-blank line (the actual header) or the start of the source.
+            header_indent = len(line) - len(line.lstrip())
+            for j in range(i - 1, -1, -1):
+                prev = lines[j]
+                if not prev.strip():
+                    continue
+                prev_indent = len(prev) - len(prev.lstrip())
+                if prev_indent > header_indent:
+                    continue
+                if prev_indent < header_indent:
+                    header_indent = prev_indent
+                # equal indent => signature continuation, keep walking
+            has_body = False
+            for j in range(i + 1, len(lines)):
+                nxt = lines[j]
+                if not nxt.strip():
+                    continue
+                nxt_indent = len(nxt) - len(nxt.lstrip())
+                if nxt_indent > header_indent:
+                    has_body = True
+                break
+            if not has_body:
                 fixed.append(line)
-                fixed.append('    pass')
+                fixed.append(' ' * (header_indent + 4) + 'pass')
                 continue
         fixed.append(line)
     return chr(10).join(fixed)
