@@ -336,10 +336,29 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   framework) + INRIA non-commercial (rasterizer submodule), same
   as SuGaR. Includes a TripoSplat-PLY bridge (single-image input)
   AND a multi-view scene path (3+ overlapping cameras = best
-  quality). Skips texturing (mvs-texturing C++ build is brittle on
+  quality). Skips   texturing (mvs-texturing C++ build is brittle on
   Colab) — output is untextured mesh; texture in Blender or the
   game engine. Required citation: Ye et al., "GauStudio: A Modular
   Framework for 3D Gaussian Splatting", CVPR 2024.
+- `Asset_Library_Browser_Colab.ipynb` — new notebook (8 step
+  cells) for **browsing, tagging, previewing, and exporting the
+  200+ asset library** that TripoSplat + GauStudio/SuGaR +
+  Mesh Optimizer produce. CPU-only, no model weights, no GPU
+  required. Scans a library folder, recognizes 12+ asset formats
+  (3DGS PLY/SPLAT, mesh GLB/OBJ/FBX/PLY/STL/3MF, image
+  PNG/JPG/WEBP, text, JSON, ZIP), builds a metadata sidecar
+  JSON. Gradio UI: gallery with thumbnails, filter by
+  tag/format/favorite/search, click-to-preview (3D mesh in inline
+  `<model-viewer>`, 3DGS gets a metadata card + link to
+  Antimatter15 viewer), tag editor, favorite toggle. Exports to
+  Unity AssetBundle-style folder, Godot .tres + mesh files,
+  self-contained static HTML portfolio, CSV manifest. Stats
+  dashboard with format breakdown + top tags + missing/orphan
+  report. **What it doesn't do:** 3DGS files don't get
+  thumbnails or inline previews (no easy in-notebook 3DGS
+  renderer; workaround is to run GauStudio first to get a GLB).
+  This is a fundamental limitation of all current web-based 3DGS
+  viewers.
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around

@@ -18,6 +18,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [TripoSplat — Image to 3D Gaussians (TripoAI/VAST-AI)](#triposplat--image-to-3d-gaussians-mit)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
 - [GauStudio — 3DGS to Mesh via TSDF (MIT + INRIA mixed)](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed)
+- [Asset Library Browser — browse, tag, preview, export your 200+ assets](#asset-library-browser)
 - [Mesh Optimizer — post-process for game-ready assets](#mesh-optimizer--post-process-for-game-ready-assets)
 - [Notebook Generator — scaffold new model notebooks](#notebook-generator--scaffold-new-model-notebooks)
 
@@ -388,6 +389,37 @@ The notebook auto-detects GPU and warns if VRAM is below 20 GB. Mesh reconstruct
 **Compute:** T4 15 GB works (GauStudio's minimum is 6 GB). L4 / A100 give headroom. First run: ~10 min install + ~5-10 min extract. **Skips texturing** (mvs-texturing C++ build is brittle on Colab) — texture in Blender or the target game engine.
 
 **Required citation:** Ye, Danelljan, Yu, Ke, "GauStudio: A Modular Framework for 3D Gaussian Splatting", CVPR 2024.
+
+---
+
+## Asset Library Browser
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Asset_Library_Browser_Colab.ipynb)
+
+After running TripoSplat + GauStudio / SuGaR + Mesh Optimizer on your 200+ images, you have a folder full of assets but **no way to browse them, pick the best ones, or ship them to a game engine**. This notebook fills that gap — a Gradio UI that scans your asset library, lets you preview / tag / favorite / filter, render thumbnails, and export to Unity AssetBundle-style folders, Godot .tres, or a static HTML portfolio.
+
+**What it does:**
+
+- **Step 1** — install deps (gradio 5.49.1, trimesh, open3d, Pillow, no model weights needed). CPU-only.
+- **Step 2** — scan a library folder, recognize formats (3DGS PLY/SPLAT, mesh GLB/OBJ/FBX/PLY/STL/3MF, image PNG/JPG/WEBP, text, JSON, ZIP), build a metadata sidecar JSON (`_library_meta.json`) with tags / favorites / notes per asset. Idempotent — re-runs preserve user metadata.
+- **Step 3** — the main Gradio UI: gallery with thumbnails, filter sidebar (tag, format, favorite, search), click any asset to preview (3D mesh in inline `<model-viewer>`, 3DGS gets metadata + link to Antimatter15 viewer), tag editor, favorite toggle. All state persists in the sidecar JSON.
+- **Step 4** — batch render thumbnails (256×256 PNGs via trimesh's offscreen renderer; 3DGS gets a placeholder with the extension as a label). Idempotent.
+- **Step 5** — export: Unity AssetBundle-style folder (`Assets/AEI_Library/Meshes/` + thumbnails + README), Godot folder (mesh files + README), static HTML portfolio (self-contained `index.html` with inline `<model-viewer>` per asset, deploy to GitHub Pages / Netlify), CSV manifest for inventory.
+- **Step 6** — stats dashboard: total assets, format breakdown, top tags, biggest files, missing/orphaned file report.
+- **Step 7** — keep-alive (Gradio runs forever otherwise).
+- **Step 8** — help / format reference / known issues.
+
+**Compute:** CPU-only. The browser is a UI, not a model. No GPU required, no model weights to download. First run: ~3 min install. Subsequent: instant. Can run alongside other notebooks in the same session (read-only on the library folder).
+
+**What it doesn't do:** 3DGS files don't get a thumbnail (no easy in-notebook 3DGS renderer) and can't be previewed in `<model-viewer>`. Workaround: run GauStudio on the 3DGS PLY → get a GLB → come back and preview the GLB. This is a fundamental limitation of all current web-based 3D viewers (Antimatter15, gsplat.js, LumaAI all require JS-based 3DGS renderers that aren't droppable into Gradio).
+
+**Recommended workflow for the 200+ library:**
+
+1. Run TripoSplat batch → 200 raw 3DGS PLYs
+2. Run GauStudio batch on a subset → 200 GLB meshes
+3. Run Mesh Optimizer on the GLBs → polished meshes with UVs
+4. **Open this notebook**, set `LIBRARY_DIR` to your output folder, run STEP 2 to scan, STEP 4 to thumbnail, STEP 3 to browse / tag / favorite
+5. STEP 5 to export the curated subset to Unity / Godot / a static HTML portfolio
 
 ---
 
