@@ -268,6 +268,29 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and `steps ≤ 15`. See the README "TripoSplat" section for the
   full architecture breakdown, the 6-format export table, and the
   complement-to-Hunyuan3D-2.1 positioning.
+- `TripoSplat_Colab.ipynb` — Step 6 (QuickTest) and Step 7 (Batch)
+  workflow enhancements for converting 200+ images into a game-asset
+  library:
+    - **Step 6** adds `QUICK_INPUT_IMAGE` (explicit path; blank = auto-pick
+      from `/content`), `QUICK_MESH_METHOD` (poisson / alpha_shape),
+      `QUICK_MAX_POINTS` (50k-500k slider), `QUICK_OUTPUT_FORMAT` (all /
+      3DGS only / mesh only / native+LOD only), `QUICK_SAVE_TO_DRIVE`
+      (mirror outputs to `/content/drive/MyDrive/AEI_3D_Out/TripoSplat/`).
+      Outputs are named after the image stem: `hero.png` →
+      `hero.ply`, `hero.glb`, `hero_LOD0..2.glb`, `hero.fbx`, etc.
+    - **Step 7** adds `BATCH_INPUT_MODE` (folder / txt list),
+      `BATCH_INPUT_FOLDER` (default `/content/triposplat_runs/inputs`),
+      `BATCH_RECURSIVE` (scan subfolders), `BATCH_MESH_METHOD`,
+      `BATCH_MAX_POINTS`, `BATCH_OUTPUT_FORMAT`, `BATCH_MESH_DEPTH`
+      (now a slider, default 10), `BATCH_DO_DRIVE_SAVE` (mirror entire
+      batch folder to Drive). Each subject gets its own subfolder so
+      LOD/GLB/FBX files from different images don't collide. Recursive
+      mode uses `parent_stem` prefix for unique slugs across folders.
+    - Default `num_gaussians` bumped 65k → 131k (Step 6) and 65k → 131k
+      (Step 7) to match the Gradio UI's default for better quality.
+    - Bumped `mesh_depth` 9 → 10 default in both cells.
+    - LOD chain default expanded to 3 levels (`1.0,0.5,0.25`) for richer
+      asset libraries.
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around
@@ -340,6 +363,21 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     from the upstream Space and cached in `/content/kokoro_samples/`
 
 ### Fixed
+- `TripoSplat_Colab.ipynb` — T4 OOM crash after LOD chain: the OBJ
+  export was the #1 source of silent kernel kills even with
+  `write_ascii=False` (open3d's OBJ writer can blow RAM during the
+  encode step). OBJ is now **skipped by default**; production formats
+  (GLB + FBX + mesh-PLY) are unaffected. Lowered `density_quantile`
+  from 0.05 → 0.01 (was chopping off thin extremities, leaving holes
+  around hands/feet/fur). Switched `linear_fit=False` → `True` for
+  better Poisson vertex placement. Default `max_faces` 300_000 → 100_000
+  so decimation triggers on typical 3DGS output (T4-safe). Bumped
+  `max_points` 100_000 → 200_000 in QuickTest and Batch so Poisson
+  gets a denser input cloud. Added `print_progress=False` to all
+  open3d write calls. Beefed up the cleanup block to also trigger
+  open3d TriangleMesh finalizers. Added missing `_lod_to_glb()`
+  helper that the LOD chain was calling (function was defined nowhere
+  — the call was raising `NameError` silently inside the try/except).
 - README polish: `23 notebook(s)` → `22 notebook(s)` in the Tools legend
   to match the actual file count
 - README: `comercialmente` typo (`commercially` × 3 occurrences across the

@@ -283,6 +283,13 @@ Model weights: [Tencent Hunyuan Community License](https://huggingface.co/tencen
 
 The mesh formats are reconstructed from the Gaussian cloud via Poisson surface reconstruction (open3d), with optional alpha-shape fallback. Quality: 100k-300k points → 30k-300k triangle mesh, ~5-15 s on CPU. Default `opacity_threshold=0.05` filters invisible Gaussians before reconstruction.
 
+### Step 6 (QuickTest) & Step 7 (Batch) workflow
+
+Designed for converting 200+ images into a game-asset library:
+
+- **Step 6 — single image**: set `QUICK_INPUT_IMAGE` to a specific path (or leave blank for auto-pick from `/content`). Output files are named after the image stem — `hero.png` → `hero.ply`, `hero.glb`, `hero_LOD0.glb` … `hero.fbx`. Set `QUICK_SAVE_TO_DRIVE` to mirror results to `/content/drive/MyDrive/AEI_3D_Out/TripoSplat/`.
+- **Step 7 — batch**: choose `BATCH_INPUT_MODE = 'folder'` (point at a folder of images) or `'txt list'` (text file of paths, one per line). Toggle `BATCH_RECURSIVE` for subfolders. Each subject gets its own subfolder so LOD/GLB/FBX files don't collide. Set `BATCH_DO_DRIVE_SAVE` to mirror the whole batch folder to Drive at the end.
+
 ### Quick Start
 
 > Requires **Colab Runtime Version 2026.01** (ships torch 2.9.0+cu126). L4 GPU (22 GB) recommended; T4 (16 GB) is tight — use `num_gaussians ≤ 65536` and `steps ≤ 15`. First run: ~3-5 min to download weights, ~30-60 s per generation on L4.
