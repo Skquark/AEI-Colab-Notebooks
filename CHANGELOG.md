@@ -304,6 +304,13 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   subdirs) — file naming uses `<index>_<slug>` prefix to avoid collisions.
   Installs `pymeshlab` and `pyfqmr` in Step 1 (the Mesh Optimizer deps
   for the new post-processing stages).
+- `TripoSplat_Colab.ipynb` — memory cleanup between export stages to
+  avoid late OOM kills on T4: explicit `del pcd` after mesh recon,
+  `del verts/tris/colors_arr/sg` after FBX write, `del lod_meshes`
+  after LOD chain. Each `del` frees 5-15 MB of numpy/open3d buffers
+  before the next allocation. Added progress updates during the
+  smoothing-groups compute and FBX write (which is the slowest single
+  step at 5-10s for 100k faces).
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around
@@ -376,7 +383,31 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     from the upstream Space and cached in `/content/kokoro_samples/`
 
 ### Fixed
-- `TripoSplat_Colab.ipynb` — T4 OOM crash after LOD chain: the OBJ
+- `TripoSplat_Colab.ipynb` — **mesh quality completely overhauled**. The
+  triangle mesh outputs (.glb / .fbx / .obj / _mesh.ply) were
+  unusable due to four compounding problems:
+    1. Poisson `scale=1.1` was clipping the surface to the unit-cube
+       bbox. Now `scale=1.3` (30% padding) for proper implicit surface.
+    2. `density_quantile=0.01` was cropping the mesh and creating holes.
+       Now default 0.0 (no cropping; user post-processes if they want).
+    3. `depth=10` (1024^3 octree) was over-fitting to noise. Now 8
+       (256^3 octree, right resolution for 200k-point clouds).
+    4. `max_faces=100_000` was over-decimating. Now 200_000.
+  Plus two new pre-processing steps that fix the root cause of bad
+  3DGS-derived meshes:
+    - **Statistical outlier removal** (k=20, std=2.0) — drops the noisy
+      edge Gaussians that 3DGS sometimes produces.
+    - **Voxel pre-downsample** (auto-scaled to 0.5% of bbox) — evens out
+      the 3DGS density gradient (denser at subject center, sparser at
+      edges) which is what breaks Poisson.
+  And **3 reconstruction methods** to choose from:
+    - `alpha_shape` (default) — sharp, open surface, no "balloon"
+      problem. Best for organic 3DGS subjects (people, animals).
+    - `poisson` — smooth water-tight. Best for closed shapes.
+    - `ball_pivoting` — robust to noise, good middle ground. New
+      addition.
+  All three methods exposed in Step 4 UI radio + Step 6 + Step 7 params.
+- `TripoSplat_Colab.ipynb` — **T4 OOM crash after LOD chain**: the OBJ
   export was the #1 source of silent kernel kills even with
   `write_ascii=False` (open3d's OBJ writer can blow RAM during the
   encode step). OBJ is now **skipped by default**; production formats

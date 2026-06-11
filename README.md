@@ -281,7 +281,26 @@ Model weights: [Tencent Hunyuan Community License](https://huggingface.co/tencen
 | **`.fbx`** | ASCII FBX 7.4 | Blender / Unity / Maya / Godot | Game pipelines, animation-ready (Y-up or Z-up) |
 | **`.ply` (mesh)** | Mesh as PLY | Mesh Optimizer handoff | Post-processing with `Mesh_Optimizer_Colab.ipynb` |
 
-The mesh formats are reconstructed from the Gaussian cloud via Poisson surface reconstruction (open3d), with optional alpha-shape fallback. Quality: 100k-300k points → 30k-300k triangle mesh, ~5-15 s on CPU. Default `opacity_threshold=0.05` filters invisible Gaussians before reconstruction.
+The mesh formats are reconstructed from the Gaussian cloud via Poisson surface reconstruction (open3d), with optional alpha-shape and ball-pivoting fallback. Quality: 100k-300k points → 30k-300k triangle mesh, ~5-15 s on CPU. Default `opacity_threshold=0.05` filters invisible Gaussians before reconstruction.
+
+### Mesh quality — read this before using the mesh exports
+
+**The triangle mesh (.glb / .fbx / .obj) is fundamentally a lossy approximation of the 3DGS output.** The native 3DGS PLY/SPLAT (the "main" PLY) is rendered as billboards of colored ellipsoids in a 3DGS-aware viewer (Antimatter15, gsplat.js, LumaAI, Polycam) — it doesn't need a mesh. The mesh recon tries to extract a triangle surface from those Gaussians, but it can only represent the **outer hull**, not the per-Gaussian orientation, scale, or color gradient. The mesh will always look slightly worse than the 3DGS view.
+
+For organic 3DGS subjects (people, animals, characters), the **recommended workflow is**:
+
+1. **Preview/real-time demos** — use the **3DGS PLY/SPLAT** in a 3DGS viewer or game-engine plugin. This is what looks the best.
+2. **Game asset (mesh)** — use the GLB/FBX as a **static LOD**. The mesh recon has these failure modes to be aware of:
+   - **Holes**: if the subject has open parts (hair, fingers), Poisson tries to close them and creates "balloon" artifacts. Alpha-shape doesn't try to close — it follows the actual points.
+   - **Missing surfaces**: if the subject was off-center in the input image, BiRefNet's background removal can clip the edges. The mesh honors the clipped Gaussians.
+   - **No UVs by default**: until post-processing (Step 7 POST or Step 8), the mesh has no UVs. Game engines can't texture it without UV-unwrap.
+3. **Highest-quality mesh** — for really good mesh quality, import the 3DGS PLY into a specialized AI mesher (LumaGen, Kiri Engine, Polycam) and use their reconstruction. They'll give you 5-10x better mesh quality than Poisson from the same point cloud.
+
+In the QuickTest, Batch, and Step 4 UI, the default `mesh_method` is now **`alpha_shape`** (was `poisson`). Alpha-shape doesn't try to close holes and gives the most accurate surface for organic 3DGS subjects. Other options:
+- `poisson` — smooth, water-tight. Best for closed subjects (statues, vehicles). Has the "balloon" problem with open subjects.
+- `ball_pivoting` — robust to noisy input, preserves open surfaces. Good middle ground.
+
+All three methods now also do **statistical outlier removal** (the noisy Gaussians at the edges of 3DGS output are removed before surface extraction) and **voxel pre-downsample** to give the algorithm evenly-spaced input.
 
 ### Step 6 (QuickTest), Step 7 (Batch) & Step 8 (Post-Process) workflow
 
