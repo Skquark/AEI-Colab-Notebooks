@@ -283,12 +283,13 @@ Model weights: [Tencent Hunyuan Community License](https://huggingface.co/tencen
 
 The mesh formats are reconstructed from the Gaussian cloud via Poisson surface reconstruction (open3d), with optional alpha-shape fallback. Quality: 100k-300k points → 30k-300k triangle mesh, ~5-15 s on CPU. Default `opacity_threshold=0.05` filters invisible Gaussians before reconstruction.
 
-### Step 6 (QuickTest) & Step 7 (Batch) workflow
+### Step 6 (QuickTest), Step 7 (Batch) & Step 8 (Post-Process) workflow
 
 Designed for converting 200+ images into a game-asset library:
 
 - **Step 6 — single image**: set `QUICK_INPUT_IMAGE` to a specific path (or leave blank for auto-pick from `/content`). Output files are named after the image stem — `hero.png` → `hero.ply`, `hero.glb`, `hero_LOD0.glb` … `hero.fbx`. Set `QUICK_SAVE_TO_DRIVE` to mirror results to `/content/drive/MyDrive/AEI_3D_Out/TripoSplat/`.
-- **Step 7 — batch**: choose `BATCH_INPUT_MODE = 'folder'` (point at a folder of images) or `'txt list'` (text file of paths, one per line). Toggle `BATCH_RECURSIVE` for subfolders. Each subject gets its own subfolder so LOD/GLB/FBX files don't collide. Set `BATCH_DO_DRIVE_SAVE` to mirror the whole batch folder to Drive at the end.
+- **Step 7 — batch**: choose `BATCH_INPUT_MODE = 'folder'` (point at a folder of images) or `'txt list'` (text file of paths, one per line). Toggle `BATCH_RECURSIVE` for subfolders — the slug is prefixed with the parent folder name (`characters_hero`) so files from different subfolders don't collide. Outputs are flat in `batch_dir/`. Set `BATCH_DO_DRIVE_SAVE` to mirror the whole batch folder to Drive at the end. Toggle `BATCH_POST_PROCESS` to also run the **game-asset post-processing pipeline** (clean → fill holes → UV unwrap → smooth → export GLB/FBX/OBJ/STL/PLY/3MF as `*_game.<fmt>` files alongside the raw outputs).
+- **Step 8 — standalone post-process**: takes a folder of pre-existing `*_mesh.ply` files (from any prior run, or a colleague's outputs) and re-runs the post-processing pipeline with new settings. Toggles for clean, fill holes (with `max_hole_size` slider), UV unwrap, smooth (Taubin / Laplacian / Humphrey / HC, iterations slider), and output formats. Useful for re-processing an old batch with better settings without re-running the model.
 
 ### Quick Start
 

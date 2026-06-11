@@ -291,6 +291,19 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     - Bumped `mesh_depth` 9 → 10 default in both cells.
     - LOD chain default expanded to 3 levels (`1.0,0.5,0.25`) for richer
       asset libraries.
+- `TripoSplat_Colab.ipynb` — new **STEP 8** for standalone post-processing
+  of `*_mesh.ply` files. Reuses the Mesh Optimizer stage functions
+  (clean, fill holes, UV unwrap, smooth, export) as pure in-notebook
+  helpers — no need to load `Mesh_Optimizer_Colab.ipynb` separately. Toggles
+  for each stage with sliders for `max_hole_size` and `smooth_iterations`.
+  Also added **`BATCH_POST_PROCESS` flag in Step 7** so the post-processing
+  pipeline runs inline on every batch item. Output is `<slug>_game.glb` /
+  `<slug>_game.fbx` / `<slug>_game.obj` (etc.) alongside the raw
+  TripoSplat exports, with vertex colors preserved, UVs generated, and
+  holes closed. Reverted Step 7 to a **flat output folder** (no per-item
+  subdirs) — file naming uses `<index>_<slug>` prefix to avoid collisions.
+  Installs `pymeshlab` and `pyfqmr` in Step 1 (the Mesh Optimizer deps
+  for the new post-processing stages).
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around
