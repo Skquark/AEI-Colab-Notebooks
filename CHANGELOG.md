@@ -326,6 +326,20 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   assets in a 200+ library, not the whole library. See the
   "Production pipeline" section in the README for the full
   decision tree.
+- `GauStudio_Colab.ipynb` — new notebook (10 step cells) for
+  **3DGS-to-mesh via TSDF fusion**. Faster, lower-VRAM alternative to
+  SuGaR for the long tail of a 200+ image library. T4 15 GB works
+  (SuGaR needed L4 22 GB); ~5-10 min per scene (SuGaR was 2-3 hrs).
+  Mesh is smoother/cleaner than SuGaR but with less geometric
+  detail — better trade-off for low-LOD game assets, worse for
+  hero-asset close-ups. **License notice:** mixed MIT (main
+  framework) + INRIA non-commercial (rasterizer submodule), same
+  as SuGaR. Includes a TripoSplat-PLY bridge (single-image input)
+  AND a multi-view scene path (3+ overlapping cameras = best
+  quality). Skips texturing (mvs-texturing C++ build is brittle on
+  Colab) — output is untextured mesh; texture in Blender or the
+  game engine. Required citation: Ye et al., "GauStudio: A Modular
+  Framework for 3D Gaussian Splatting", CVPR 2024.
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around

@@ -17,6 +17,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Hunyuan3D-2 — Tencent Image / Text-to-3D](#hunyuan3d-2--tencent-image--text-to-3d)
 - [TripoSplat — Image to 3D Gaussians (TripoAI/VAST-AI)](#triposplat--image-to-3d-gaussians-mit)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
+- [GauStudio — 3DGS to Mesh via TSDF (MIT + INRIA mixed)](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed)
 - [Mesh Optimizer — post-process for game-ready assets](#mesh-optimizer--post-process-for-game-ready-assets)
 - [Notebook Generator — scaffold new model notebooks](#notebook-generator--scaffold-new-model-notebooks)
 
@@ -355,6 +356,38 @@ The notebook auto-detects GPU and warns if VRAM is below 20 GB. Mesh reconstruct
 **Compute:** L4 22 GB recommended. T4 16 GB will OOM. CPU-only not viable (CUDA rasterizer). First run: ~15 min install + ~2-3 hrs compute. For 200+ scenes, this is realistic only for **5-10 hero assets** — for the long tail, use TripoSplat's default mesh or the 3DGS PLY directly in a 3DGS viewer.
 
 **Required citation:** Guédon & Lepetit, "SuGaR: Surface-Aligned Gaussian Splatting for 3D Mesh Reconstruction", CVPR 2024.
+
+---
+
+## GauStudio — 3DGS to Mesh via TSDF (MIT + INRIA mixed)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/GauStudio_Colab.ipynb)
+
+**License notice:** [GauStudio](https://github.com/GAP-LAB-CUHK-SZ/gaustudio) (Chongjie Ye et al., GAP Lab @ CUHK-Shenzhen, [arXiv 2403.19632](https://arxiv.org/abs/2403.19632)) is **MIT-licensed for the main framework**, but the bundled `gaustudio-diff-gaussian-rasterization` is a derivative of INRIA's rasterizer and inherits its **non-commercial** restriction. Same situation as SuGaR.
+
+**What it does:** Takes a trained 3DGS scene (or a TripoSplat PLY) and extracts a clean mesh by **rendering depth maps from the 3DGS cameras + fusing them with TSDF** (truncated signed distance function) via [vdbfusion](https://github.com/nicolamattina/vdbfusion). A fundamentally different algorithm family from TripoSplat's Poisson or SuGaR's density-field.
+
+**GauStudio vs SuGaR — when to use which:**
+
+| | GauStudio (this notebook) | SuGaR |
+|--|--------------------------|-------|
+| Time per scene | ~5-10 min | ~2-3 hrs |
+| VRAM | T4 15 GB OK | L4 22 GB required |
+| Mesh quality (single-view) | Modest | Modest (similar) |
+| Mesh quality (multi-view) | Good | Best |
+| Algorithm | TSDF fusion of depth maps | Density-field + Poisson |
+| Topological style | Smoother, cleaner | Sharper, more detail |
+| Best for | Quick sweeps, low-LOD game assets, T4 | Hero assets, CAD-like outputs, L4/A100 |
+
+**Why include both?** Different use cases. For the 200+ image library:
+- **GauStudio for the long tail** (50-100 subjects in a few hours on T4) — good enough for low-LOD game assets, smoothing style actually preferred
+- **SuGaR for the 5-10 hero assets** (10-30 hrs on L4) — sharpest mesh quality for close-up game objects
+
+**Pipeline:** TripoSplat (image → 3DGS PLY) → Step 3 bridge (PLY → `cameras.json`) → Step 5 `gs-extract-mesh` CLI → Step 6 game-asset transform + `.glb` → Step 8 Drive.
+
+**Compute:** T4 15 GB works (GauStudio's minimum is 6 GB). L4 / A100 give headroom. First run: ~10 min install + ~5-10 min extract. **Skips texturing** (mvs-texturing C++ build is brittle on Colab) — texture in Blender or the target game engine.
+
+**Required citation:** Ye, Danelljan, Yu, Ke, "GauStudio: A Modular Framework for 3D Gaussian Splatting", CVPR 2024.
 
 ---
 

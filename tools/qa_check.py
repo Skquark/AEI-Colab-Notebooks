@@ -27,6 +27,7 @@ NOTEBOOKS = [
     ('Cube_3D_Colab.ipynb',          'authored'),
     ('Dia_Colab.ipynb',              'authored'),
     ('Fish-S2-Pro_Colab.ipynb',      'authored'),
+    ('GauStudio_Colab.ipynb',        'authored'),
     ('Higgs-Audio_Colab.ipynb',      'authored'),
     ('Hunyuan3D-2.1_Colab.ipynb',    'authored'),
     ('Hunyuan3D-2_Colab.ipynb',      'authored'),
