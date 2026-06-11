@@ -311,6 +311,21 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   before the next allocation. Added progress updates during the
   smoothing-groups compute and FBX write (which is the slowest single
   step at 5-10s for 100k faces).
+- `SuGaR_Colab.ipynb` — new notebook (8 cells) for **Surface-Aligned
+  Gaussian Splatting to Mesh**. Takes a TripoSplat-generated 3DGS PLY
+  and a preprocessed image, builds a COLMAP-compatible scene with one
+  estimated camera, then runs SuGaR's surface-alignment + mesh
+  extraction. Outputs a textured `.obj` + texture atlas `.png` +
+  refined 3DGS `.ply` + `.glb` for game engines. **License warning:**
+  SuGaR uses the **INRIA Gaussian-Splatting License** (custom
+  non-commercial research license) — this notebook is included for
+  personal-asset research/evaluation only. For commercial use, get
+  INRIA's permission or use Kiri Engine / Polycam instead.
+  Compute: L4 22 GB recommended (~2-3 hrs per scene), T4 16 GB will
+  OOM, A100 40 GB gives ~40% speedup. Realistic for 5-10 hero
+  assets in a 200+ library, not the whole library. See the
+  "Production pipeline" section in the README for the full
+  decision tree.
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around

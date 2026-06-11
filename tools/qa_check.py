@@ -42,6 +42,7 @@ NOTEBOOKS = [
     ('Pixal3D_Wheel_Builder.ipynb',  'preexisting'),
     ('Qwen3-TTS_Colab.ipynb',        'authored'),
     ('Supertonic-3_Colab.ipynb',     'authored'),
+    ('SuGaR_Colab.ipynb',            'authored'),
     ('TTS_Model_Loader.ipynb',       'authored'),
     ('TTS_Voice_Library.ipynb',      'authored'),
     ('TripoSplat_Colab.ipynb',       'authored'),

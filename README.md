@@ -16,6 +16,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Hunyuan3D-2.1 — Tencent PBR 3D Pipeline *(flagship)*](#hunyuan3d-21--tencent-pbr-3d-pipeline-flagship)
 - [Hunyuan3D-2 — Tencent Image / Text-to-3D](#hunyuan3d-2--tencent-image--text-to-3d)
 - [TripoSplat — Image to 3D Gaussians (TripoAI/VAST-AI)](#triposplat--image-to-3d-gaussians-mit)
+- [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
 - [Mesh Optimizer — post-process for game-ready assets](#mesh-optimizer--post-process-for-game-ready-assets)
 - [Notebook Generator — scaffold new model notebooks](#notebook-generator--scaffold-new-model-notebooks)
 
@@ -336,6 +337,46 @@ The notebook auto-detects GPU and warns if VRAM is below 20 GB. Mesh reconstruct
 ### License
 
 [MIT](https://huggingface.co/VAST-AI/TripoSplat) — model + code commercial-OK.
+
+---
+
+## SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/SuGaR_Colab.ipynb)
+
+**⚠️ License warning:** [SuGaR](https://github.com/Anttwo/SuGaR) ([Guédon & Lepetit, CVPR 2024](https://arxiv.org/abs/2311.12775)) uses the **INRIA Gaussian-Splatting License** — free for research/evaluation, **NOT for commercial use** without explicit INRIA consent. This notebook is for **personal-asset evaluation only**. For commercial assets, use Kiri Engine, Polycam, or another commercial alternative.
+
+**What it does:** takes the 3DGS PLY from TripoSplat (or any 3DGS scene), adds surface-alignment constraints, re-trains the Gaussians to lie on a coherent surface, and extracts a **textured mesh** that follows the actual surface much more accurately than naive point-cloud reconstruction.
+
+**Why use this instead of TripoSplat's default mesh export?** TripoSplat's `*_mesh.ply` / `.glb` / `.fbx` come from sampling 1 point per Gaussian and running Poisson reconstruction — fast (~30s) but lossy. SuGaR takes 2-3 hours per scene on L4 and gives you significantly better mesh quality, with proper UVs and texture maps included.
+
+**Pipeline:** TripoSplat (image → 3DGS PLY) → Step 2 bridge (PLY → COLMAP scene) → Step 3 optional 3DGS re-train → Step 4 SuGaR surface-align + mesh extract → Step 5 game-asset transform → Step 6 Drive mirror.
+
+**Compute:** L4 22 GB recommended. T4 16 GB will OOM. CPU-only not viable (CUDA rasterizer). First run: ~15 min install + ~2-3 hrs compute. For 200+ scenes, this is realistic only for **5-10 hero assets** — for the long tail, use TripoSplat's default mesh or the 3DGS PLY directly in a 3DGS viewer.
+
+**Required citation:** Guédon & Lepetit, "SuGaR: Surface-Aligned Gaussian Splatting for 3D Mesh Reconstruction", CVPR 2024.
+
+---
+
+## Production pipeline — choosing the right tool for your 200+ image library
+
+For converting 200+ images into a game-asset library, here's the honest decision tree based on what each tool actually delivers in 2026:
+
+| Your input | Best tool | Why | Time per scene | Quality |
+|------------|-----------|-----|----------------|---------|
+| **Single image, fast preview** | **TripoSplat's 3DGS PLY** | Real-time 3DGS rendering, no mesh conversion needed | 30s | Best visual quality |
+| **Single image, low-LOD game asset** | **TripoSplat's default mesh** (`.glb`/`.fbx`) | Fast Poisson recon, OK for low-poly LOD | 30s + 10s | Low-medium |
+| **Single image, 5-10 hero assets** | **SuGaR** (this notebook) | Surface-aligned recon, 3-5x better mesh quality | 2-3 hrs | High (research/eval only — INRIA non-commercial) |
+| **Multi-image (3+ overlapping views)** | **vanilla 3DGS + SuGaR** | Multi-view gives SuGaR the consistency signal it needs | 3-4 hrs | Very high |
+| **Multi-image, want best mesh possible** | **Meshroom** (photogrammetry, separate project) | True 3D from photos, no 3DGS needed | 2-4 hrs | Highest (CPU-only) |
+| **Production / commercial, fast iteration** | **Kiri Engine 3DGS-to-Mesh** | Off-the-shelf, paid, supports TripoSplat output | ~5 min | High (commercial-OK) |
+| **Production / commercial, single-image** | **Polycam / LumaGen / Meshy** | Industry-standard, proprietary models, paid | ~2 min | Highest (commercial-OK) |
+
+**Practical recommendation for your 200+ library:**
+1. Run **TripoSplat** on all 200 images first (Step 7 batch, 30s each = ~1.5 hrs total). You now have a 3DGS PLY + rough mesh for every subject.
+2. Pick your **5-10 hero assets** (the ones that will appear close-up in the game). Run **SuGaR** on those for high-quality meshes (2-3 hrs each = 10-30 hrs total).
+3. Use the **3DGS PLYs in a 3DGS-aware viewer** (Antimatter15, gsplat.js, LumaAI) for the long tail — best visual quality, no mesh conversion needed.
+4. For any commercial shipping, use **Kiri Engine** to convert the TripoSplat 3DGS PLYs to commercial-OK meshes.
 
 ---
 
