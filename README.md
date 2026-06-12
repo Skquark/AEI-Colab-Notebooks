@@ -470,11 +470,11 @@ After running TripoSplat + GauStudio / SuGaR + Mesh Optimizer on your 200+ image
 **What it does:**
 
 - **Step 1** — install deps (gradio 5.49.1, trimesh, open3d, Pillow, no model weights needed). CPU-only.
-- **Step 2** — scan a library folder, recognize formats (3DGS raw PLY / packed `.splat` / compressed `.sog` `.spz` `.ksplat` `.lcc` / `KHR_gaussian_splatting` GLB via header magic; mesh GLB/OBJ/FBX/PLY/STL/3MF; voxel `-collision.glb`; PlayCanvas `lod-meta.json`; image PNG/JPG/WEBP; text, JSON, ZIP), build a metadata sidecar JSON (`_library_meta.json`) with tags / favorites / notes per asset. Idempotent — re-runs preserve user metadata.
-- **Step 3** — the main Gradio UI: gallery with thumbnails, filter sidebar (tag, format, favorite, search), click any asset to preview (3D mesh + collision GLB in inline `<model-viewer>`; 3DGS gets a per-format metadata card with viewer link — PlayCanvas for `.sog` + `KHR_gaussian_splatting` GLB, Scaniverse for `.spz`, LumaAI for `.lcc`, Antimatter15 fallback; `lod-meta.json` shows the JSON contents), tag editor, favorite toggle. All state persists in the sidecar JSON.
+- **Step 2** — scan a library folder, recognize formats (3DGS raw PLY / packed `.splat` / compressed `.sog` `.spz` `.ksplat` `.lcc` / `KHR_gaussian_splatting` GLB via header magic; mesh GLB/OBJ/FBX/PLY/STL/3MF; voxel `-collision.glb`; PlayCanvas `lod-meta.json`; image PNG/JPG/WEBP; text, JSON, ZIP), build a metadata sidecar JSON (`_library_meta.json`) with tags / favorites / notes per asset. **Auto-reads `<slug>_meta.json` sidecars** (written by TripoSPlat STEP 8 / SplatTransform STEP 6 / Mesh_Optimizer) and merges `size_class` + `grounding` + `tiers` + `colliders` into the per-asset record. Idempotent — re-runs preserve user metadata.
+- **Step 3** — the main Gradio UI: gallery with thumbnails, filter sidebar (**tag, format, size_class, grounded-only, favorite, search**), click any asset to preview (3D mesh + collision GLB in inline `<model-viewer>`; 3DGS gets a per-format metadata card with viewer link — PlayCanvas for `.sog` + `KHR_gaussian_splatting` GLB, Scaniverse for `.spz`, LumaAI for `.lcc`, Antimatter15 fallback; `lod-meta.json` shows the JSON contents). Asset detail panel shows two new badges: green `size_class` badge + blue `grounded {deg}°` badge. Tag editor, favorite toggle. All state persists in the sidecar JSON.
 - **Step 4** — batch render thumbnails (256×256 PNGs via trimesh's offscreen renderer; 3DGS gets a placeholder with the extension as a label). Idempotent.
 - **Step 5** — export: Unity AssetBundle-style folder (`Assets/AEI_Library/Meshes/` + thumbnails + README), Godot folder (mesh files + README), static HTML portfolio (self-contained `index.html` with inline `<model-viewer>` per asset, deploy to GitHub Pages / Netlify), CSV manifest for inventory.
-- **Step 6** — stats dashboard: total assets, format breakdown, top tags, biggest files, missing/orphaned file report.
+- **Step 6** — stats dashboard: total assets, format breakdown, **size_class breakdown**, **grounding status**, top tags, biggest files, missing/orphaned file report.
 - **Step 7** — keep-alive (Gradio runs forever otherwise).
 - **Step 8** — help / format reference / known issues.
 
@@ -730,16 +730,17 @@ The companion to all our 3D generation notebooks: takes the **raw, often-broken 
 
 **Stack**: [`trimesh`](https://github.com/mikedh/trimesh) (3.6k★, MIT) for I/O + repair + smoothing · [`pyfqmr`](https://github.com/Kramer84/pyfqmr) (MIT, 100 KB) for fast quadric decimation (sp4cerat's gold-standard algorithm) · [`pymeshlab`](https://pymeshlab.readthedocs.io) (MIT) for advanced MeshLab filters (UV unwrap, hole filling) · [`Open3D`](https://www.open3d.org) (MIT) for point-cloud ops + alignment. **All CPU-only. No GPU required.**
 
-Eight pipeline stages (all optional, all tunable):
+Nine pipeline stages (all optional, all tunable):
 
 1. **Load** — STL, PLY, OBJ, GLB, GLTF, 3MF, OFF, COLLADA via trimesh auto-detect
-2. **Clean** — merge duplicate vertices, remove degenerate faces, fix normals
-3. **Fill holes** — pymeshlab `close_holes` (configurable max hole size)
-4. **Decimate** — quadric edge-collapse to target face count (lossy or lossless)
-5. **Smooth** — Laplacian / Taubin (volume-preserving) / Humphrey (shrinkage-reducing) / HC
-6. **Remesh** — isotropic uniform remeshing via pymeshlab
-7. **Recompute normals** — for proper shading after smoothing
-8. **UV Unwrap** — for textured meshes (skips if already unwrapped)
+2. **Ground** — translate so the bottom sits on Y=0, center in XZ, optionally axis-align via PCA in the XZ plane (snapped to 90°). Writes a `<slug>_meta.json` sidecar with the transform + size_class — same format as TripoSPlat STEP 8's meta.json so the Asset_Library_Browser can read either source consistently.
+3. **Clean** — merge duplicate vertices, remove degenerate faces, fix normals
+4. **Fill holes** — pymeshlab `close_holes` (configurable max hole size)
+5. **Decimate** — quadric edge-collapse to target face count (lossy or lossless)
+6. **Smooth** — Laplacian / Taubin (volume-preserving) / Humphrey (shrinkage-reducing) / HC
+7. **Remesh** — isotropic uniform remeshing via pymeshlab
+8. **Recompute normals** — for proper shading after smoothing
+9. **UV Unwrap** — for textured meshes (skips if already unwrapped)
 
 Plus five export formats: `.glb` (Unity/Unreal/Three.js), `.obj + .mtl` (Blender/Maya), `.stl` (3D print), `.ply` (Meshlab/CloudCompare), `.3mf` (Windows 3D Builder).
 
