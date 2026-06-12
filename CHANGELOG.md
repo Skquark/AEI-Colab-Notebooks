@@ -46,6 +46,34 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   filenames on disk + rewrites META. Re-run STEP 2 to refresh scan.
 - Tooltip count 19 → 23, try blocks 14 → 15, except handlers 14 → 15.
 
+### Asset_Library_Browser — premium UI Tier 5.1 (commit c1c1d37)
+- **Comparison modal** (side-by-side A/B previews):
+  - `compare_btn` opens a modal with the current asset as A
+  - `compare_b_dd` dropdown picks the B asset (lists all other assets)
+  - Two `gr.HTML` columns render A and B previews side-by-side
+  - Diff-highlighted stats table shows path / format / size / size_class /
+    grounded / favorite / views / tags / modified
+  - Rows where A ≠ B get an orange `#fff3e0` background
+  - Closes via `Esc` button or `compare_close_btn`
+  - Keyboard shortcut: `D` opens compare with the current selection
+- Tooltip count 23 → 24, try blocks 15 → 16, except handlers 15 → 16.
+
+### Asset_Library_Browser — premium UI Tier 5.2 (commit 6eda5f6)
+- **Bulk ZIP export**:
+  - `export_selected_btn` packs the assets checked in the batch
+    CheckboxGroup into a single ZIP
+  - `export_filtered_btn` packs all currently-filtered assets (no need
+    to check them individually)
+  - `export_file` (`gr.File`) shows the resulting ZIP for download
+  - Each export includes:
+    - The selected asset files (preserving relative paths)
+    - `<slug>_meta.json` sidecars (when present) for splat assets
+    - `aei_manifest_<timestamp>.csv` with per-asset metadata
+  - Status HTML shows file count, ZIP size, uncompressed size, sidecar
+    count, manifest flag, skipped count
+  - Default output: `/content/aei_library_export_<timestamp>.zip`
+- Tooltip count 24 → 25, try blocks 16 → 18, except handlers 16 → 18.
+
 ### Asset_Library_Browser — tiering + size_class + grounding filters
 - **STEP 2 (scan)** now reads `<slug>_meta.json` sidecars (written by
   TripoSPlat STEP 8 or SplatTransform STEP 6) for each asset file. If
