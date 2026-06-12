@@ -30,6 +30,22 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   library` dates + `Variants: N` badge.
 - Tooltip count 9 → 19, try blocks 8 → 14, except handlers 8 → 14.
 
+### Asset_Library_Browser — premium UI Tier 4 (commit 56c0de1)
+- **Saved filter presets** (persisted to `_library_meta.json["presets"]`):
+  - `preset_dd` dropdown lists existing preset names
+  - `preset_save_btn` saves the current filter state (9 fields) under the
+    textbox name
+  - `preset_load_btn` restores a saved preset into all 9 filter widgets
+    + re-runs the gallery + count display
+  - `preset_delete_btn` removes the selected preset
+- **Per-asset view count** (increments in `on_select`, persisted to META):
+  detail panel shows `Views: N` badge when N > 0. Useful for finding
+  which assets you actually look at most.
+- **Rename batch action**: `gr.Radio` (prepend / append / replace) +
+  `gr.Textbox` (text to use, or `old|new` for replace). Updates
+  filenames on disk + rewrites META. Re-run STEP 2 to refresh scan.
+- Tooltip count 19 → 23, try blocks 14 → 15, except handlers 14 → 15.
+
 ### Asset_Library_Browser — tiering + size_class + grounding filters
 - **STEP 2 (scan)** now reads `<slug>_meta.json` sidecars (written by
   TripoSPlat STEP 8 or SplatTransform STEP 6) for each asset file. If
