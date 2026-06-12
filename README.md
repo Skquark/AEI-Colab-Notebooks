@@ -273,45 +273,23 @@ Model weights: [Tencent Hunyuan Community License](https://huggingface.co/tencen
 - **Sampler**: 20-step Euler flow matching with classifier-free guidance (default 3.0, shift 3.0)
 - **Total**: 3.78 GB across 5 safetensors
 
-### Output formats (6 in one click)
+### Output formats (2 — native 3DGS only)
 
 | Format | Type | Viewer | Use case |
 | --- | --- | --- | --- |
-| **`.ply`** | 3DGS standard | [Antimatter15](https://antimatter15.com/splat/) | 3DGS renderers, gaussian-splat research |
+| **`.ply`** | 3DGS standard | [Antimatter15](https://antimatter15.com/splat/), [gsplat.tech](https://gsplat.tech/) | 3DGS renderers, gaussian-splat research |
 | **`.splat`** | 32-byte packed | [Antimatter15](https://antimatter15.com/splat/) | Web 3DGS viewers, smallest of the native formats |
-| **`.glb`** | binary glTF | Inline `<model-viewer>` (Three.js) | Game engines, AR/VR, real-time preview |
-| **`.obj`** | Wavefront | Any DCC | Universal mesh interchange |
-| **`.fbx`** | ASCII FBX 7.4 | Blender / Unity / Maya / Godot | Game pipelines, animation-ready (Y-up or Z-up) |
-| **`.ply` (mesh)** | Mesh as PLY | Mesh Optimizer handoff | Post-processing with `Mesh_Optimizer_Colab.ipynb` |
 
-The mesh formats are reconstructed from the Gaussian cloud via Poisson surface reconstruction (open3d), with optional alpha-shape and ball-pivoting fallback. Quality: 100k-300k points → 30k-300k triangle mesh, ~5-15 s on CPU. Default `opacity_threshold=0.05` filters invisible Gaussians before reconstruction.
+**Mesh outputs have been intentionally removed from this notebook.** TripoSplat's 3DGS-derived mesh exports (via Poisson/alpha_shape/ball_pivoting reconstruction of the Gaussian cloud) were consistently low-quality — holes, missing surfaces, no proper UVs, and slow to compute. For game-ready textured meshes, use **[Pixal3D](#pixal3d--image-to-3d-with-pbr-textures)** instead. For high-quality 3DGS-to-mesh research pipelines, see [SuGaR](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial) (sharp, 2-3 hrs/scene) and [GauStudio](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed) (smooth, ~10 min/scene).
 
-### Mesh quality — read this before using the mesh exports
+### Workflow
 
-**The triangle mesh (.glb / .fbx / .obj) is fundamentally a lossy approximation of the 3DGS output.** The native 3DGS PLY/SPLAT (the "main" PLY) is rendered as billboards of colored ellipsoids in a 3DGS-aware viewer (Antimatter15, gsplat.js, LumaAI, Polycam) — it doesn't need a mesh. The mesh recon tries to extract a triangle surface from those Gaussians, but it can only represent the **outer hull**, not the per-Gaussian orientation, scale, or color gradient. The mesh will always look slightly worse than the 3DGS view.
+The notebook is now focused on **producing 3DGS for real-time viewing** (the highest-quality output TripoSplat gives). Workflow for a 200+ image library:
 
-For organic 3DGS subjects (people, animals, characters), the **recommended workflow is**:
+- **Step 6 — single image**: set `QUICK_INPUT_IMAGE` to a specific path (or leave blank for auto-pick from `/content`). Outputs are named after the image stem — `hero.png` → `hero.ply` + `hero.splat`. ~30 s on L4.
+- **Step 7 — batch**: choose `BATCH_INPUT_MODE = 'folder'` (point at a folder of images) or `'txt list'`. Toggle `BATCH_RECURSIVE` for subfolders — the slug is prefixed with the parent folder name (`characters_hero`) so files from different subfolders don't collide. Outputs are flat in `batch_dir/`. Set `BATCH_DO_DRIVE_SAVE` to mirror the whole batch folder to Drive.
 
-1. **Preview/real-time demos** — use the **3DGS PLY/SPLAT** in a 3DGS viewer or game-engine plugin. This is what looks the best.
-2. **Game asset (mesh)** — use the GLB/FBX as a **static LOD**. The mesh recon has these failure modes to be aware of:
-   - **Holes**: if the subject has open parts (hair, fingers), Poisson tries to close them and creates "balloon" artifacts. Alpha-shape doesn't try to close — it follows the actual points.
-   - **Missing surfaces**: if the subject was off-center in the input image, BiRefNet's background removal can clip the edges. The mesh honors the clipped Gaussians.
-   - **No UVs by default**: until post-processing (Step 7 POST or Step 8), the mesh has no UVs. Game engines can't texture it without UV-unwrap.
-3. **Highest-quality mesh** — for really good mesh quality, import the 3DGS PLY into a specialized AI mesher (LumaGen, Kiri Engine, Polycam) and use their reconstruction. They'll give you 5-10x better mesh quality than Poisson from the same point cloud.
-
-In the QuickTest, Batch, and Step 4 UI, the default `mesh_method` is now **`alpha_shape`** (was `poisson`). Alpha-shape doesn't try to close holes and gives the most accurate surface for organic 3DGS subjects. Other options:
-- `poisson` — smooth, water-tight. Best for closed subjects (statues, vehicles). Has the "balloon" problem with open subjects.
-- `ball_pivoting` — robust to noisy input, preserves open surfaces. Good middle ground.
-
-All three methods now also do **statistical outlier removal** (the noisy Gaussians at the edges of 3DGS output are removed before surface extraction) and **voxel pre-downsample** to give the algorithm evenly-spaced input.
-
-### Step 6 (QuickTest), Step 7 (Batch) & Step 8 (Post-Process) workflow
-
-Designed for converting 200+ images into a game-asset library:
-
-- **Step 6 — single image**: set `QUICK_INPUT_IMAGE` to a specific path (or leave blank for auto-pick from `/content`). Output files are named after the image stem — `hero.png` → `hero.ply`, `hero.glb`, `hero_LOD0.glb` … `hero.fbx`. Set `QUICK_SAVE_TO_DRIVE` to mirror results to `/content/drive/MyDrive/AEI_3D_Out/TripoSplat/`.
-- **Step 7 — batch**: choose `BATCH_INPUT_MODE = 'folder'` (point at a folder of images) or `'txt list'` (text file of paths, one per line). Toggle `BATCH_RECURSIVE` for subfolders — the slug is prefixed with the parent folder name (`characters_hero`) so files from different subfolders don't collide. Outputs are flat in `batch_dir/`. Set `BATCH_DO_DRIVE_SAVE` to mirror the whole batch folder to Drive at the end. Toggle `BATCH_POST_PROCESS` to also run the **game-asset post-processing pipeline** (clean → fill holes → UV unwrap → smooth → export GLB/FBX/OBJ/STL/PLY/3MF as `*_game.<fmt>` files alongside the raw outputs).
-- **Step 8 — standalone post-process**: takes a folder of pre-existing `*_mesh.ply` files (from any prior run, or a colleague's outputs) and re-runs the post-processing pipeline with new settings. Toggles for clean, fill holes (with `max_hole_size` slider), UV unwrap, smooth (Taubin / Laplacian / Humphrey / HC, iterations slider), and output formats. Useful for re-processing an old batch with better settings without re-running the model.
+The previous post-processing step (clean, fill holes, UV unwrap, smooth) and the game-asset export pipeline (`.glb`/`.obj`/`.fbx`/`.stl`/`.ply`/`.3mf` from `_mesh.ply`) have been **removed** since they produced unusable meshes. The Pixal3D notebook has a new `Step 8 — Post-Process existing GLBs` (added as part of this refactor) that handles the same game-asset post-processing pipeline for any `.glb` source — including ones you get from Pixal3D or a 3rd-party mesher like Kiri Engine.
 
 ### Quick Start
 
@@ -325,16 +303,16 @@ Designed for converting 200+ images into a game-asset library:
 | L4 | 22 GB | 131072 | 20 | ~60 s | Recommended. Default 131k, push to 262k if VRAM allows. |
 | T4 | 16 GB | 65536 | 12 | ~90 s | Low-VRAM mode. Use `num_gaussians ≤ 65k` and `steps ≤ 12`. |
 
-The notebook auto-detects GPU and warns if VRAM is below 20 GB. Mesh reconstruction (Poisson) runs on CPU and is independent of VRAM.
+The notebook auto-detects GPU and warns if VRAM is below 20 GB.
 
-### Why this complements Hunyuan3D-2.1
+### Why this complements Pixal3D
 
-- **Output**: Gaussians (real-time rendering, perfect view interpolation) vs mesh (game-ready, PBR)
-- **Speed**: 30-60 s per image (TripoSplat) vs 60-180 s (Hunyuan3D-2.1 shape only)
-- **License**: MIT (commercial-OK) vs Hunyuan non-commercial
-- **Use TripoSplat for**: game-engine previews, AR/VR, real-time 3DGS demos, fast iteration
-- **Use Hunyuan3D-2.1 for**: textured PBR assets, high-fidelity meshes, print-ready
-- **Bridge them**: TripoSplat's mesh output (`.ply`) can be loaded by `Mesh_Optimizer_Colab.ipynb` for decimation, repair, retopology
+- **Output**: Gaussians (real-time rendering, perfect view interpolation) vs textured PBR mesh
+- **Speed**: 30-60 s per image (TripoSplat) vs 60-120 s (Pixal3D, includes PBR bake)
+- **License**: MIT (commercial-OK) vs Pixal3D SIGGRAPH 2026 (research)
+- **Use TripoSplat for**: real-time 3DGS previews, AR/VR demos, fast iteration, low-LOD game assets (mesh)
+- **Use Pixal3D for**: game-ready textured PBR assets, shippable meshes, print-ready
+- **Bridge them**: TripoSplat's 3DGS PLY → [SuGaR_Colab](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial) for high-quality mesh OR upload to [GauStudio_Colab](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed) for fast mesh. TripoSplat's `.ply` also works as 3DGS fallback for game engines that support 3DGS rendering.
 
 ### License
 
@@ -429,19 +407,21 @@ For converting 200+ images into a game-asset library, here's the honest decision
 
 | Your input | Best tool | Why | Time per scene | Quality |
 |------------|-----------|-----|----------------|---------|
-| **Single image, fast preview** | **TripoSplat's 3DGS PLY** | Real-time 3DGS rendering, no mesh conversion needed | 30s | Best visual quality |
-| **Single image, low-LOD game asset** | **TripoSplat's default mesh** (`.glb`/`.fbx`) | Fast Poisson recon, OK for low-poly LOD | 30s + 10s | Low-medium |
-| **Single image, 5-10 hero assets** | **SuGaR** (this notebook) | Surface-aligned recon, 3-5x better mesh quality | 2-3 hrs | High (research/eval only — INRIA non-commercial) |
-| **Multi-image (3+ overlapping views)** | **vanilla 3DGS + SuGaR** | Multi-view gives SuGaR the consistency signal it needs | 3-4 hrs | Very high |
-| **Multi-image, want best mesh possible** | **Meshroom** (photogrammetry, separate project) | True 3D from photos, no 3DGS needed | 2-4 hrs | Highest (CPU-only) |
-| **Production / commercial, fast iteration** | **Kiri Engine 3DGS-to-Mesh** | Off-the-shelf, paid, supports TripoSplat output | ~5 min | High (commercial-OK) |
-| **Production / commercial, single-image** | **Polycam / LumaGen / Meshy** | Industry-standard, proprietary models, paid | ~2 min | Highest (commercial-OK) |
+| **Single image, shippable textured mesh** | **[Pixal3D](#pixal3d--image-to-3d-with-pbr-textures)** | PBR-textured GLB out of the box, no post-processing | 60-90 s | **Best (textures!)** |
+| **Single image, real-time 3DGS preview** | **[TripoSplat](#triposplat--image-to-3d-gaussians-mit)** | Real-time 3DGS rendering, no mesh needed | 30 s | Best visual quality (3DGS) |
+| **Single image, low-LOD game asset** | TripoSplat `.ply` + [GauStudio](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed) | Fast TSDF recon, OK for low-poly LOD | 30 s + 10 min | Medium (smooth) |
+| **Single image, 5-10 hero assets** | [Pixal3D](#pixal3d--image-to-3d-with-pbr-textures) (then [Mesh Optimizer](#mesh-optimizer--post-process-for-game-ready-assets) post) | Best quality + clean post-process for game engines | 90 s + 5 min | **Highest** |
+| **Single image, 3DGS→high-quality mesh research** | [SuGaR](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial) | Surface-aligned recon, sharpest mesh from 3DGS | 2-3 hrs | Very high (research/eval only — INRIA non-commercial) |
+| **Production / commercial, fast iteration** | **[Kiri Engine 3DGS-to-Mesh](https://www.kiriengine.app/blog/what-is-3dgs-to-mesh)** | Off-the-shelf, paid, supports TripoSplat output | ~5 min | High (commercial-OK) |
+| **Production / commercial, single-image** | **[Polycam](https://poly.cam/) / [LumaGen](https://lumalabs.ai/gen) / [Meshy](https://www.meshy.ai/)** | Industry-standard, proprietary models, paid | ~2 min | Highest (commercial-OK) |
 
 **Practical recommendation for your 200+ library:**
-1. Run **TripoSplat** on all 200 images first (Step 7 batch, 30s each = ~1.5 hrs total). You now have a 3DGS PLY + rough mesh for every subject.
-2. Pick your **5-10 hero assets** (the ones that will appear close-up in the game). Run **SuGaR** on those for high-quality meshes (2-3 hrs each = 10-30 hrs total).
-3. Use the **3DGS PLYs in a 3DGS-aware viewer** (Antimatter15, gsplat.js, LumaAI) for the long tail — best visual quality, no mesh conversion needed.
-4. For any commercial shipping, use **Kiri Engine** to convert the TripoSplat 3DGS PLYs to commercial-OK meshes.
+
+1. Run **[Pixal3D](#pixal3d--image-to-3d-with-pbr-textures) Step 7 batch** on all 200 images first (1.5-3 hrs total). You now have 200 textured GLB meshes.
+2. Open the **[Asset Library Browser](#asset-library-browser)** to browse / tag / preview the 200 assets.
+3. For the 5-10 hero assets that need extra polish, run **[Pixal3D Step 8 post-process](#pixal3d--image-to-3d-with-pbr-textures)** (clean, fill holes, UV re-unwrap, smooth).
+4. For the 5-10 hero assets where you also want 3DGS fallback (real-time rendering in a game engine that supports 3DGS), run **[TripoSplat](#triposplat--image-to-3d-gaussians-mit) Step 7** to get the 3DGS PLY.
+5. For any commercial shipping, use **[Kiri Engine](https://www.kiriengine.app/blog/what-is-3dgs-to-mesh)** to convert the TripoSplat 3DGS PLYs to commercial-OK meshes.
 
 ---
 

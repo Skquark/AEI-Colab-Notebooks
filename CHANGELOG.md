@@ -359,6 +359,48 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   renderer; workaround is to run GauStudio first to get a GLB).
   This is a fundamental limitation of all current web-based 3DGS
   viewers.
+- `TripoSplat_Colab.ipynb` — **major refactor**. Stripped all
+  mesh export code (`gaussians_to_pointcloud`,
+  `reconstruct_mesh` with 3 methods, `_apply_transform_to_mesh`,
+  `_generate_lod_chain`, `_lod_to_glb`, `write_fbx_ascii`,
+  `_compute_smoothing_groups`, `_smoothing_groups_to_fbx_mask`,
+  `export_all_formats`, `postprocess_for_game`, all the
+  `_*_post_*` helpers, and Step 8's standalone post-process).
+  That's ~1500 lines / 47 KB of mesh code removed (86% reduction
+  in STEP 3). The notebook now outputs **only `.ply` (3DGS
+  standard) and `.splat` (web viewer packed)** — both are the
+  high-quality 3DGS outputs the user actually wants. For
+  game-ready textured meshes, the user is directed to
+  `Pixal3D_Colab.ipynb`. For 3DGS-to-mesh research pipelines,
+  the user is directed to `SuGaR_Colab.ipynb` and
+  `GauStudio_Colab.ipynb`. The mesh-reconstruction quality
+  problems (holes, missing surfaces, no UVs, T4 OOM crashes) are
+  gone with the deletion. The Step 6 / Step 7 workflow ergonomics
+  (auto-pick image, `QUICK_INPUT_IMAGE`, `BATCH_INPUT_MODE`,
+  `BATCH_RECURSIVE`, file naming by image stem, `BATCH_DO_DRIVE_SAVE`)
+  are preserved. STEP 3 now ~7.5 KB, STEP 4 UI now ~7.5 KB,
+  STEP 6 ~4.5 KB, STEP 7 ~7 KB (was 55/15/8/13 KB respectively).
+- `Pixal3D_Colab.ipynb` — ported all the workflow ergonomics
+  from the stripped TripoSplat notebook. **Added 2 new cells**
+  (now 11 total): Step 8 (post-process existing GLBs via the
+  same Mesh Optimizer stages: clean, fill holes, UV unwrap,
+  smooth, multi-format export) and Step 9 (help / format
+  reference / pipeline overview / Pixal3D vs TripoSplat decision
+  tree). Step 6 (single image) gained auto-pick from /content
+  and per-stage advanced sampling sliders (SS_GUIDANCE,
+  SS_RESCALE, SS_RESCALE_T, SHAPE_GUIDANCE, SHAPE_RESCALE,
+  SHAPE_RESCALE_T, TEX_GUIDANCE, TEX_RESCALE, TEX_RESCALE_T) so
+  the same code as TripoSplat's batch can be tuned per-stage.
+  Step 7 (batch) gained `BATCH_INPUT_MODE` ('folder' vs 'txt
+  list'), `BATCH_RECURSIVE`, `MAX_ITEMS`, `BATCH_DO_DRIVE_SAVE`,
+  per-image SLUG (image stem with parent prefix in recursive
+  mode for collision-free naming), and the Drive mirror goes to
+  a separate folder so the canonical output stays clean. Step 5
+  (keep-alive) upgraded to the standard 30-min Colab JS pattern
+  (was a 5-min Python thread). Cell IDs standardized to
+  `step{N}-{slug}`. qa_check now shows 22 tooltips (was 22),
+  17 try/17 except (was 9/9) — the new STEP 8 post-process adds 8
+  more try/except blocks for safe per-stage error handling.
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around
