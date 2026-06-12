@@ -401,6 +401,31 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `step{N}-{slug}`. qa_check now shows 22 tooltips (was 22),
   17 try/17 except (was 9/9) — the new STEP 8 post-process adds 8
   more try/except blocks for safe per-stage error handling.
+- `SplatTransform_Colab.ipynb` — new notebook (9 cells) wrapping
+  [PlayCanvas `splat-transform`](https://github.com/playcanvas/splat-transform)
+  (MIT, commercial-OK) for **3DGS format conversion + compression**.
+  Takes TripoSplat's raw 3DGS `.ply` outputs (~150-250 MB each)
+  and converts to 4 game-engine-friendly formats with ~10×
+  compression: `.sog` (PlayCanvas native, GPU SH k-means),
+  `.spz` (Niantic, smallest cross-platform, mobile-friendly),
+  `.glb` + `KHR_gaussian_splatting` (the new glTF 2.0 standard
+  extension, future-proof), and `.ply` (lossless fallback). Plus
+  decimation (reduce Gaussian count for web previews), SH-band
+  stripping (drop color detail for faster loads), LOD chains
+  (streamed SOG for PlayCanvas progressive loading), voxel
+  collision meshes (`.collision.glb` for runtime physics — NOT
+  visuals), and GPU rasterized turntable previews (`.webp`).
+  Installs Node 22+ via NodeSource (Colab's default nodejs is too
+  old) + `npm i -g @playcanvas/splat-transform`. All 4 outputs
+  toggleable per run; per-format compression-ratio reports. Step
+  7 does a final Drive mirror with a generated README explaining
+  each folder. **The missing piece in the 200+ image library
+  workflow:** TripoSplat 200× PLY = 30 GB → SplatTransform 200×
+  SOG = 3 GB (saves 27 GB of Drive space). **Important caveat
+  documented everywhere:** splat-transform is NOT a mesh-from-3DGS
+  generator; the only mesh it produces is a voxel collision mesh.
+  For visual mesh extraction, the user is still directed to
+  SuGaR / GauStudio / Pixal3D.
 
 ### Added (prior in this cycle)
 - `VoxCPM2_Colab.ipynb` — self-contained Colab wrapper around

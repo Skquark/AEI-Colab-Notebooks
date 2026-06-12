@@ -16,6 +16,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Hunyuan3D-2.1 — Tencent PBR 3D Pipeline *(flagship)*](#hunyuan3d-21--tencent-pbr-3d-pipeline-flagship)
 - [Hunyuan3D-2 — Tencent Image / Text-to-3D](#hunyuan3d-2--tencent-image--text-to-3d)
 - [TripoSplat — Image to 3D Gaussians (TripoAI/VAST-AI)](#triposplat--image-to-3d-gaussians-mit)
+- [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
 - [GauStudio — 3DGS to Mesh via TSDF (MIT + INRIA mixed)](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed)
 - [Asset Library Browser — browse, tag, preview, export your 200+ assets](#asset-library-browser)
@@ -317,6 +318,45 @@ The notebook auto-detects GPU and warns if VRAM is below 20 GB.
 ### License
 
 [MIT](https://huggingface.co/VAST-AI/TripoSplat) — model + code commercial-OK.
+
+---
+
+## SplatTransform — 3DGS post-processor (PlayCanvas, MIT)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/SplatTransform_Colab.ipynb)
+
+The **missing piece** for shipping 3DGS assets to a game engine. Takes the raw 3DGS `.ply` output from [TripoSplat](#triposplat--image-to-3d-gaussians-mit) (~150-250 MB each) and converts it to game-engine-friendly formats with **~10× compression** via [PlayCanvas `splat-transform`](https://github.com/playcanvas/splat-transform) (MIT, commercial-OK).
+
+**What it produces:**
+
+| Format | Engine | Size vs PLY | Use for |
+|--------|--------|--------------|---------|
+| **`.sog`** | PlayCanvas | ~10% (90% smaller) | Production PlayCanvas scenes |
+| **`.spz`** | Niantic Scaniverse | ~5% | Mobile AR, smallest files |
+| **`.glb` + `KHR_gaussian_splatting`** | Three.js, PlayCanvas, Babylon.js (glTF 2.0 standard) | ~20% | Future-proof, glTF-native |
+| **`.ply`** | Universal (Antimatter15, gsplat.tech, LumaAI) | 100% (lossless) | Universal fallback |
+| **`.collision.glb`** | Any glTF 2.0 importer | n/a | Runtime physics (NOT a visual mesh) |
+| **`lod-meta.json` + multiple `.sog`** | PlayCanvas viewer | depends on LODs | Streaming progressive loading |
+
+**What it does NOT do:** generate a textured visual mesh from 3DGS. The only mesh `splat-transform` produces is a **voxel collision mesh** (for runtime physics). For visual mesh extraction from 3DGS, use [SuGaR_Colab](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial) or [GauStudio_Colab](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed). For game-ready textured meshes from a single image, use [Pixal3D_Colab](#pixal3d--image-to-3d-with-pbr-textures).
+
+**What it does:**
+
+- **Step 1** — install Node 22+ and `splat-transform` from npm
+- **Step 2** — Drive cache + GPU check (WebGPU optional for most steps; SOG SH k-means benefits from GPU)
+- **Step 3** — batch convert a folder of TripoSplat PLYs into all 4 game formats (SOG, SPZ, GLB, PLY) with size + compression-ratio reports
+- **Step 4** — decimate (reduce Gaussian count for web previews / low-LOD) and/or strip SH bands (drop higher-frequency color)
+- **Step 5** — build LOD chains (streamed SOG for PlayCanvas progressive loader)
+- **Step 6** — generate voxel collision meshes (`.collision.glb` for runtime physics) + GPU rasterized turntable previews (`.webp`)
+- **Step 7** — final Drive mirror of all export folders + a README explaining each folder
+- **Step 8** — keep-alive
+- **Step 9** — help / format reference / engine compatibility / known issues
+
+**License:** MIT (PlayCanvas Ltd.). Commercial-OK, no copyleft.
+
+**Compute:** Node 22+ runtime (Colab needs `apt-get install nodejs`; the install script uses NodeSource for 22 LTS). GPU optional — most steps work on CPU; SOG SH k-means benefits from GPU (5-10× faster). L4 / T4 both fine. First run: ~2-3 min install. Subsequent: instant per file.
+
+**200+ library workflow step:** TripoSplat (200× PLY = 30 GB) → **this notebook** (200× SOG = 3 GB, saves 27 GB) → Asset_Library_Browser for browsing.
 
 ---
 
