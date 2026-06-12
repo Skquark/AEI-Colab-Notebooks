@@ -5,6 +5,31 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Asset_Library_Browser — premium UI Tier 1-3 (3 commits)
+- **Tier 1 (commit e3e48c9):** Fullscreen preview toggle (`gr.Group(visible=...)`),
+  keyboard nav (←/→/Space/P/N/T/F/? via JS keydown listeners), smart filters
+  (untagged_only, has_colliders_only, recent_days slider), sort + group by
+  any field, batch actions (`gr.CheckboxGroup` + add-tag / set-tier /
+  remove-from-meta buttons).
+- **Tier 2 (commit b96af41):** Format extensions. `classify()` now recognizes
+  `.splat` (3DGS_PACKED), `.usdz` / `.vrm` / `.dae` / `.x3d` / `.mtl` (MESH),
+  `.svg` / `.bmp` / `.tiff` / `.gif` (IMAGE), `.hdr` / `.exr` (HDR),
+  `.mp4` / `.webm` / `.mov` / `.mkv` (VIDEO), `.wav` / `.mp3` / `.ogg` /
+  `.flac` / `.m4a` (AUDIO), `.csv` / `.tsv` / `.md` / `.log` (TEXT), `.yml`
+  / `.yaml` (META), `.tar` / `.gz` / `.7z` / `.rar` (ARCHIVE). Preview HTML
+  gained branches for VIDEO (`<video>`), AUDIO (`<audio>`), HDR, TEXT, META
+  (inline content viewer). Variant switcher: dropdown appears when an asset
+  has siblings (same slug, other extensions). Tier cycle button (`T` key)
+  walks size_class through `(none) → small_prop → prop → tree_or_vehicle →
+  building → (none)`.
+- **Tier 3 (commit f57a597):** Reactive count display in toolbar (updates
+  with filter), `gr.Warning` toast when filter matches zero, `gr.Info`
+  toast when filter matches subset, rich empty-state preview, full help
+  modal (`gr.Column(visible=False, elem_id='help-modal')` with `Esc` /
+  close button), per-asset detail panel shows `Modified` + `Added to
+  library` dates + `Variants: N` badge.
+- Tooltip count 9 → 19, try blocks 8 → 14, except handlers 8 → 14.
+
 ### Asset_Library_Browser — tiering + size_class + grounding filters
 - **STEP 2 (scan)** now reads `<slug>_meta.json` sidecars (written by
   TripoSPlat STEP 8 or SplatTransform STEP 6) for each asset file. If
