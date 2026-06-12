@@ -5,6 +5,62 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### TripoSPlat STEP 8 — One-Shot Game-Ready Prep (SplatTransform Lite)
+- New STEP 8 in `TripoSplat_Colab.ipynb`. After a STEP 7 batch finishes, this
+  cell auto-discovers the latest batch folder (or honors `INPUT_BATCH_DIR`),
+  installs Node 22+ + `@playcanvas/splat-transform` idempotently, and produces
+  per-asset:
+  - 3 visual quality tiers: `<slug>_full.sog` (no decimate, 3 SH bands, ~17 MB),
+    `<slug>_standard.sog` (25% Gaussians, 2 SH bands, ~4-5 MB, default LOD),
+    `<slug>_background.sog` (6% Gaussians, 0 SH bands, ~1-2 MB, mass-placement)
+  - 2 collider meshes: `<slug>_hull.glb` (convex hull, ~10-50 KB) and
+    `<slug>_collision.glb` (voxel marching-cubes, ~1-3 MB)
+  - `<slug>_meta.json` sidecar with sizes, paths, `size_class` (small_prop /
+    prop / tree_or_vehicle / building derived from final bbox height), and the
+    grounding transform
+  - `.sog` + `.splat` compression by default; `.spz` + `.glb+KHR_gaussian_splatting`
+    opt-in
+- **Grounding helper** (`_ground_splat()`): PCA-based axis alignment in the XZ
+  plane (snapped to nearest 90°) + translation so the bottom of the splat sits
+  on Y=0 + XZ centroid centering. Applied to the PLY before compression, so
+  the resulting `.sog`/`.splat`/`.spz`/`.glb` files all come out **already
+  grounded** — drop them in your engine with `splat.position.y = 0` and they
+  work. Default `APPLY_GROUNDING = True`. Original PLY in STEP 7 output is
+  untouched (so you can re-run with grounding off to compare).
+- **SplatTransform STEP 6** in `SplatTransform_Colab.ipynb` gained 3 collider
+  types (was just voxel marching-cubes): voxel `.collision.glb`, convex hull
+  `.hull.glb` (always run), and concave hull / alpha-shape `.concave.glb`
+  (opt-in). Also gained `RE_GROUND_ON_IMPORT` toggle (off by default) to
+  re-ground PLYs from non-TripoSPlat sources.
+- Both cells share the same `_ground_splat()` helper (copy-pasted, ~50 lines).
+  Trade-off: keeping each notebook self-contained for Colab (no cross-notebook
+  imports). 14 new Gradio `info=` tooltips across the new params; 1 new
+  try/except block for the per-asset grounding flow.
+
+### TripoSPlat STEP 7 — crash safety + quality defaults
+- Defaults changed for the balanced 200+ library case:
+  `BATCH_STEPS: 15 → 30`, `BATCH_NUM_GAUSSIANS: 131072 → 262144`. Cell markdown
+  documents speed presets (steps=20/131k = 1 min/img; steps=12/65k = 30 s/img).
+- New `BATCH_RESUME_FOLDER` param: paste the path to a crashed batch and the
+  cell picks up where it left off (per-asset progress log
+  `_batch_progress.jsonl`).
+- New `BATCH_RESUME` (default `True`): skip assets with existing `.ply`.
+- Per-item Drive mirror (was: at end). Each completed model is safe
+  immediately on a T4 disconnect.
+- New `BATCH_VERBOSE` (default `True`): per-item progress + ETA.
+
+### TripoSPlat STEP 1 — Google Drive mount
+- New `CONNECT_GOOGLE_DRIVE` checkbox (default `True`) at the top of STEP 1.
+  When checked, mounts Drive and pre-creates
+  `/content/drive/MyDrive/AEI_3D_Out/TripoSplat/` so all batch outputs are
+  mirrored automatically. Fixes the common "lost my batch because Drive
+  wasn't mounted" pain point for fresh Colab sessions.
+
+### TripoSPlat STEP 4 (Gradio UI) — display fix
+- STEP 4 was a single 8001-char source list entry which Colab's renderer
+  displayed as one giant line. Split into 158 proper line-by-line entries
+  (matches the other steps in this notebook).
+
 ### Added
 - `Audio_PostProcessor_Colab.ipynb` — new **AI Enhance** tab (6th of 10),
   powered by [`resemble-enhance`](https://github.com/resemble-ai/resemble-enhance)

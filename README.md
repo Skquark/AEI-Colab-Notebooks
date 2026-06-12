@@ -287,10 +287,53 @@ Model weights: [Tencent Hunyuan Community License](https://huggingface.co/tencen
 
 The notebook is now focused on **producing 3DGS for real-time viewing** (the highest-quality output TripoSplat gives). Workflow for a 200+ image library:
 
+- **Step 1 — install + Drive mount** (recommended). Set `CONNECT_GOOGLE_DRIVE = True` (default) so all subsequent outputs are mirrored to `/content/drive/MyDrive/AEI_3D_Out/TripoSplat/`. Outputs are otherwise lost on disconnect.
 - **Step 6 — single image**: set `QUICK_INPUT_IMAGE` to a specific path (or leave blank for auto-pick from `/content`). Outputs are named after the image stem — `hero.png` → `hero.ply` + `hero.splat`. ~30 s on L4.
-- **Step 7 — batch**: choose `BATCH_INPUT_MODE = 'folder'` (point at a folder of images) or `'txt list'`. Toggle `BATCH_RECURSIVE` for subfolders — the slug is prefixed with the parent folder name (`characters_hero`) so files from different subfolders don't collide. Outputs are flat in `batch_dir/`. Set `BATCH_DO_DRIVE_SAVE` to mirror the whole batch folder to Drive.
+- **Step 7 — batch**: choose `BATCH_INPUT_MODE = 'folder'` (point at a folder of images) or `'txt list'`. Toggle `BATCH_RECURSIVE` for subfolders — the slug is prefixed with the parent folder name (`characters_hero`) so files from different subfolders don't collide. Outputs are flat in `batch_dir/`.
+  - **Quality defaults** (balanced, suitable for 200+ batches on T4): `steps=30`, `num_gaussians=262144`, `guidance=3.0`, `shift=3.0`. Speed presets in the cell markdown (steps=20/131k = 1 min/img; steps=12/65k = 30 s/img preview).
+  - **Crash safety**: per-item Drive mirror (each completed model is safe immediately, not at end), per-asset progress log (`_batch_progress.jsonl`), and `BATCH_RESUME_FOLDER` lets you re-run on a crashed batch to pick up where you left off.
+- **Step 8 — One-Shot Game-Ready Prep (SplatTransform Lite)**: the recommended next step. Compresses every PLY in the latest batch folder to game-friendly formats (`.sog`, `.splat`, `.spz`, `.glb`), generates 3 quality tiers (full / standard / background) and 2 colliders (`.hull.glb` + `.collision.glb`). Auto-discovers the latest batch if you don't set `INPUT_BATCH_DIR`. Idempotent install of `splat-transform` on first run. See "Game-ready workflow" below for the full pipeline.
 
 The previous post-processing step (clean, fill holes, UV unwrap, smooth) and the game-asset export pipeline (`.glb`/`.obj`/`.fbx`/`.stl`/`.ply`/`.3mf` from `_mesh.ply`) have been **removed** since they produced unusable meshes. The Pixal3D notebook has a new `Step 8 — Post-Process existing GLBs` (added as part of this refactor) that handles the same game-asset post-processing pipeline for any `.glb` source — including ones you get from Pixal3D or a 3rd-party mesher like Kiri Engine.
+
+### Grounding (drop on the ground for placement)
+
+**All STEP 8 outputs are grounded by default** so they "just work" in your engine. A `_ground_splat()` helper runs before compression and does:
+
+1. **Translation to origin in XZ** (median of all point X, Z positions)
+2. **PCA in the XZ plane, snapped to nearest 90°** (the principal horizontal axis becomes +X, ±90° rounded)
+3. **Translation to Y=0** (the lowest point becomes the ground)
+4. Records the transform in each asset's `_meta.json`:
+   ```json
+   "grounding": {
+     "applied": true,
+     "translation": {"x": 0.5, "y": -0.2, "z": -0.3},
+     "rotation_y_degrees": 90,
+     "size_units": {"height": 1.8, "width": 0.5, "depth": 0.4},
+     "size_class": "prop"
+   }
+   ```
+5. **Derives `size_class`** from the final bbox height: `< 0.5m` → `small_prop`, `0.5-2m` → `prop` (people, weapons), `2-10m` → `tree_or_vehicle`, `> 10m` → `building`. Used by Asset_Library_Browser for filtering and procedural placement.
+
+The result: every compressed asset comes out with the bottom on Y=0, centered in XZ, and facing one of 4 cardinal directions. Three.js, your WebGPU engine, or any game engine can drop them on the ground with `splat.position.y = 0` and they'll just work. The transform is **idempotent and reversible** — recorded in meta.json so you can apply, undo, or override per-asset.
+
+Set `APPLY_GROUNDING = False` to disable (e.g., for assets already in a grid layout).
+
+### Game-ready workflow (200+ image library)
+
+The recommended end-to-end pipeline for converting a 200+ image library into game-ready assets:
+
+1. **TripoSPlat STEP 7 (batch)** — 200× `.ply` + `.splat` files. ~30-60 sec per image at quality defaults. Per-item Drive mirror so a T4 disconnect doesn't lose work.
+2. **TripoSPlat STEP 8 (SplatTransform Lite)** — for each PLY, produces:
+   - 3 visual tiers: `<slug>_full.sog` (~17 MB), `<slug>_standard.sog` (~4-5 MB), `<slug>_background.sog` (~1-2 MB)
+   - 2 colliders: `<slug>_hull.glb` (~10-50 KB convex), `<slug>_collision.glb` (~1-3 MB voxel)
+   - `<slug>_meta.json` with grounding, tier sizes, `size_class`
+   - All **grounded by default** so they drop on Y=0 in your engine
+   - For 200 assets: ~30-40 min total
+3. **Asset_Library_Browser** — set `LIBRARY_DIR` to the `game_ready/` folder. Auto-recognizes all 13+ formats (3DGS compressed, voxel collision, KHR_gaussian_splatting GLB, meshes, images). Tag assets as hero/standard/background for the LOD system.
+4. **For hero assets (5-10)**: also run [GauStudio_Colab](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed) to get a high-fidelity textured mesh as a fallback for engines that don't support 3DGS yet.
+
+For the 1500+ library, run batches in sessions of 200-300 with the new `BATCH_RESUME_FOLDER` param, then STEP 8 against each batch's output.
 
 ### Quick Start
 
@@ -347,10 +390,17 @@ The **missing piece** for shipping 3DGS assets to a game engine. Takes the raw 3
 - **Step 3** — batch convert a folder of TripoSplat PLYs into all 4 game formats (SOG, SPZ, GLB, PLY) with size + compression-ratio reports
 - **Step 4** — decimate (reduce Gaussian count for web previews / low-LOD) and/or strip SH bands (drop higher-frequency color)
 - **Step 5** — build LOD chains (streamed SOG for PlayCanvas progressive loader)
-- **Step 6** — generate voxel collision meshes (`.collision.glb` for runtime physics) + GPU rasterized turntable previews (`.webp`)
+- **Step 6** — generate **3 types of colliders** for runtime physics:
+  - **Voxel collision mesh** (`.collision.glb` — marching cubes from splat cloud, GPU-only)
+  - **Convex hull** (`.hull.glb` — trimesh convex_hull on subsampled splat positions, ~10-50 KB, perfect for distant background)
+  - **Concave hull / alpha shape** (`.concave.glb` — trimesh alpha_shape, follows surface concavities, ~50-500 KB, good for characters/weapons)
+  - Optional **re-grounding** (`RE_GROUND_ON_IMPORT = False`): re-applies the same `_ground_splat()` transform from TripoSplat STEP 8 to input PLYs. Use when feeding PLYs from other sources (GauStudio, hand-made) that need to be grounded to match. Off by default because TripoSplat users will have already-grounded PLYs.
+  - Optional GPU rasterized turntable previews (`.webp`)
 - **Step 7** — final Drive mirror of all export folders + a README explaining each folder
 - **Step 8** — keep-alive
 - **Step 9** — help / format reference / engine compatibility / known issues
+
+**Tip:** For the 80% case (compress every PLY, generate the 3 quality tiers, generate hull + voxel colliders), use **TripoSplat STEP 8 (SplatTransform Lite)** instead — it's the same operations in one cell with auto-discovery of the latest batch. This notebook is the right place for advanced cases: streamed LOD chains, WebGPU turntable previews, alpha-shape concave colliders, custom decimation curves for noisy splats.
 
 **License:** MIT (PlayCanvas Ltd.). Commercial-OK, no copyleft.
 
@@ -455,13 +505,15 @@ For converting 200+ images into a game-asset library, here's the honest decision
 | **Production / commercial, fast iteration** | **[Kiri Engine 3DGS-to-Mesh](https://www.kiriengine.app/blog/what-is-3dgs-to-mesh)** | Off-the-shelf, paid, supports TripoSplat output | ~5 min | High (commercial-OK) |
 | **Production / commercial, single-image** | **[Polycam](https://poly.cam/) / [LumaGen](https://lumalabs.ai/gen) / [Meshy](https://www.meshy.ai/)** | Industry-standard, proprietary models, paid | ~2 min | Highest (commercial-OK) |
 
-**Practical recommendation for your 200+ library:**
+**Practical recommendation for your 200+ library (3DGS-first pipeline):**
 
-1. Run **[Pixal3D](#pixal3d--image-to-3d-with-pbr-textures) Step 7 batch** on all 200 images first (1.5-3 hrs total). You now have 200 textured GLB meshes.
-2. Open the **[Asset Library Browser](#asset-library-browser)** to browse / tag / preview the 200 assets.
-3. For the 5-10 hero assets that need extra polish, run **[Pixal3D Step 8 post-process](#pixal3d--image-to-3d-with-pbr-textures)** (clean, fill holes, UV re-unwrap, smooth).
-4. For the 5-10 hero assets where you also want 3DGS fallback (real-time rendering in a game engine that supports 3DGS), run **[TripoSplat](#triposplat--image-to-3d-gaussians-mit) Step 7** to get the 3DGS PLY.
-5. For any commercial shipping, use **[Kiri Engine](https://www.kiriengine.app/blog/what-is-3dgs-to-mesh)** to convert the TripoSplat 3DGS PLYs to commercial-OK meshes.
+1. Run **[TripoSplat STEP 7 batch](#triposplat--image-to-3d-gaussians-mit)** on all 200 images at quality defaults (steps=30, 262k Gaussians, ~30-60 s/image, 1.5-3 hrs total). Per-item Drive mirror so a T4 disconnect doesn't lose work.
+2. Run **[TripoSplat STEP 8 (SplatTransform Lite)](#triposplat--image-to-3d-gaussians-mit)** to compress every PLY to game-ready formats (SOG/SPLAT/SPZ/GLB), generate 3 quality tiers (full/standard/background), and produce 2 colliders (hull + voxel). All **grounded by default** so assets drop on Y=0 in your engine. ~30-40 min for 200 assets.
+3. Open the **[Asset Library Browser](#asset-library-browser)** with `LIBRARY_DIR` set to the `game_ready/` folder. Tag assets as hero/standard/background based on `size_class` from meta.json.
+4. For the 5-10 hero assets where you also want a textured mesh fallback, run **[GauStudio](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed)** (~10 min/asset) or **[Pixal3D](#pixal3d--image-to-3d-with-pbr-textures)** (60-90 s/asset, better quality but research-only license).
+5. For any commercial shipping with engines that don't support 3DGS, use **[Kiri Engine](https://www.kiriengine.app/blog/what-is-3dgs-to-mesh)** to convert the TripoSplat PLYs to commercial-OK meshes.
+
+**Alternative (textured-mesh-first pipeline):** if your engines don't support 3DGS, swap step 1 for [Pixal3D STEP 7 batch](#pixal3d--image-to-3d-with-pbr-textures) and skip the STEP 8 3DGS compression (use [Pixal3D STEP 8 post-process](#pixal3d--image-to-3d-with-pbr-textures) for the hero assets instead).
 
 ---
 
