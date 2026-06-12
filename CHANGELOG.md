@@ -5,6 +5,64 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Asset_Library_Browser — tiering + size_class + grounding filters
+- **STEP 2 (scan)** now reads `<slug>_meta.json` sidecars (written by
+  TripoSPlat STEP 8 or SplatTransform STEP 6) for each asset file. If
+  present, merges `size_class`, `grounding`, `tiers`, and `colliders`
+  fields into the per-asset record. The library meta.json gets richer
+  per-asset records without re-scanning the splat generation step.
+- **STEP 3 (Gradio UI)** gained two new filters:
+  - `size_dd` (Dropdown) — filter by `small_prop` / `prop` /
+    `tree_or_vehicle` / `building` (auto-populated from existing
+    `size_class` values in the library)
+  - `grounded_cb` (Checkbox) — show only assets that had the grounding
+    transform applied
+  - Detail panel shows two new badges: green `size_class` badge + blue
+    `grounded {deg}°` badge next to the file info
+  - `on_save` / `on_fav` updated to thread the new filters so the
+    gallery doesn't reset to unfiltered on edit
+- **STEP 6 (Stats dashboard)** added two new sections:
+  - Size class breakdown (count per class, with "no sidecar" count
+    showing which assets need to be re-processed)
+  - Grounding status (X grounded of Y with metadata, plus a count
+    of assets with no grounding data at all)
+- For the 1500+ library: filter to "show me only `tree_or_vehicle`
+  assets that are grounded", or "show me ungrounded assets that need
+  re-running STEP 8", or "show me all hero/`prop` assets for review".
+
+### Game engine integration (Three.js / WebGPU loader)
+- New README section "Game engine integration — loading the assets into
+  Three.js / WebGPU" with:
+  - File layout of what TripoSPlat STEP 8 / SplatTransform STEP 6
+    produces per asset (3 visual tiers + 2 colliders + meta.json)
+  - TypeScript loader class with full type annotations:
+    `loadGroundedAsset()`, `selectLOD()`, `setupPicking()`
+  - Usage example showing per-frame LOD update + click picking
+  - Tiering constants table mapping `size_class` to grid spacing
+  - Notes on Three.js version, browser compat, memory budget
+- TypeScript with `.d.ts` style type hints since the user is building
+  a WebGPU engine. Snippets are complete enough to copy-paste.
+
+### Mesh_Optimizer — stage_ground() (parallels splat grounding)
+- New `stage_ground()` function (trimesh-based, mirrors the splat
+  helper): translates mesh so the bottom sits on Y=0, centers in XZ,
+  optionally axis-aligns via PCA in the XZ plane (snapped to 90 deg).
+  Returns `(modified_mesh, transform_dict)` with the same shape as
+  TripoSPlat STEP 8's `_ground_splat()` output.
+- Pipeline integration: `optimize_mesh()` now runs 'ground' as the
+  first stage (right after load, before clean). All 4 presets have
+  `'ground': True` as the first stage by default.
+- Meta.json sidecar: after successful ground, `optimize_mesh()` writes
+  a `<slug>_meta.json` with the transform + size_class + timestamp.
+  Same format as TripoSPlat STEP 8's meta.json so the Asset_Library_Browser
+  can read either source consistently.
+- Two new params: `ground_center_xz` (default True),
+  `ground_axis_align` (default True). Both can be disabled for assets
+  already in a grid layout or for organic shapes.
+- This makes the splat and mesh pipelines consistent: every asset
+  in the user's library (splats OR meshes) goes through the same
+  grounding treatment and gets the same meta.json sidecar format.
+
 ### TripoSPlat STEP 8 — One-Shot Game-Ready Prep (SplatTransform Lite)
 - New STEP 8 in `TripoSplat_Colab.ipynb`. After a STEP 7 batch finishes, this
   cell auto-discovers the latest batch folder (or honors `INPUT_BATCH_DIR`),
