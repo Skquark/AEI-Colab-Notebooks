@@ -20,6 +20,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
 - [GauStudio — 3DGS to Mesh via TSDF (MIT + INRIA mixed)](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed)
 - [Asset Library Browser — browse, tag, preview, export your 200+ assets](#asset-library-browser)
+- [Game engine integration — Three.js / WebGPU loader for the grounded assets](#game-engine-integration--loading-the-assets-into-threejs--webgpu)
 - [Mesh Optimizer — post-process for game-ready assets](#mesh-optimizer--post-process-for-game-ready-assets)
 - [Notebook Generator — scaffold new model notebooks](#notebook-generator--scaffold-new-model-notebooks)
 
@@ -488,6 +489,210 @@ After running TripoSplat + GauStudio / SuGaR + Mesh Optimizer on your 200+ image
 3. Run Mesh Optimizer on the GLBs → polished meshes with UVs
 4. **Open this notebook**, set `LIBRARY_DIR` to your output folder, run STEP 2 to scan, STEP 4 to thumbnail, STEP 3 to browse / tag / favorite
 5. STEP 5 to export the curated subset to Unity / Godot / a static HTML portfolio
+
+---
+
+## Game engine integration — loading the assets into Three.js / WebGPU
+
+Once you have a `game_ready/` folder full of grounded splats, meshes, and colliders, you need to actually **use** them in your game engine. This is the missing piece that turns 200+ raw files into a working asset library.
+
+The output of [TripoSPlat STEP 8](#triposplat--image-to-3d-gaussians-mit) (or [SplatTransform_Colab](#splattransform--3dgs-post-processor-playcanvas-mit)) looks like this per asset `<slug>`:
+
+```
+game_ready/
+├── <slug>_full.sog          # 17 MB - hero tier (no decimate, 3 SH bands)
+├── <slug>_standard.sog       # 4-5 MB - default LOD (25% Gaussians, 2 SH)
+├── <slug>_background.sog     # 1-2 MB - mass-placement (6%, 0 SH)
+├── <slug>_hull.glb           # 10-50 KB - convex collider
+├── <slug>_collision.glb      # 1-3 MB - voxel marching-cubes collider
+├── <slug>_meta.json          # sizes, transform, size_class
+└── <slug>_grounded.ply      # intermediate (can ignore at runtime)
+```
+
+All `.sog` and collider `.glb` files are **already grounded** (bottom on Y=0, centered in XZ, axis-aligned). You can drop them in your scene with `splat.position.y = 0` and they work.
+
+### TypeScript loader (Three.js + gsplat.js + WebGPU)
+
+```typescript
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { SplatLoader } from '@playcanvas/gsplat';  // or your 3DGS loader
+
+interface AssetMeta {
+  slug: string;
+  source_ply: string;
+  generated_at: string;
+  tiers: Record<string, { path: string; size_bytes: number }>;
+  colliders: Record<string, { path: string; size_bytes: number }>;
+  grounding: {
+    applied: boolean;
+    translation: { x: number; y: number; z: number };
+    rotation_y_radians: number;
+    rotation_y_degrees: number;
+    bounds_after: { min: number[]; max: number[] };
+    size_units: { height: number; width: number; depth: number };
+    size_class: 'small_prop' | 'prop' | 'tree_or_vehicle' | 'building';
+  };
+}
+
+interface LoadedAsset {
+  slug: string;
+  meta: AssetMeta;
+  splats: { full: THREE.Object3D; standard: THREE.Object3D; background: THREE.Object3D };
+  hull: THREE.Object3D;       // invisible, for raycasting
+  collision: THREE.Object3D;   // invisible, for physics
+}
+
+/**
+ * Loads a single grounded 3DGS asset from a game_ready/ folder.
+ * All outputs are pre-grounded; this just wires them up.
+ */
+export async function loadGroundedAsset(
+  folder: string,    // e.g. '/assets/game_ready/'
+  slug: string,      // e.g. 'hero_knight'
+  scene: THREE.Scene
+): Promise<LoadedAsset> {
+  // 1. Load the meta.json sidecar (sizes, transform, size_class)
+  const metaRes = await fetch(`${folder}/${slug}_meta.json`);
+  const meta: AssetMeta = await metaRes.json();
+
+  // 2. Load the 3 visual tiers (3DGS SOG files)
+  const splatLoader = new SplatLoader();
+  const [full, standard, background] = await Promise.all([
+    splatLoader.loadAsync(`${folder}/${slug}_full.sog`),
+    splatLoader.loadAsync(`${folder}/${slug}_standard.sog`),
+    splatLoader.loadAsync(`${folder}/${slug}_background.sog`),
+  ]);
+
+  // 3. Load both collider GLBs (hull + voxel)
+  const gltfLoader = new GLTFLoader();
+  const [hullGltf, collisionGltf] = await Promise.all([
+    gltfLoader.loadAsync(`${folder}/${slug}_hull.glb`),
+    gltfLoader.loadAsync(`${folder}/${slug}_collision.glb`),
+  ]);
+
+  // 4. Apply the recorded grounding transform to the visual splats
+  //    (Note: the .sog files are ALREADY pre-transformed by TripoSPlat
+  //    STEP 8 / SplatTransform, so the translation/rotation values below
+  //    are just for reference / undo. Setting position.y = 0 is a no-op
+  //    if the asset was grounded at the source.)
+  const g = meta.grounding;
+  [full, standard, background].forEach((s) => {
+    s.position.set(0, 0, 0);                                  // already at origin
+    s.rotation.y = g.rotation_y_radians;                       // apply recorded rotation
+  });
+
+  // 5. Configure colliders: invisible, used only for raycasting
+  hullGltf.scene.visible = false;
+  collisionGltf.scene.visible = false;
+  hullGltf.scene.name = `${slug}_hull`;
+  collisionGltf.scene.name = `${slug}_collision`;
+
+  // 6. Add everything to the scene
+  scene.add(full, standard, background, hullGltf.scene, collisionGltf.scene);
+
+  return { slug, meta, splats: { full, standard, background }, hull: hullGltf.scene, collision: collisionGltf.scene };
+}
+
+/**
+ * Pick the right LOD tier based on the camera distance to the asset.
+ * Background tier for distant (fastest, smallest), full tier for hero.
+ */
+export function selectLOD(asset: LoadedAsset, distanceToCamera: number): THREE.Object3D {
+  if (distanceToCamera < 20) {
+    return asset.splats.full;             // 17 MB - close-up, hero quality
+  } else if (distanceToCamera < 100) {
+    return asset.splats.standard;        // 4-5 MB - medium range
+  } else {
+    return asset.splats.background;      // 1-2 MB - distant, mass-placement
+  }
+}
+
+/**
+ * Raycast against the cheaper hull collider (10-50 KB) for picking.
+ * Fall back to the accurate voxel collider for interactive objects.
+ */
+export function setupPicking(
+  asset: LoadedAsset,
+  raycaster: THREE.Raycaster,
+  scene: THREE.Scene
+): void {
+  // Make hull visible to raycaster but invisible to camera
+  asset.hull.visible = false;
+  asset.hull.traverse((c) => (c as any).raycast = THREE.Mesh.prototype.raycast);
+  scene.add(asset.hull);
+
+  raycaster.intersectObjects([asset.hull], true);
+}
+```
+
+### Usage example
+
+```typescript
+// 1. Load the asset
+const hero = await loadGroundedAsset('/assets/game_ready/', 'hero_knight', scene);
+console.log(`Loaded ${hero.slug} (${hero.meta.grounding.size_class}, ${hero.meta.grounding.size_units.height.toFixed(2)}m tall)`);
+
+// 2. Drop on the ground (it's already grounded, so y=0 is fine)
+hero.splats.full.position.set(10, 0, 5);
+
+// 3. Per-frame LOD: pick tier based on camera distance
+function updateLOD(camera: THREE.Camera) {
+  const dist = camera.position.distanceTo(hero.splats.full.position);
+  const currentVisible = [hero.splats.full, hero.splats.standard, hero.splats.background]
+    .find((s) => s.visible);
+  const desired = selectLOD(hero, dist);
+  if (currentVisible !== desired) {
+    currentVisible.visible = false;
+    desired.visible = true;
+  }
+}
+
+// 4. Picking
+canvas.addEventListener('click', (e) => {
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects([hero.hull], true);
+  if (hits.length > 0) {
+    console.log(`Clicked ${hero.slug} at ${hits[0].point.toArray()}`);
+  }
+});
+```
+
+### Tiering constants (for procedural placement)
+
+The `size_class` field in meta.json enables smart placement grids:
+
+| Size class | Height | Recommended grid spacing | Use for |
+|---|---|---|---|
+| `small_prop` | < 0.5m | 0.5m | Debris, grass, rocks, small pickups |
+| `prop` | 0.5-2m | 1-2m | People, weapons, furniture |
+| `tree_or_vehicle` | 2-10m | 3-5m | Trees, cars, large structures |
+| `building` | > 10m | 10-30m | Buildings, landmarks |
+
+```typescript
+const GRID_SPACING: Record<AssetMeta['grounding']['size_class'], number> = {
+  small_prop: 0.5,
+  prop: 2,
+  tree_or_vehicle: 4,
+  building: 15,
+};
+
+function placeAsset(asset: LoadedAsset, x: number, z: number) {
+  const tier = asset.meta.grounding.size_class;
+  const spacing = GRID_SPACING[tier];
+  // Snap to grid
+  const snappedX = Math.round(x / spacing) * spacing;
+  const snappedZ = Math.round(z / spacing) * spacing;
+  asset.splats.standard.position.set(snappedX, 0, snappedZ);
+}
+```
+
+### Notes
+
+- **Three.js version**: r150+ has WebGPU renderer (`THREE.WebGPURenderer`). gsplat.js works with both WebGL and WebGPU.
+- **Browser compatibility**: SOG is supported in all major browsers via the PlayCanvas Engine. `KHR_gaussian_splatting` GLB is a future-proof standard but currently only PlayCanvas + Three.js (via plugins) support it. SPZ/KSPLAT are great for mobile AR.
+- **First-frame timing**: 3DGS files are large (1-17 MB). For 200+ assets, lazy-load on demand; don't preload everything.
+- **Memory budget**: 200 assets × 4-5 MB standard tier ≈ 1 GB of GPU memory. Background tier drops this to ~300 MB. Use LOD aggressively.
 
 ---
 
