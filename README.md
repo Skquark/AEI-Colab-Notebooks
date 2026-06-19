@@ -17,6 +17,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Hunyuan3D-2 — Tencent Image / Text-to-3D](#hunyuan3d-2--tencent-image--text-to-3d)
 - [TripoSplat — Image to 3D Gaussians (TripoAI/VAST-AI)](#triposplat--image-to-3d-gaussians-mit)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
+- [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
 - [GauStudio — 3DGS to Mesh via TSDF (MIT + INRIA mixed)](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed)
 - [Asset Library Browser — browse, tag, preview, export your 200+ assets](#asset-library-browser)
@@ -422,6 +423,62 @@ The **missing piece** for shipping 3DGS assets to a game engine. Takes the raw 3
 **Compute:** Node 22+ runtime (Colab needs `apt-get install nodejs`; the install script uses NodeSource for 22 LTS). GPU optional — most steps work on CPU; SOG SH k-means benefits from GPU (5-10× faster). L4 / T4 both fine. First run: ~2-3 min install. Subsequent: instant per file.
 
 **200+ library workflow step:** TripoSplat (200× PLY = 30 GB) → **this notebook** (200× SOG = 3 GB, saves 27 GB) → Asset_Library_Browser for browsing.
+
+---
+
+## SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/SkinTokens_Colab.ipynb)
+
+Automated **skeleton generation + skinning weight prediction** for any 3D mesh, via a unified autoregressive model over learned *SkinTokens*. The official Gradio demo is at [🤗&nbsp;VAST-AI/SkinTokens](https://huggingface.co/spaces/VAST-AI/SkinTokens); this notebook packages the same model for **free Google Colab** with Drive cache, batch mode, low-VRAM toggle, and a Colab-side file picker.
+
+**Why this matters for game dev:** A rigged character is the prerequisite for animation. Until now, rigging either required hours of manual weight painting in Blender, or one of three lossy decoupling methods (RigNet, Puppeteer, UniRig). SkinTokens unifies skeleton + skinning into a single autoregressive sequence via learned discrete *skin tokens*, achieving **98%–133%** better skinning accuracy and **17%–22%** better bone prediction than state-of-the-art baselines.
+
+### Method in three stages
+1. **Learn SkinTokens** — an FSQ-CVAE compresses sparse skinning weights into a 64,000-entry codebook
+2. **Unified autoregressive modeling** — a Qwen3-0.6B Transformer generates the skeleton + SkinTokens as one interleaved sequence
+3. **RL refinement via GRPO** — 4 geometric/semantic rewards fine-tune for out-of-distribution assets
+
+### What you get
+* **Input:** `.obj` / `.fbx` / `.glb` (one or many at once)
+* **Output:** a rigged `.glb` with predicted **skeleton + per-vertex skinning weights**
+* **Checkpoints:** ≈ 1.6 GB (GRPO-refined autoregressive model + FSQ-CVAE), cached on Drive
+* **bpy_server sidecar:** Blender Python runs as a long-lived subprocess on port 59876 (matches the official demo's pattern) so the 30-60 s bpy import only happens once per session
+
+### Quick Start
+1. Open the notebook in Colab with a **T4 GPU** runtime (15 GB VRAM, 25 GB RAM recommended)
+2. Run cells 1-3 in order: install → imports → core helpers (≈ 8-12 min on first run, 2-3 min with Drive cache)
+3. Run cell 4 for the **Gradio UI** (interactive multi-mesh, full sliders) **or** cell 7 for a **single-mesh Colab picker** **or** cell 8 for a **folder batch**
+4. The keep-alive cell 6 keeps the runtime alive for 12 h so the Gradio UI stays reachable
+
+### Sampling parameters
+All match the official demo's defaults: `top_k=5`, `top_p=0.95`, `temperature=1.0`, `repetition_penalty=2.0`, `num_beams=10`, `max_length=2048`. Plus three pipeline toggles:
+* **Use existing skeleton** — if your mesh already has a rig, predict skinning only (faster, cleaner)
+* **Preserve original texture & scale** — transfer the predicted rig back onto the un-preprocessed mesh
+* **Voxel skin post-processing** — apply a voxel-based mask to the predicted skin weights (slower)
+
+And two Colab / T4 toggles:
+* **Low VRAM (CPU offload Qwen3)** — drops peak VRAM from ~14 GB to ~6-8 GB. Recommended for T4. ~1.3x slowdown.
+* **Mirror outputs to Google Drive** — copy each rigged `.glb` to `AEI_3D_Out/SkinTokens/`.
+
+### Hardware
+* **GPU:** NVIDIA, ≥ 14 GB VRAM recommended. T4 (15 GB) works with Low VRAM enabled.
+* **RAM:** ≥ 25 GB (Blender shared object + FSQ-CVAE encoder/decoder)
+* **Disk:** ≈ 8 GB free (PyTorch + CUDA + bpy wheel + checkpoints)
+* **First run:** 8-12 min (PyTorch + flash-attn + bpy) + ≈ 3 min (checkpoint download)
+* **Subsequent runs:** 2-3 min (everything cached in Drive)
+
+### License
+* **Notebook + checkpoints:** MIT (upstream [VAST-AI-Research/SkinTokens](https://github.com/VAST-AI-Research/SkinTokens))
+* **bpy wheel:** GPL-3.0 (Blender Foundation), shipped unmodified via the public HF Space
+* **Successor lineage:** SkinTokens (2026) → [UniRig (SIGGRAPH '25)](https://github.com/VAST-AI-Research/UniRig) → [CharacterGen](https://charactergen.github.io) (image → rigged 3D)
+
+### Related notebooks
+* **TripoSplat** — image → 3D Gaussians (also VAST-AI)
+* **Hunyuan3D-2.1** — image → textured mesh
+* **SplatTransform** — post-process 3DGS for game engines
+* **Mesh Optimizer** — decimate, repair, UV-unwrap, quantize game-ready meshes
+* **Asset_Library_Browser** — browse, tag, and ship your rigged library to a game engine
 
 ---
 

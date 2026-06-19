@@ -5,6 +5,47 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### SkinTokens — New notebook: Mesh to Rig with TokenRig (VAST-AI, MIT)
+New notebook at `SkinTokens_Colab.ipynb`. The [official HF Space](https://huggingface.co/spaces/VAST-AI/SkinTokens)
+ships a polished Gradio demo, but it's ZeroGPU-only and not runnable in free Colab.
+This notebook packages the same MIT-licensed model for free Colab with Drive cache,
+batch mode, low-VRAM toggle, and a Colab-side file picker.
+
+- **9-cell standard pattern** (matches `tools/validate.py`): `view-in-github`,
+  `header`, `step1-install`, `step2-cache`, `step3-core`, `step4-ui`,
+  `step5-keepalive`, `step6-quicktest`, `step7-batch`.
+- **STEP 1 — install + repo + checkpoints + bpy_server sidecar.** Installs
+  torch 2.7.0+cu128, flash-attn matching wheel (cu12torch2.7 cxx11abiTRUE
+  cp312 — matches the Space's prebuilt), then bpy 4.5.4rc0 from the public
+  HF Space (PyPI has no cp312 bpy wheel — only cp311 / cp313). Clones the
+  upstream `VAST-AI-Research/SkinTokens` repo, downloads both checkpoints
+  (GRPO-refined TokenRig + FSQ-CVAE SkinTokens, ≈ 1.6 GB), and boots a
+  long-lived `bpy_server.py` subprocess on port 59876 (the same
+  Bottle+Tornado HTTP pattern the official demo uses). All cached in
+  `AEI_3D_Cache/SkinTokens/` on Drive.
+- **STEP 2 — imports + lazy model cache.** `src.*` modules loaded once. Model
+  cached on first call so subsequent Gradio clicks are instant. Defines
+  `run_rig()` (the shared pipeline) and `_mirror_to_drive()` (with the
+  same-path-skip that TripoSPlat / SplatTransform use).
+- **STEP 3 — core helpers.** `run_single()`, `run_batch()` (skips
+  already-done outputs on re-run), and `_mirror_to_drive()`.
+- **STEP 4 — Gradio UI** mirroring the official demo: multi-file upload,
+  sampling sliders (`top_k`, `top_p`, `temperature`, `repetition_penalty`,
+  `num_beams`, `max_length`), pipeline toggles (`use_skeleton`,
+  `use_transfer`, `use_postprocess`), Colab toggles (`low_vram`,
+  `do_drive_save`), Run button, status textbox, downloadable .glb files.
+  `demo.load` welcome. `clear_output()` before launch.
+- **STEP 5 — keep-alive** (12 h, matches other Colab notebooks in this repo).
+- **STEP 6 — Colab-side single-mesh picker** with all 12 form params + 1
+  button. The same `run_rig()` call STEP 4 uses under the hood.
+- **STEP 7 — Colab-side folder batch** with all 12 form params + 1 button.
+  Recursively processes `.obj` / `.fbx` / `.glb` in `INPUT_DIR`, preserves
+  directory layout in `OUTPUT_DIR`, output always `.glb`.
+- **Low-VRAM mode:** CPU-offload the Qwen3 backbone before inference. Drops
+  peak VRAM from ~14 GB to ~6-8 GB on T4. ~1.3x slowdown.
+- **All 11 sliders/checkboxes** have `info=` tooltips (UI polish). 19
+  try/except blocks. Drive cache set BEFORE any `huggingface_hub` import.
+
 ### SplatTransform — Engine Preset + Streamed-SOG Octree + Manifest (4 commits)
 For a new downstream consumer: a WebGPU Gaussian-splat game engine that
 ingests bundled PlayCanvas SOG v2, auto-orients object-scale assets at
