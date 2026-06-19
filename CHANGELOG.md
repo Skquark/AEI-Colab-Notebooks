@@ -5,6 +5,98 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Pi3X — New notebook: Video-Native 3DGS, Permutation-Equivariant (ICLR 2026)
+New notebook at `Pi3X_Colab.ipynb`. **[π³ / Pi3X](https://yyfz.github.io/pi3/)**
+is a feed-forward neural network for visual geometry reconstruction from
+Shanghai AI Lab + ZJU (ICLR 2026). Unlike every other 3DGS-from-images tool in
+this suite, **π³ is permutation-equivariant** — there is no fixed reference
+view, input order is irrelevant, the model handles long videos without drift,
+and reconstruction quality stays stable on sequences of 10, 50, 200+ frames.
+
+**License posture:** code is BSD-3-Clause (commercial-OK), upstream
+[yyfz/Pi3](https://github.com/yyfz/Pi3). **Weights are CC BY-NC-4.0** (strictly
+non-commercial, per the official model card). Notebook shipped with prominent
+warning. Your output `.ply` files are yours.
+
+- **9-cell standard pattern** (matches `tools/validate.py`): `view-in-github`,
+  `header`, `step1-install`, `step2-cache`, `step3-core`, `step4-ui`,
+  `step5-keepalive`, `step6-quicktest`, `step7-batch`.
+- **STEP 1 — install + repo + checkpoint.** torch 2.5.1+cu121 + torchvision
+  0.20.1 + numpy 1.26.4 (pinned to match upstream), `git clone --depth=1` the
+  BSD-3 upstream, install inference deps, download `yyfz233/Pi3X` model
+  (≈ 5 GB safetensors) to Drive cache. No DINOv2 download — Pi3X uses its own
+  ViT encoder.
+- **STEP 2 — imports + lazy model cache.** `Pi3X.from_pretrained(...)` cached
+  per `(use_multimodal,)` so subsequent Gradio clicks are instant. Defines
+  `infer()` (frames → results dict with `points`, `local_points`, `rays`,
+  `conf`, `camera_poses`, `metric`), `write_colmap()` (Pi3X → COLMAP-format
+  using `recover_intrinsic_from_rays_d` from upstream `pi3.utils.geometry`),
+  `train_gsplat()` (gsplat 1.3.0 simple_trainer, ~1-3 min on T4),
+  `_mirror_to_drive()` (same-path-skip), and `run_full_pipeline()`.
+- **STEP 3 — core helpers.** `run_single_scene()` (auto-detects video vs
+  folder), `run_batch()` (skips already-done scenes).
+- **STEP 4 — Gradio UI.** Multi-file upload (any 1+ images, any order) OR video
+  upload. Exposed params: `use_multimodal` (default OFF, frees ~2 GB GPU),
+  `use_amp` (bf16/fp16), `edge_mask` (depth-normal edge filter), `video_fps`
+  (0.5-5), `max_frames` (4-200, Pi3X is permutation-equivariant so all frames
+  are weighted equally), `do_drive_save` toggle. Generates `.ply` + preview
+  pane with file links to supersplat.dev / playcanvas.com/viewer.
+- **STEP 5 — keep-alive** (12 h, with repeated license reminder).
+- **STEP 6 — Colab single-scene picker** (8 form params + 1 button).
+- **STEP 7 — Colab batch** (8 form params + 1 button).
+- **26 info= tooltips** on all form controls. 13 try/except blocks. Drive
+  cache set BEFORE any `huggingface_hub` import. `clear_output()` before
+  `demo.launch`. `default_concurrency_limit=2`. `demo.load` welcome.
+
+### MapAnything — New notebook: Universal 3DGS-from-Images (Meta, Apache 2.0)
+New notebook at `MapAnything_Colab.ipynb`. **[MapAnything](https://map-anything.github.io/)**
+is Meta's universal 3D reconstruction framework (3DV 2026). One feed-forward
+transformer handles **12+ 3D reconstruction tasks** in a single forward pass:
+image-only SfM, image+pose, image+intrinsics+depth, registration, depth
+completion, monocular metric depth, and more. Output is a metric 3D point
+cloud + camera poses which we feed into `gsplat` to produce a real 3DGS scene.
+
+**The standout property is universality**: give it 2 images, 20 images, an
+image + known depth from a depth sensor, an image + known camera poses from
+COLMAP, or a video without any calibration at all — and it always produces a
+metric 3D reconstruction.
+
+**License posture:** **fully commercial-OK**. Code is Apache 2.0 (upstream
+[facebookresearch/map-anything](https://github.com/facebookresearch/map-anything)).
+Weights are from [🤗&nbsp;facebook/map-anything-apache](https://huggingface.co/facebook/map-anything-apache)
+— the **Apache 2.0** variant. (Meta also publishes a CC-BY-NC variant at
+`facebook/map-anything` which we deliberately do not use.) Output `.ply`
+files are yours.
+
+- **9-cell standard pattern** (matches `tools/validate.py`): `view-in-github`,
+  `header`, `step1-install`, `step2-cache`, `step3-core`, `step4-ui`,
+  `step5-keepalive`, `step6-quicktest`, `step7-batch`.
+- **STEP 1 — install + repo + checkpoint.** torch 2.4.1+cu121 + torchvision
+  0.19.1 (pinned — matches upstream `pyproject.toml`), `git clone --depth=1`
+  the Apache 2.0 upstream, install `uniception==0.1.7` + lightweight inference
+  deps, download `map-anything-apache/model.safetensors` (4.47 GB) to Drive
+  cache. DINOv2-giant (~1.1 GB) is fetched on first `from_pretrained()`.
+- **STEP 2 — imports + lazy model cache.** `MapAnything.from_pretrained(...)`
+  cached per `(amp_dtype, minibatch_size)`. Defines `infer()` (uses upstream
+  `mapanything.utils.image.load_images`), `write_colmap()` (MapAnything
+  outputs → COLMAP-format with PINHOLE camera model, 1-indexed cameras.txt +
+  images.txt + points3D.ply), `train_gsplat()` (gsplat 1.3.0 simple_trainer),
+  `_mirror_to_drive()` (same-path-skip), and `run_full_pipeline()`.
+- **STEP 3 — core helpers.** `run_single_scene()` (auto-detects video vs
+  folder), `run_batch()` (skips already-done scenes).
+- **STEP 4 — Gradio UI.** Multi-file upload (any 1+ images) OR video upload.
+  Exposed params: `gsplat_iterations` (1k-30k), `apply_mask`, `mask_edges`,
+  `use_multiview_confidence` (cross-view depth consistency), `confidence_percentile`
+  (0-50), `amp_dtype` (bf16/fp16/fp32), `minibatch_size` (1-8), `video_fps`
+  (0.5-5), `max_frames` (4-64), `do_drive_save` toggle. Generates `.ply` +
+  preview pane with file links to supersplat.dev / playcanvas.com/viewer.
+- **STEP 5 — keep-alive** (12 h, with repeated license reminder).
+- **STEP 6 — Colab single-scene picker** (8 form params + 1 button).
+- **STEP 7 — Colab batch** (8 form params + 1 button).
+- **29 info= tooltips** on all form controls. 9 try/except blocks. Drive
+  cache set BEFORE any `huggingface_hub` import. `clear_output()` before
+  `demo.launch`. `default_concurrency_limit=2`. `demo.load` welcome.
+
 ### Polish pass: NoPoSplat + Wild Gaussian Splatting (v2)
 
 Full review + polish of both new notebooks based on the upstream source code

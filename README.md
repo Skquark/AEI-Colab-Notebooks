@@ -18,6 +18,8 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [TripoSplat — Image to 3D Gaussians (TripoAI/VAST-AI)](#triposplat--image-to-3d-gaussians-mit)
 - [NoPoSplat — 2-3 Photos → 3DGS, pose-free (MIT, ICLR 2025)](#noposplat--2-3-photos--3dgs-pose-free-mit-iclr-2025)
 - [Wild Gaussian Splatting — Video / Image Folder → 3DGS (MASt3R + INRIA)](#wild-gaussian-splatting--video--image-folder--3dgs-cc-by-nc-sa--inria)
+- [MapAnything — Universal 3DGS-from-Images (Meta, Apache 2.0)](#mapanything--universal-3dgs-from-images-meta-apache-20)
+- [Pi3X — Video-Native 3DGS, Permutation-Equivariant (BSD-3 + CC BY-NC-4.0)](#pi3x--video-native-3dgs-permutation-equivariant-bsd-3--cc-by-nc-40)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
@@ -472,8 +474,122 @@ Wild Gaussian Splatting (this notebook)  →  .ply + .mp4
 ### Related notebooks
 * **NoPoSplat** — 2-3 photos → 3DGS in ~10s (MIT, faster but lower fidelity)
 * **TripoSPlat** — single image → 3DGS (MIT, generative prior)
+* **MapAnything** — universal 3DGS from any 1+ images, Apache 2.0
+* **Pi3X** — video-native 3DGS with permutation-equivariance, BSD-3 + CC BY-NC-4.0
 * **SplatTransform** — post-process 3DGS for game engines (SOG/SPLAT/SPZ/GLB)
 * **Asset_Library_Browser** — browse, tag, and ship your rigged library to a game engine
+
+---
+
+## MapAnything — Universal 3DGS-from-Images (Meta, Apache 2.0)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MapAnything_Colab.ipynb)
+
+**[MapAnything](https://map-anything.github.io/)** is Meta's universal 3D reconstruction framework (3DV 2026). One feed-forward transformer handles **12+ 3D reconstruction tasks** in a single forward pass: image-only SfM, image+pose, image+intrinsics+depth, registration, depth completion, monocular metric depth, and more. Output is a metric 3D point cloud + camera poses which we feed into `gsplat` to produce a real 3DGS scene.
+
+**The standout property is universality**: give it 2 images, 20 images, an image + known depth from a depth sensor, an image + known camera poses from COLMAP, or a video without any calibration at all — and it always produces a metric 3D reconstruction.
+
+### How it differs from our other 3DGS notebooks
+
+| Notebook | Inputs | Approach | License |
+|---|---|---|---|
+| **TripoSplat** | 1 image | Generative prior, feed-forward | MIT |
+| **NoPoSplat** | 2-3 unposed photos | Pose-free, feed-forward | MIT (+ MASt3R backbone CC BY-NC-SA) |
+| **Wild GS** | Video / image folder | MASt3R pose + 3DGS optimization | CC BY-NC-SA + INRIA non-commercial |
+| **MapAnything (this)** | Any 1+ images; optional poses/intrinsics/depth | Universal feed-forward transformer, then gsplat | **Apache 2.0** (commercial-OK) |
+| **Pi3X** | Video frames (any order, any count) | Permutation-equivariant feed-forward, then gsplat | BSD-3 code + CC BY-NC-4.0 weights (non-commercial) |
+
+### Pipeline
+```
+images (and optional poses / depth / intrinsics)
+       ↓
+MapAnything (universal transformer, 1 forward pass)
+       ↓
+metric point cloud + camera poses + intrinsics + depth
+       ↓
+write COLMAP-format (cameras.txt, images.txt, points3D.ply)
+       ↓
+gsplat (1-3 min training on T4)
+       ↓
+3DGS .ply (SOG/SPLAT/SPZ after SplatTransform_Colab STEP 3)
+```
+
+### Requirements
+* **GPU:** NVIDIA, ≥ 6 GB VRAM (T4 15 GB works with `minibatch_size=1`)
+* **RAM:** ≥ 12 GB
+* **Disk:** ≈ 8 GB free (PyTorch + CUDA + 4.47 GB MapAnything + 1.1 GB DINOv2-giant + working space)
+* **Time on first run:** 8-12 min (PyTorch + uniception + MapAnything + DINOv2-giant)
+* **Time on subsequent runs:** 2-3 min (everything cached in your Drive)
+* **Per-scene runtime:** ~20-60 seconds for 10 images at 518² on T4 (one forward pass)
+
+### License
+* **Notebook + code + weights:** **Apache 2.0** — fully commercial-OK.
+* **Source:** [facebookresearch/map-anything](https://github.com/facebookresearch/map-anything) (Apache 2.0); weights from [🤗&nbsp;facebook/map-anything-apache](https://huggingface.co/facebook/map-anything-apache) (Apache 2.0 variant — Meta also publishes a CC-BY-NC variant at `facebook/map-anything` which we deliberately do not use)
+
+### Related notebooks
+* **NoPoSplat** — 2-3 photos → 3DGS in ~10s (MIT, but slower for >3 images)
+* **WildGaussianSplatting** — video → 3DGS with per-scene optimization (non-commercial)
+* **Pi3X** — video-native 3DGS with permutation-equivariance (non-commercial weights)
+* **SplatTransform** — post-process 3DGS for game engines (SOG/SPLAT/SPZ/GLB)
+* **Asset_Library_Browser** — browse, tag, and ship your library to a game engine
+
+---
+
+## Pi3X — Video-Native 3DGS, Permutation-Equivariant (BSD-3 + CC BY-NC-4.0)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Pi3X_Colab.ipynb)
+
+> **⚠️ License notice:** **Code = BSD 3-Clause** (commercial-OK). **Weights = CC BY-NC-4.0** (strictly non-commercial, per the official model card). Use this notebook for research, personal projects, and non-commercial work. For commercial 3DGS-from-video, use **MapAnything** (Apache 2.0) instead.
+
+**[π³ / Pi3X](https://yyfz.github.io/pi3/)** is a feed-forward neural network for visual geometry reconstruction from Shanghai AI Lab + ZJU (ICLR 2026). Unlike every other 3DGS-from-images tool in this suite, **π³ is permutation-equivariant** — there is no fixed reference view, input order is irrelevant, the model handles long videos without drift, and reconstruction quality stays stable on sequences of 10, 50, 200+ frames.
+
+**Pi3X** is the engineering update of π³: smoother Convolutional Head, optional camera/pose/depth conditioning, continuous confidence prediction, and approximate metric scale.
+
+### How it differs from our other 3DGS notebooks
+* **MapAnything** — Apache 2.0, universal transformer, any number of images. Commercial-OK.
+* **WildGaussianSplatting** — non-commercial, MASt3R pose + INRIA 3DGS optimization, 5-15 min.
+* **Pi3X (this)** — **BSD-3 code + CC BY-NC-4.0 weights**, permutation-equivariant feed-forward for video, ~5-30 s for 100 frames. Ideal for **long phone videos** where other feed-forward methods drift.
+
+### Pipeline
+```
+video frames (or image folder) — any number, any order
+       ↓
+Pi3X (π³) — permutation-equivariant feed-forward transformer, 1 forward pass
+       ↓
+metric point cloud + per-frame camera poses + intrinsics + depth
+       ↓
+write COLMAP-format (cameras.txt, images.txt, points3D.ply)
+       ↓
+gsplat (1-3 min training on T4)
+       ↓
+3DGS .ply (SOG/SPLAT/SPZ after SplatTransform_Colab STEP 3)
+```
+
+### Requirements
+* **GPU:** NVIDIA, ≥ 6 GB VRAM (T4 15 GB works; A100/L4 recommended for 100+ frames)
+* **RAM:** ≥ 12 GB
+* **Disk:** ≈ 8 GB free (PyTorch + CUDA + ~5 GB Pi3X + working space)
+* **Time on first run:** 5-8 min (PyTorch + π³ + safetensors download)
+* **Time on subsequent runs:** 1-2 min (everything cached in your Drive)
+* **Per-video runtime:** ~5-30 seconds for 100 frames at 224×224 on T4 (one forward pass)
+
+### Key parameters
+* **`use_multimodal=False`** (default) — disables conditioning on pose/intrinsics/depth and frees ~2 GB GPU. Recommended for unordered video frames.
+* **`edge_mask=True`** — masks out edge artifacts using normal/depth consistency, improving 3DGS quality.
+* **`use_amp=True`** — bf16 on Ampere+, fp16 fallback, ~2x speedup.
+* **`max_frames=64`** — Pi3X is permutation-equivariant, so all frames are weighted equally; the model handles 200+ frames gracefully.
+
+### License
+* **Code:** BSD 3-Clause (commercial-OK) — upstream [yyfz/Pi3](https://github.com/yyfz/Pi3)
+* **Weights:** CC BY-NC-4.0 (strictly non-commercial) — [🤗&nbsp;yyfz233/Pi3X](https://huggingface.co/yyfz233/Pi3X)
+* **Your output (.ply, camera poses, renders):** yours, no restriction.
+
+### Related notebooks
+* **MapAnything** — universal 3DGS-from-images, Apache 2.0 (commercial-OK alternative)
+* **WildGaussianSplatting** — video → 3DGS with per-scene optimization, CC BY-NC-SA + INRIA
+* **NoPoSplat** — 2-3 photos → 3DGS in ~10s, MIT
+* **SplatTransform** — post-process 3DGS for game engines (SOG/SPLAT/SPZ/GLB)
+* **Asset_Library_Browser** — browse, tag, and ship your library to a game engine
 
 ---
 
