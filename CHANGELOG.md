@@ -5,6 +5,55 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### SplatTransform — Engine Preset + Streamed-SOG Octree + Manifest (4 commits)
+For a new downstream consumer: a WebGPU Gaussian-splat game engine that
+ingests bundled PlayCanvas SOG v2, auto-orients object-scale assets at
+load time, and whose shader evaluates only DC + degree-1 SH.
+
+- **Engine Preset (commit ad541f4, default OFF):** new `step2b-engine-preset`
+  cell + `step2a-engine-preset-doc` markdown. When ON, biases STEP 3's
+  output formats + SH strip defaults:
+  - `WRITE_SOG=True`, `WRITE_SPZ/GLB/PLY=False` (still individually toggleable)
+  - `STRIP_SH_BANDS=3` (DC-only — engine's shader max)
+  - `RE_GROUND_ON_IMPORT` set from `ASSET_CLASS` (False for props, True
+    for environments)
+  - When OFF: existing defaults unchanged (no regression for current users).
+  - Prop-vs-environment distinction documented in the markdown cell:
+    **don't pre-ground props for auto-orienting engines** (double-applies).
+- **STEP 5 relabel (commit 9a66662):** title now reads "Density Chain
+  (per-tier full-model SOGs, NOT streaming)" with markdown clarifying the
+  distinction from streamed octree mode. Behavior unchanged.
+- **STEP 5b — Streamed-SOG Octree (commit 9a66662):** new cell that builds
+  native `lod-meta.json` per asset via splat-transform's `-l <level>` tagging
+  + `lod-meta.json` output (PlayCanvas streamed format). Generates N
+  decimated SOGs in a temp dir, then bundles them:
+  ```
+  splat-transform lod0.sog -l 0 lod1.sog -l 1 ... out/lod-meta.json -C 512 -X 16
+  ```
+  Tunable params: `LOD_COUNTS` (e.g. 200k/100k/50k/20k), `LOD_CHUNK_COUNT`
+  (default 512), `LOD_CHUNK_EXTENT` (default 16m). Pre-grounding opt-in via
+  `APPLY_GROUNDING` (recommended for environments, NOT for props). Resume +
+  FORCE_REDO. Mirror to Drive.
+- **STEP 6 note (commit 9a66662):** added markdown block clarifying that
+  engines with built-in collision baking (Unreal, Unity DOTS, custom
+  Havok/PhysX) can skip this step entirely.
+- **STEP 3 batch hardening (commit 65266a1):**
+  - `PARALLEL_WORKERS` (1-8, default 2): `ThreadPoolExecutor` runs K
+    conversions concurrently for thousands-of-files batches.
+  - `RESUME` (default True) + `FORCE_REDO`: skip source PLY if all enabled
+    format outputs already exist with non-zero size. Survives Colab
+    disconnects.
+  - `VALIDATE_OUTPUTS` (default True): re-opens each produced SOG and
+    confirms the file parses + is non-trivial.
+  - `EMIT_MANIFEST` (default True): writes `<output_dir>/manifest.json`
+    with per-source metadata — paths, sizes, compression ratios, source
+    splat counts, `assetClass` inferred from splat count vs
+    `ASSET_CLASS_THRESHOLD` (default 1M), errors per source, top-level
+    summary (total_sources / succeeded / failed).
+  - Per-file error log printed at end (first 20 errors shown + count of
+    remaining).
+  - Cell count 10 → 13. Try blocks 16 → 26, except handlers 17 → 27.
+
 ### Asset_Library_Browser — premium UI Tier 1-3 (3 commits)
 - **Tier 1 (commit e3e48c9):** Fullscreen preview toggle (`gr.Group(visible=...)`),
   keyboard nav (←/→/Space/P/N/T/F/? via JS keydown listeners), smart filters

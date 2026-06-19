@@ -388,9 +388,11 @@ The **missing piece** for shipping 3DGS assets to a game engine. Takes the raw 3
 
 - **Step 1** — install Node 22+ and `splat-transform` from npm
 - **Step 2** — Drive cache + GPU check (WebGPU optional for most steps; SOG SH k-means benefits from GPU)
-- **Step 3** — batch convert a folder of TripoSplat PLYs into all 4 game formats (SOG, SPZ, GLB, PLY) with size + compression-ratio reports
+- **Step 2b (Engine Preset)** — optional toggle, default OFF. When ON, biases STEP 3's output formats + SH strip defaults for a WebGPU/PlayCanvas engine consumer (SOG-only by default, DC-only SH, grounding off for props). See "Engine Preset" below for the prop-vs-environment distinction.
+- **Step 3** — batch convert a folder of TripoSplat PLYs into all 4 game formats (SOG, SPZ, GLB, PLY) with size + compression-ratio reports. **New batch-hardening params:** `PARALLEL_WORKERS` (default 2) runs K conversions concurrently via `ThreadPoolExecutor`; `RESUME` (default True) + `FORCE_REDO` skip sources whose outputs already exist (survives Colab disconnects); `VALIDATE_OUTPUTS` re-opens each SOG to confirm it parses; `EMIT_MANIFEST` (default True) writes `<output_dir>/manifest.json` with per-source paths/sizes/ratios/splat-counts/assetClass + a top-level summary.
 - **Step 4** — decimate (reduce Gaussian count for web previews / low-LOD) and/or strip SH bands (drop higher-frequency color)
-- **Step 5** — build LOD chains (streamed SOG for PlayCanvas progressive loader)
+- **Step 5** — **density chain** (per-tier full-model SOGs, NOT streaming). N full SOGs of decreasing Gaussian counts. Good for object props (engine swaps in/out based on distance).
+- **Step 5b** — **streamed-SOG octree** (native `lod-meta.json`, for environment captures). Generates N decimated SOGs in a temp dir, then bundles them via `splat-transform -l 0..N lodN.sog out/lod-meta.json -C 512 -X 16`. The engine progressively streams chunks from low to high LOD. Tunable `LOD_COUNTS` + `LOD_CHUNK_COUNT` + `LOD_CHUNK_EXTENT`. Optional pre-grounding (`APPLY_GROUNDING=True` for environments; keep OFF for props to avoid double-application).
 - **Step 6** — generate **3 types of colliders** for runtime physics:
   - **Voxel collision mesh** (`.collision.glb` — marching cubes from splat cloud, GPU-only)
   - **Convex hull** (`.hull.glb` — trimesh convex_hull on subsampled splat positions, ~10-50 KB, perfect for distant background)
@@ -402,6 +404,18 @@ The **missing piece** for shipping 3DGS assets to a game engine. Takes the raw 3
 - **Step 9** — help / format reference / engine compatibility / known issues
 
 **Tip:** For the 80% case (compress every PLY, generate the 3 quality tiers, generate hull + voxel colliders), use **TripoSplat STEP 8 (SplatTransform Lite)** instead — it's the same operations in one cell with auto-discovery of the latest batch. This notebook is the right place for advanced cases: streamed LOD chains, WebGPU turntable previews, alpha-shape concave colliders, custom decimation curves for noisy splats.
+
+**Engine Preset (Step 2b):** if your downstream consumer is a **WebGPU Gaussian-splat game engine** that loads bundled `.sog` (SOG v2) directly, auto-orients object-scale assets at load time, and renders only DC + degree-1 SH, enable `ENGINE_PRESET = True` and pick `ASSET_CLASS = 'prop'` or `'environment'`. The preset biases every output choice toward the engine's needs, while leaving each individual STEP 3 toggle still overrideable. **The critical caveat:** don't pre-ground props for auto-orienting engines (the engine applies its own 180° flip + recenter, double-application breaks positioning). For environment captures (loaded in world coords), use STEP 5b's streamed-SOG octree + turn pre-grounding ON.
+
+**STEP 5 vs STEP 5b — when to use which:**
+
+- **STEP 5 (density chain):** N full-model SOGs of decreasing Gaussian counts. Engine swaps between them based on camera distance. Good for **props** (object-scale assets). Not for progressive streaming.
+- **STEP 5b (streamed-SOG octree):** one `lod-meta.json` + spatial SOG chunks. Engine progressively streams chunks from low to high LOD as the camera explores. Good for **environment captures** (terrain, city blocks, big rooms). Built via splat-transform's native `-l <level>` tagging + `lod-meta.json` output.
+
+**STEP 6 collision note:** if your engine bakes its own collision at scene-import time (Unreal, Unity DOTS physics, custom Havok/PhysX), skip STEP 6 entirely — leave all 3 `GENERATE_*` toggles False.
+
+**STEP 3 batch hardening:** `PARALLEL_WORKERS` (1-8, default 2) for concurrent conversions on thousands-of-files batches; `RESUME` skips sources whose outputs already exist (survives Colab disconnects); `EMIT_MANIFEST` writes `<output_dir>/manifest.json` with per-source metadata + `assetClass` (auto-inferred from splat count vs `ASSET_CLASS_THRESHOLD`) so the engine's upload step can automate asset records.
+
 
 **License:** MIT (PlayCanvas Ltd.). Commercial-OK, no copyleft.
 
