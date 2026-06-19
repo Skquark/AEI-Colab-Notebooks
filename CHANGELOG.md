@@ -5,6 +5,65 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Polish pass: NoPoSplat + Wild Gaussian Splatting (v2)
+
+Full review + polish of both new notebooks based on the upstream source code
+and the model cards. Adds the missing parameters, fixes the wrong defaults,
+removes the invalid params, and adds info= tooltips to all form controls.
+
+**NoPoSplat v2 (was 3 tips → now 27):**
+- **OPACITY_MAPPING params + global_step slider:** `cfg.opacity_mapping`
+  has `initial`, `final`, `warm_up` — the `warm_up` controls how the opacity
+  mapping transitions from initial to final as the encoder's `global_step`
+  increases. Now exposed as `global_step` and `opacity_warm_up` sliders in
+  the UI and the form cells.
+- **Encoder cache key fixed:** previously `(ckpt, size, max_views)` — now
+  `(ckpt, size, max_views, global_step, opacity_initial, opacity_final,
+  opacity_warm_up)` so different opacity settings return a fresh encoder.
+- **GaussianAdapterCfg sliders:** `sh_degree` (0-4), `gaussian_scale_min`
+  (0.001-1.0), `gaussian_scale_max` (1.0-50.0) — the upstream exposes these
+  but the v1 notebook hardcoded them. Now the user can tune them in
+  an "Advanced encoder config" accordion.
+- **Separate 2-view vs 3-view checkpoints in dropdown** with `2V — ` and
+  `3V — ` prefixes. The `_do_run` handler validates that the right number
+  of images was uploaded (2 vs 3) and returns a clear error message if not.
+- **Removed base64 from `_splat_viewer_html`:** previously encoded the
+  entire `.ply` (200-500 MB) as a base64 string in the HTML — wasteful and
+  slow. Now just a small panel with download links to supersplat.dev and
+  playcanvas.com/viewer.
+- **info= tooltips on all STEP 6/7 form params:** 19 new tooltips
+  describing image size, global_step, opacity_warm_up, sh_degree, scale
+  range, and drive-mirror behavior.
+
+**Wild Gaussian Splatting v2 (was 4 tips → now 47):**
+- **Fixed wrong MASt3R defaults:** v1 used `niter1=500, niter2=200` (from the
+  2024 dust3r notebook) but the actual `sparse_scene_optimizer` defaults
+  are `niter1=300, niter2=300`. The lr values were also wrong (`lr2=0.014` →
+  `0.01`).
+- **Removed invalid params:** `min_conf_thr=1.5` and `mask_images=True`
+  are not in MASt3R's `sparse_global_alignment` signature. They were
+  silently dropped before, now they're not passed at all.
+- **Added MASt3R params to the UI:** `subsample` (8), `kinematic_mode`
+  (hclust-ward / mst / hclust-complete / hclust-average / hclust-single),
+  `opt_pp` (refine principal point), `opt_depth` (refine per-pixel depth),
+  `loss_dust3r_w` (0.01).
+- **Added 3DGS training params to the UI:** `sh_degree` (0-3 dropdown),
+  `antialiasing` (Mip-NeRF 360 filter), `white_background` (for object
+  captures on white backdrops), `opacity_reset_interval` (3000 default).
+- **Fixed orbit render:** v1 used a hand-rolled camera path with
+  OpenGL/OpenCV coordinate confusion. v2 uses the upstream's
+  `generate_ellipse_path_from_camera_infos` (copied inline from the
+  nerlfield/gaussian-splatting fork) which generates a proper ellipse
+  through the training-view centroid using the COLMAP poses.
+- **num_orbit_frames slider** (30-240, default 120) for the orbit MP4.
+- **info= tooltips on all STEP 6/7 form params:** 30 new tooltips.
+
+**Total improvements:**
+- 8 new Gradio sliders/checkboxes/dropdowns in NoPoSplat UI
+- 11 new Gradio sliders/checkboxes/dropdowns in WildGS UI
+- 49 new info= tooltips across both notebooks (3+4 → 27+47)
+- 0 new QA findings (only the pre-existing MOSS-TTS HF cache warning remains)
+
 ### Wild Gaussian Splatting — New notebook: Video / Image Folder → 3DGS (CC BY-NC-SA + INRIA)
 New notebook at `WildGaussianSplatting_Colab.ipynb`. The closest open-source
 equivalent to a Luma Labs Capture / Genie workflow: upload a casual video or a
