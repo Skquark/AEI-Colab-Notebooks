@@ -39,6 +39,7 @@ NOTEBOOKS = [
     ('SplatTransform_Colab.ipynb',   'authored'),
     ('MOSS-TTS_Colab.ipynb',         'authored'),
     ('MisoTTS_Colab.ipynb',          'authored'),
+    ('NoPoSplat_Colab.ipynb',        'authored'),
     ('Notebook_Generator.ipynb',      'authored'),
     ('OpenVoice-V2_Colab.ipynb',      'authored'),
     ('Pixal3D_Colab.ipynb',          'preexisting'),

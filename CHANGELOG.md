@@ -5,6 +5,46 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### NoPoSplat — New notebook: 2-3 Photos → 3DGS, pose-free (MIT, ICLR 2025)
+New notebook at `NoPoSplat_Colab.ipynb`. The closest open-source equivalent
+to a Luma-style "upload photos, get 3DGS" workflow. Feed-forward model:
+2-3 unposed, uncalibrated images in → complete 3DGS scene out in ~10s on T4.
+
+- **9-cell standard pattern** (matches `tools/validate.py`): `view-in-github`,
+  `header`, `step1-install`, `step2-cache`, `step3-core`, `step4-ui`,
+  `step5-keepalive`, `step6-quicktest`, `step7-batch`.
+- **STEP 1 — install + repo + checkpoint.** torch 2.4.1+cu121 + torchvision
+  0.19.1 (pinned — newer breaks `torchvision.transforms.functional` imports
+  the upstream uses), `git clone --depth=1` the MIT upstream, install
+  requirements (skips the broken `sql` line), optional RoPE CUDA kernel build
+  (~1-2 min), download `mixRe10kDl3dv_512x512.ckpt` (2.3 GB) to Drive cache.
+- **STEP 2 — imports + lazy encoder cache.** Uses `get_encoder(cfg)` and
+  `checkpoint_filter_fn` from the upstream. Encoder cached per (ckpt, size,
+  max_views) so subsequent Gradio clicks are instant. Defines
+  `_load_image()` (BICUBIC resize, pad to 32-multiple) + `_build_context()`
+  that builds the `BatchedViews` dict the encoder expects.
+- **STEP 3 — core helpers.** `run_single_pair()` writes one `.ply`;
+  `run_batch()` processes a folder of images into all C(N,2) pairs;
+  `_mirror_to_drive()` with the same-path-skip pattern.
+- **STEP 4 — Gradio UI.** Multi-file upload (2-3 images), checkpoint dropdown
+  (5 options, auto-downloads on first use), image size slider (128-512),
+  Drive-mirror toggle, preview pane with file links to
+  supersplat.dev / playcanvas.com/viewer.
+- **STEP 5 — keep-alive** (12 h, matches other Colab notebooks).
+- **STEP 6 — Colab-side single-pair picker** (12 form params + 1 button).
+- **STEP 7 — Colab-side folder batch** (12 form params + 1 button).
+- **Custom `_gaussians_to_ply()` writer** that emits a binary 3DGS PLY
+  (positions + scales + rotations + SH DC + opacities) that any 3DGS viewer
+  (SuperSplat, splat-transform, gsplat.js, PlayCanvas) can read.
+- **Pipeline diagram** in `header`: `NoPoSplat → SplatTransform STEP 3 →
+  Asset_Library_Browser → Three.js / WebGPU game engine`. NoPoSplat's output
+  feeds straight into our existing game-ready pipeline.
+- **License posture:** the notebook is MIT (upstream MIT). The MASt3R
+  backbone weights are CC BY-NC-SA 4.0 (we only consume them for inference,
+  never train, never redistribute). Output `.ply` files are fully yours.
+- **All 3 sliders/checkboxes have `info=` tooltips** (UI polish). 9
+  try/except blocks. Drive cache set BEFORE any `huggingface_hub` import.
+
 ### SkinTokens — New notebook: Mesh to Rig with TokenRig (VAST-AI, MIT)
 New notebook at `SkinTokens_Colab.ipynb`. The [official HF Space](https://huggingface.co/spaces/VAST-AI/SkinTokens)
 ships a polished Gradio demo, but it's ZeroGPU-only and not runnable in free Colab.

@@ -16,6 +16,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Hunyuan3D-2.1 — Tencent PBR 3D Pipeline *(flagship)*](#hunyuan3d-21--tencent-pbr-3d-pipeline-flagship)
 - [Hunyuan3D-2 — Tencent Image / Text-to-3D](#hunyuan3d-2--tencent-image--text-to-3d)
 - [TripoSplat — Image to 3D Gaussians (TripoAI/VAST-AI)](#triposplat--image-to-3d-gaussians-mit)
+- [NoPoSplat — 2-3 Photos → 3DGS, pose-free (MIT, ICLR 2025)](#noposplat--2-3-photos--3dgs-pose-free-mit-iclr-2025)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
@@ -363,6 +364,54 @@ The notebook auto-detects GPU and warns if VRAM is below 20 GB.
 ### License
 
 [MIT](https://huggingface.co/VAST-AI/TripoSplat) — model + code commercial-OK.
+
+---
+
+## NoPoSplat — 2-3 Photos → 3DGS, pose-free (MIT, ICLR 2025)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/NoPoSplat_Colab.ipynb)
+
+**[NoPoSplat](https://noposplat.github.io/)** (Botao Ye et al., NVIDIA + ETH Zurich, ICLR 2025 Oral) is a feed-forward 3DGS reconstruction model: **upload 2-3 unposed, uncalibrated photos of a scene → get a complete 3D Gaussian Splat scene back in ~10 seconds**. No COLMAP, no bundle adjustment, no per-scene optimization. The closest open-source equivalent to a Luma-style "upload photos, get 3DGS" workflow.
+
+The model is a ViT-L encoder (built on the MASt3R backbone) with four heads: a 3D point head (DPT), a Gaussian parameter head (DPT-GS), a second-view head, and a **Unified Gaussian Adapter** that fuses both views' predictions into a single 3DGS scene in a canonical frame. Critically, NoPoSplat is **pose-free**: it does not require camera extrinsics or intrinsics as input.
+
+### When to use NoPoSplat vs TripoSplat
+* **TripoSplat** — single image → 3DGS via a learned generative prior. Best for imagined/photographic scenes where you only have one photo. ~30-60s.
+* **NoPoSplat (this notebook)** — 2-3 unposed photos → real 3DGS via direct reconstruction. Best for capturing real places/objects with a phone. ~10-20s.
+* **WildGaussianSplatting** (planned) — video → 3DGS via MASt3R pose + per-scene 3DGS optimization. Best for high-fidelity capture from video. 5-15 min.
+
+### What you get
+* **Input:** 2 or 3 images (`.jpg` / `.png`) of the same scene from different viewpoints
+* **Output:** a real 3DGS scene (`.ply`, ~200-500 MB for 30k-100k Gaussians) + predicted camera poses
+* **Runtime:** ~10 seconds for 2 views at 256×256, ~20-30 seconds for 2 views at 512×512 (T4)
+* **VRAM:** ~6-10 GB on T4 (model is ~1.1B parameters at bf16)
+
+### Pipeline
+```
+NoPoSplat (this notebook)  →  .ply  →  SplatTransform_Colab STEP 3  →  SOG/SPLAT/SPZ/GLB
+                                                ↓
+                                  Asset_Library_Browser_Colab
+                                                ↓
+                                  Three.js / WebGPU game engine
+```
+
+### Checkpoints (all MIT, hosted on 🤗 botaoye/NoPoSplat)
+* `mixRe10kDl3dv_512x512.ckpt` — SOTA, 2 views at 512² (2.3 GB) — **default**
+* `mixRe10kDl3dv.ckpt` — 2 views at 256², faster
+* `re10k_3views.ckpt` — 3 views at 256²
+* `re10k.ckpt` — 2 views at 256², RealEstate10K only
+* `acid.ckpt` — 2 views at 256², ACID dataset
+
+### License
+* **Notebook + code:** MIT (upstream [cvg/NoPoSplat](https://github.com/cvg/NoPoSplat))
+* **MASt3R backbone weights (CC BY-NC-SA 4.0):** the ViT-L weights NoPoSplat's encoder was fine-tuned from. Consumed for inference only. If you need a fully-commercial pipeline, see the [WildGaussianSplatting notebook](#) (same backbone, different downstream path).
+* **Your output (.ply, camera poses):** yours, no restriction.
+
+### Related notebooks
+* **TripoSPlat** — image → 3DGS, MIT, single image
+* **WildGaussianSplatting** (planned) — video → 3DGS with per-scene optimization, non-commercial
+* **SplatTransform** — post-process 3DGS for game engines (SOG/SPLAT/SPZ/GLB)
+* **Asset_Library_Browser** — browse, tag, and ship your rigged library to a game engine
 
 ---
 
