@@ -17,6 +17,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Hunyuan3D-2 — Tencent Image / Text-to-3D](#hunyuan3d-2--tencent-image--text-to-3d)
 - [TripoSplat — Image to 3D Gaussians (TripoAI/VAST-AI)](#triposplat--image-to-3d-gaussians-mit)
 - [NoPoSplat — 2-3 Photos → 3DGS, pose-free (MIT, ICLR 2025)](#noposplat--2-3-photos--3dgs-pose-free-mit-iclr-2025)
+- [Wild Gaussian Splatting — Video / Image Folder → 3DGS (MASt3R + INRIA)](#wild-gaussian-splatting--video--image-folder--3dgs-cc-by-nc-sa--inria)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
@@ -410,6 +411,67 @@ NoPoSplat (this notebook)  →  .ply  →  SplatTransform_Colab STEP 3  →  SOG
 ### Related notebooks
 * **TripoSPlat** — image → 3DGS, MIT, single image
 * **WildGaussianSplatting** (planned) — video → 3DGS with per-scene optimization, non-commercial
+* **SplatTransform** — post-process 3DGS for game engines (SOG/SPLAT/SPZ/GLB)
+* **Asset_Library_Browser** — browse, tag, and ship your rigged library to a game engine
+
+---
+
+## Wild Gaussian Splatting — Video / Image Folder → 3DGS (CC BY-NC-SA + INRIA)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/WildGaussianSplatting_Colab.ipynb)
+
+> **⚠️ License notice:** This notebook is for **research and evaluation only**. The 3DGS
+> training uses the original [INRIA Gaussian-Splatting License](https://github.com/graphdeco-inria/gaussian-splatting/blob/main/LICENSE.md)
+> (non-commercial, requires written consent from Inria for commercial use). The
+> MASt3R backbone is **CC BY-NC-SA 4.0** by Naver. Your output `.ply` / `.mp4` is
+> yours, but do not use the trained scenes commercially without obtaining appropriate
+> licenses. See the full license breakdown in the notebook header.
+
+**[Wild Gaussian Splatting](https://github.com/nerlfield/wild-gaussian-splatting)**
+(Daniel Kovalenko, reface.ai) is the closest open-source equivalent to a **Luma Labs
+Capture / Genie** workflow: upload a casual video or a folder of overlapping photos,
+get a polished 3DGS scene back. It chains [MASt3R](https://github.com/naver/mast3r)
+(Naver, ICLR 2025) for pose + point cloud estimation with the original
+[INRIA 3DGS](https://github.com/graphdeco-inria/gaussian-splatting) training loop,
+producing a real 3DGS scene (not just novel-view video) in 5-15 minutes on a T4.
+
+### How it works
+
+1. **Frame extraction** (if you uploaded a video) → save to a folder
+2. **MASt3R alignment** → predict camera poses, intrinsics, depth, and per-image point clouds jointly
+3. **COLMAP-format export** → write `cameras.txt`, `images.txt`, `points3D.ply` so the 3DGS loader can read them
+4. **3DGS training** → 3,000-30,000 iterations of the original INRIA densify/prune loop
+5. **Render an orbit video** → MP4 of the final scene
+6. **Output:** `point_cloud.ply` (real 3DGS) + `cameras.json` + `renders.mp4` + per-frame PNGs
+
+### When to use this vs NoPoSplat
+* **NoPoSplat** — 2-3 unposed photos → real 3DGS in ~10 seconds. MIT-licensed notebook; output is yours. No INRIA / non-commercial baggage.
+* **Wild Gaussian Splatting (this notebook)** — video / image folder → real 3DGS in 5-15 min with proper per-scene optimization. Higher fidelity than NoPoSplat but inherits non-commercial licenses. Best for hero / portfolio assets.
+* **TripoSPlat** — single image → 3DGS via learned generative prior. Best for imagined / single-photo scenes. MIT, fully commercial-OK.
+
+### Pipeline
+```
+Wild Gaussian Splatting (this notebook)  →  .ply + .mp4
+                                                ↓
+                                  SplatTransform_Colab STEP 3  →  SOG/SPLAT/SPZ/GLB
+                                                ↓
+                                  Asset_Library_Browser_Colab
+                                                ↓
+                                  Three.js / WebGPU game engine
+```
+
+### Requirements
+* **GPU:** NVIDIA, ≥ 12 GB VRAM (T4 15 GB works for ≤15 frames; L4/A100 needed for longer clips)
+* **RAM:** ≥ 12 GB
+* **Disk:** ≈ 10 GB free (PyTorch + CUDA + 2.75 GB MASt3R + 2.29 GB DUSt3R + working space)
+* **ffmpeg** (`apt-get install ffmpeg`) — required for video frame extraction and MP4 render
+* **Time on first run:** 8-12 min (PyTorch + diff-gaussian-rasterization + simple-knn compile + checkpoints)
+* **Time on subsequent runs:** 2-3 min (everything cached in your Drive)
+* **Per-scene runtime:** 5-15 min for ≤15 frames, ~1 min per additional 5 frames
+
+### Related notebooks
+* **NoPoSplat** — 2-3 photos → 3DGS in ~10s (MIT, faster but lower fidelity)
+* **TripoSPlat** — single image → 3DGS (MIT, generative prior)
 * **SplatTransform** — post-process 3DGS for game engines (SOG/SPLAT/SPZ/GLB)
 * **Asset_Library_Browser** — browse, tag, and ship your rigged library to a game engine
 

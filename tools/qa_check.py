@@ -55,6 +55,7 @@ NOTEBOOKS = [
     ('Wan2.2_Animate_Colab.ipynb',    'authored'),
     ('Wan2.2_Colab.ipynb',           'authored'),
     ('Wan2.2_S2V_Colab.ipynb',        'authored'),
+    ('WildGaussianSplatting_Colab.ipynb', 'authored'),
     ('dots.tts-soar_Colab.ipynb',    'authored'),
 ]
 

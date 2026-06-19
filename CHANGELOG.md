@@ -5,6 +5,44 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Wild Gaussian Splatting — New notebook: Video / Image Folder → 3DGS (CC BY-NC-SA + INRIA)
+New notebook at `WildGaussianSplatting_Colab.ipynb`. The closest open-source
+equivalent to a Luma Labs Capture / Genie workflow: upload a casual video or a
+folder of overlapping photos, get a polished 3DGS scene back in 5-15 minutes on a T4.
+
+**License posture:** the wrapper is Apache-2.0 (per upstream README). The 3DGS
+training is the original [INRIA implementation](https://github.com/graphdeco-inria/gaussian-splatting)
+licensed under the **INRIA non-commercial research license** (commercial use requires
+written consent from Inria). The MASt3R backbone (used for pose + point cloud
+estimation) is **CC BY-NC-SA 4.0** by Naver. Same situation as our SuGaR/GauStudio
+notebooks — ship with prominent warning. Your output `.ply` / `.mp4` is yours.
+
+- **9-cell standard pattern** (matches `tools/validate.py`).
+- **STEP 1 — install + repo + checkpoints + 3DGS compile.** `apt-get install
+  ffmpeg` first, then torch 2.4.1+cu121, `git clone --recurse-submodules` the
+  upstream (3 submodules: dust3r, mast3r, gaussian-splatting), install top-level
+  + DUSt3R/MASt3R requirements (skips the broken `sql` line), build the RoPE
+  CUDA kernel (~1-2 min), `pip install -e` the two 3DGS submodules
+  (`diff-gaussian-rasterization` + `simple-knn`, ~3-5 min compile), download
+  MASt3R (2.75 GB) + DUSt3R (2.29 GB) checkpoints to Drive cache.
+- **STEP 2 — imports + lazy MASt3R model + shared pipeline.** Uses
+  `mast3r.model.load_model` + `mast3r.cloud_opt.sparse_ga.sparse_global_alignment`.
+  Defines `run_mast3r()` (image folder → COLMAP-format dataset),
+  `run_3dgs()` (subprocess wrapper around the upstream `train.py` with all the
+  lr/densify args), and `run_full_pipeline()` (chains both with a single call).
+  Custom COLMAP-format writer (cameras.txt, images.txt, points3D.ply) replaces
+  the real COLMAP binary which Colab doesn't have.
+- **STEP 3 — core helpers.** `extract_video_frames()` (ffmpeg), `run_single_scene()`,
+  `run_batch()` (auto-detects videos vs subdirs).
+- **STEP 4 — Gradio UI.** `gr.Video` upload + multi-file image upload,
+  iterations slider (3k-30k), image size dropdown (256/512), video fps slider,
+  Drive-mirror toggle. Generates `.ply` + orbit `.mp4` + preview pane.
+- **STEP 5 — keep-alive** (12 h, with repeated license reminder).
+- **STEP 6 — Colab single-scene picker** (5 form params + 1 button).
+- **STEP 7 — Colab batch** (5 form params + 1 button).
+- **All 4 sliders/checkboxes have `info=` tooltips** (UI polish). 10 try/except
+  blocks. Drive cache set BEFORE any downloads.
+
 ### NoPoSplat — New notebook: 2-3 Photos → 3DGS, pose-free (MIT, ICLR 2025)
 New notebook at `NoPoSplat_Colab.ipynb`. The closest open-source equivalent
 to a Luma-style "upload photos, get 3DGS" workflow. Feed-forward model:
