@@ -5,6 +5,70 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Polish pass: MapAnything + Pi3X (v2)
+
+Full review of both new 3DGS-from-images notebooks against the upstream APIs
+and the model cards. Adds the missing parameters, fixes the wrong defaults,
+and adds info= tooltips to all form controls.
+
+**MapAnything v2 (was 29 tips → now 64):**
+- **All upstream `model.infer()` params exposed:**
+  `ignore_depth_scale_inputs` and `ignore_pose_scale_inputs` were missing
+  (now added); `stride` (1-32, subsample every Nth image) was missing
+  (critical for long videos). `apply_confidence_mask` checkbox exposed.
+  `min_init_opacity` slider (0-1) wired into `write_colmap` to filter
+  `non_ambiguous_mask` → init_opacity for gsplat.
+- **`save_glb()` function added** mirroring upstream
+  `demo_inference_on_colmap_outputs.py --save_glb`. Trimesh PointCloud
+  export with colors from `img_no_norm`. Subsampled to 200k points to keep
+  file size <50 MB. Toggle in UI + form cells. Mirrored to Drive when enabled.
+- **Advanced "Input Ignore Flags" sub-accordion** in the Gradio UI for
+  the 5 `ignore_*_inputs` flags. Hidden by default, expanded for power users.
+- **PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True** set before any torch
+  import (Meta's recommended memory optimization for large view counts).
+- **4 viewers in `_splat_viewer_html`** (was 2): supersplat.dev,
+  playcanvas.com/viewer, gsplat.tech, plus the GLB link when enabled.
+- **Separate `gr.File` for the .glb** so users can download it independently.
+- **Gradio height: 900 → 1100** to fit the extra accordion without scrolling.
+- **info= tooltips on all 35 new form controls** in STEPs 4/6/7.
+
+**Pi3X v2 (was 26 tips → now 41):**
+- **Pi3X `metric` scaling factor applied** to the point cloud in
+  `write_colmap` (was being silently ignored). Multiplies points by
+  `results['metric'][0]` to convert from scale-invariant to true metric.
+  Without this, the entire scene was in arbitrary units.
+- **`interval` slider (1-60)** wired into `load_images_as_tensor(..., interval=N)`.
+  Upstream default for video is 10 (not 1). For 1 minute of 30 fps video at
+  1 fps = 1800 frames, `interval=10` = 180 frames (manageable).
+- **`conf_threshold` slider (0-0.95)** with sigmoid on raw confidence logits,
+  wired into `write_colmap` to filter low-confidence points. `conf_mask`
+  added to results dict.
+- **`max_points` slider (100k-5M)** subsamples `points3D.ply` to keep gsplat
+  happy. Long videos can produce 10M+ points; gsplat prefers ≤2M.
+- **`conditions_path` Textbox** for Pi3X multimodal prior injection
+  (`.npz` with pose/intrinsics/depth). Loaded with `np.load()` and passed
+  as `model(imgs, conditions=...)`. Only used when `use_multimodal=True`.
+- **`save_glb()` function added** mirroring upstream `example_mm.py --save_path`.
+  Single-image color (PIL resize) for the point cloud, subsampled to 200k pts.
+- **PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True** set before any torch
+  import (long-video memory optimization).
+- **Edge mask applied to point cloud** in `write_colmap` (was being computed
+  in `infer()` but never actually used for the COLMAP output).
+- **4 viewers in `_splat_viewer_html`** (was 2): supersplat.dev,
+  playcanvas.com/viewer, gsplat.tech, plus the GLB link.
+- **Separate `gr.File` for the .glb** so users can download it independently.
+- **Gradio height: 900 → 1100** to fit the extra controls.
+- **info= tooltips on all 15 new form controls** in STEPs 4/6/7.
+
+**Total improvements:**
+- 4 new Gradio controls + 1 Textbox in MapAnything UI
+- 5 new Gradio controls + 1 Textbox in Pi3X UI
+- 35 new info= tooltips in MapAnything (29 → 64)
+- 15 new info= tooltips in Pi3X (26 → 41)
+- 2 new utility functions (`save_glb`) in both notebooks
+- 2 new upstream param groups (`ignore_*_scale_inputs`, `conditions.npz`)
+- 0 new QA findings (only the pre-existing MOSS-TTS HF cache warning remains)
+
 ### Pi3X — New notebook: Video-Native 3DGS, Permutation-Equivariant (ICLR 2026)
 New notebook at `Pi3X_Colab.ipynb`. **[π³ / Pi3X](https://yyfz.github.io/pi3/)**
 is a feed-forward neural network for visual geometry reconstruction from
