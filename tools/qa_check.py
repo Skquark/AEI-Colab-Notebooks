@@ -52,6 +52,7 @@ NOTEBOOKS = [
     ('SuGaR_Colab.ipynb',            'authored'),
     ('TTS_Model_Loader.ipynb',       'authored'),
     ('TTS_Voice_Library.ipynb',      'authored'),
+    ('TextureMapPrep_Colab.ipynb',    'authored'),
     ('TripoSplat_Colab.ipynb',       'authored'),
     ('VoxCPM2_Colab.ipynb',          'authored'),
     ('Wan2.2_Animate_Colab.ipynb',    'authored'),

@@ -20,6 +20,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Wild Gaussian Splatting — Video / Image Folder → 3DGS (MASt3R + INRIA)](#wild-gaussian-splatting--video--image-folder--3dgs-cc-by-nc-sa--inria)
 - [MapAnything — Universal 3DGS-from-Images (Meta, Apache 2.0)](#mapanything--universal-3dgs-from-images-meta-apache-20)
 - [Pi3X — Video-Native 3DGS, Permutation-Equivariant (BSD-3 + CC BY-NC-4.0)](#pi3x--video-native-3dgs-permutation-equivariant-bsd-3--cc-by-nc-40)
+- [TextureMapPrep — Seamless PBR Maps for Game Assets](#texturemapprep--seamless-pbr-maps-for-game-assets)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
@@ -588,8 +589,125 @@ gsplat (1-3 min training on T4)
 * **MapAnything** — universal 3DGS-from-images, Apache 2.0 (commercial-OK alternative)
 * **WildGaussianSplatting** — video → 3DGS with per-scene optimization, CC BY-NC-SA + INRIA
 * **NoPoSplat** — 2-3 photos → 3DGS in ~10s, MIT
+* **TextureMapPrep** — generate the 6 PBR maps (albedo+normal+depth+height+rough+metal) from an albedo
 * **SplatTransform** — post-process 3DGS for game engines (SOG/SPLAT/SPZ/GLB)
 * **Asset_Library_Browser** — browse, tag, and ship your library to a game engine
+
+---
+
+## TextureMapPrep — Seamless PBR Maps for Game Assets
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/TextureMapPrep_Colab.ipynb)
+
+**[Marigold](https://marigoldcomputervision.github.io/) + [LOTUS](https://lotus3d.github.io/) +
+[OpenCV](https://opencv.org/) + [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)**
+all wired into a single batch pipeline for converting one or many seamless **albedo**
+PNG textures into the full **6-map PBR set** your game engine expects:
+
+* **albedo** (base color, sRGB)
+* **normal** (tangent-space, OpenGL convention — flip Y in Unity)
+* **depth** (linear, 16-bit PNG)
+* **height** (for displacement, derived from normal via Poisson)
+* **roughness** (R channel, linear — from Marigold appearance IID)
+* **metallic** (R channel, linear — from Marigold appearance IID)
+
+…and then optionally upscales **every map** with Real-ESRGAN (2x or 4x) while
+preserving the seamless wraparound.
+
+## Why these models
+
+* **[Marigold v1.1](https://huggingface.co/prs-eth/marigold-depth-v1-1)** (PRS-ETH,
+  CVPR 2024 Oral, Best Paper Candidate) — Apache-2.0 code, RAIL++-M weights.
+  One unified `diffusers` API for depth + surface normals + intrinsic image
+  decomposition (albedo + roughness + metallic). Already in the diffusers core.
+* **[LOTUS v1](https://lotus3d.github.io/)** (EnVision Research, ICLR 2025) —
+  Apache-2.0 code + weights. The depth + normal model the
+  [PBRFusion4DepthDemo-InstNorm](https://huggingface.co/spaces/NightRaven109/PBRFusion4DepthDemo-InstNorm)
+  space uses. Comparable quality to Marigold, different architecture.
+  Single-step inference = ~5x faster than standard diffusion-based methods.
+* **[FLUX 2-klein-4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-4B) +
+  [NightRaven109/kleinalbedo4B5ksteps](https://huggingface.co/NightRaven109/kleinalbedo4B5ksteps)**
+  (Apache-2.0) — the optional Albedo path from
+  [PBRFusion4AlbedoKlein](https://huggingface.co/spaces/NightRaven109/PBRFusion4AlbedoKlein).
+  Generates a clean, shadowless albedo from the input. ~8 GB. Off by default.
+* **[OpenCV](https://opencv.org/)** (Apache-2.0) — classic normal-from-albedo
+  (Sobel gradient), normal-from-depth (cross product on 3D points),
+  height-from-normal (Poisson reconstruction via FFT), tile-wrap for seamless
+  textures, all the basic PBR image ops.
+* **[Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)** (BSD-3, 35.9k stars,
+  on PyPI as `realesrgan`) — the standard 2x/4x texture super-resolution. Uses
+  `BORDER_WRAP` for seamless upscaling.
+
+## How it differs from our other 3D/texture notebooks
+
+| Notebook | Purpose |
+|---|---|
+| **Mesh_Optimizer** | post-process 3D meshes (decimate, repair, UV-unwrap, ground) |
+| **SplatTransform** | 3DGS asset post-processor (SOG/SPLAT/SPZ) |
+| **SkinTokens** | generate rigged characters from meshes |
+| **Asset_Library_Browser** | browse, tag, and ship your 200+ assets |
+| **TextureMapPrep (this)** | generate PBR map sets from albedo images |
+
+This notebook slots in **before** a textured mesh enters `Mesh_Optimizer` /
+`Pixal3D_Colab` / your game engine — it's the "I have an albedo, give me
+the other 5 maps" stage.
+
+## Pipeline diagram
+
+```
+seamless albedo.png  (one or many)
+       ↓
+[1] Marigold Depth       →  depth.png (16-bit)
+[1] Marigold Normals     →  normal_map (used directly)
+[1] Marigold IID         →  albedo_intrinsic, roughness, metallic
+[1] (optional) FLUX Albedo  →  cleaner albedo_shadowless.png
+       ↓
+[2] OpenCV fallbacks     →  normal-from-albedo (if no normals)
+                            normal-from-depth (verification)
+                            height-from-normal (Poisson)
+                            displacement.png
+       ↓
+[3] Real-ESRGAN 2x/4x    →  every map upscaled
+                            (BORDER_WRAP to preserve seamless)
+       ↓
+/content/PBR_Out/<slug>/
+  ├── albedo.png
+  ├── albedo_shadowless.png  (if FLUX path)
+  ├── normal.png
+  ├── depth.png
+  ├── height.png
+  ├── displacement.png
+  ├── roughness.png
+  ├── metallic.png
+  └── 2x/  or  4x/  (if upscaled)
+```
+
+## Requirements
+* **GPU:** NVIDIA, ≥ 8 GB VRAM (T4 15 GB works for all paths except FLUX 2-klein
+  which needs ~10 GB; FLUX is disabled by default on T4)
+* **RAM:** ≥ 12 GB
+* **Disk:** ≈ 5 GB free (PyTorch + diffusers + Marigold ~1.4 GB + LOTUS ~1.4 GB +
+  Real-ESRGAN ~64 MB; FLUX 2-klein adds ~8 GB if enabled)
+* **Time on first run:** 8-12 min (PyTorch + diffusers + all models)
+* **Time on subsequent runs:** 1-2 min (everything cached in your Drive)
+* **Per-texture runtime:** ~3-10 s for Marigold paths, ~20-40 s for FLUX path,
+  ~1-2 s per upsample
+
+## Where it fits in our pipeline
+```
+TextureMapPrep (this notebook)
+   →  6 PBR maps per texture
+   →  Mesh_Optimizer (if you want a quick preview mesh)
+   →  Pixal3D_Colab / Hunyuan3D (full 3D from your PBR maps)
+   →  Asset_Library_Browser
+   →  Three.js / WebGPU game engine
+```
+
+> **⚠️ License note:** Marigold code is **Apache-2.0**, Marigold model weights are
+> **RAIL++-M** (research + commercial w/ safety conditions). LOTUS is **Apache-2.0**
+> (code + weights). FLUX 2-klein-4B is **Apache-2.0**. Real-ESRGAN is **BSD-3**.
+> OpenCV is **Apache-2.0**. Most output maps are yours to use freely; the
+> Marigold weights carry RAIL++-M conditions (mainly about safety classifiers).
 
 ---
 

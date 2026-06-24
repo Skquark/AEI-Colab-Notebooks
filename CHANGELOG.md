@@ -69,6 +69,87 @@ and adds info= tooltips to all form controls.
 - 2 new upstream param groups (`ignore_*_scale_inputs`, `conditions.npz`)
 - 0 new QA findings (only the pre-existing MOSS-TTS HF cache warning remains)
 
+### TextureMapPrep — New notebook: Seamless PBR Maps for Game Assets
+New notebook at `TextureMapPrep_Colab.ipynb`. Unified batch pipeline for
+converting seamless albedo PNGs into the full **6-map PBR set** (albedo,
+normal, depth, height, roughness, metallic) plus optional Real-ESRGAN 2x/4x
+upscale. Inspired by the
+[NightRaven109/PBRFusion](https://huggingface.co/spaces/NightRaven109/PBRFusion4AlbedoKlein)
+HF spaces (LOTUS depth + FLUX Albedo LoRA + CCSR upscale) but unified through
+the **Marigold** diffusers API instead of three separate frameworks.
+
+**Framework choice (Marigold-first):**
+The PBRFusion spaces use 3 separate models assembled ad-hoc. Marigold (PRS-ETH,
+CVPR 2024 Oral) gives us depth + surface normals + intrinsic image
+decomposition (albedo + roughness + metallic) through **one unified diffusers
+API**. Code is Apache-2.0, model weights are RAIL++-M (commercial w/ safety
+conditions). Already in the diffusers core. This makes the notebook ~3 GB
+total + much simpler glue code. LOTUS (Apache-2.0) and FLUX 2-klein (Apache-2.0)
+are kept as alternative / opt-in paths.
+
+**Model inventory:**
+* **Marigold v1.1** (`prs-eth/marigold-{depth,normals,iid-appearance,iid-lighting}-v1-1`)
+  - Apache-2.0 code, RAIL++-M weights. The main path.
+* **LOTUS v1** (`jingheya/lotus-{depth-g-v2-1-disparity,normal-g-v1-1}`)
+  - Apache-2.0 (code+weights). Alternative depth+normals; same architecture
+  the PBRFusion4DepthDemo-InstNorm space uses. Single-step diffusion.
+* **FLUX 2-klein-4B** + Albedo LoRA - Apache-2.0. Optional clean-albedo path
+  (off by default; needs ~8 GB VRAM). Same Albedo LoRA as PBRFusion4AlbedoKlein.
+* **OpenCV** (Apache-2.0) - Sobel normal-from-albedo, cross-product
+  normal-from-depth, FFT-based Poisson height-from-normal, tile-wrap for seamless
+  handling, all the basic PBR image ops.
+* **Real-ESRGAN** (BSD-3, 35.9k stars, on PyPI) - 2x / 4x texture upscale
+  with BORDER_WRAP for seamless preservation.
+* **scikit-image** (BSD-3) - Poisson reconstruction utilities (inpaint_biharmonic fallback).
+
+- **9-cell standard pattern** (matches `tools/validate.py`): `view-in-github`,
+  `header`, `step1-install`, `step2-cache`, `step3-core`, `step4-ui`,
+  `step5-keepalive`, `step6-quicktest`, `step7-batch`.
+- **STEP 1 - install + clone.** torch 2.5.1+cu121, diffusers>=0.30 (Marigold
+  pipelines landed in 0.28), `realesrgan` from PyPI, git-clone
+  `EnVision-Research/Lotus`. Pre-downloads all 4 Marigold checkpoints
+  + 4 LOTUS checkpoints to Drive cache.
+- **STEP 2 - imports + lazy model cache.** Imports `MarigoldDepthPipeline`,
+  `MarigoldNormalsPipeline`, `MarigoldIntrinsicsPipeline` from diffusers,
+  `LotusGPipeline`/`LotusDPipeline` from the cloned repo, cv2, PIL,
+  `inpaint_biharmonic`, `RealESRGANer`, RRDBNet. Defines:
+  - `get_marigold(task)` / `get_lotus(task, mode)` / `get_flux_albedo()` /
+    `get_realesrgan(scale)` - lazy model cache, local-snapshot aware.
+  - `infer_depth_marigold(img, ...)` / `infer_normals_marigold(img, ...)` /
+    `infer_iid_marigold(img, model, ...)` - Marigold inference wrappers
+    with seamless wrap + crop.
+  - `infer_depth_lotus(img, ...)` / `infer_normals_lotus(img, ...)` - LOTUS
+    inference wrappers.
+  - `infer_albedo_flux(img, ...)` - FLUX 2-klein + Albedo LoRA + Reinhard
+    color match.
+  - `seamless_wrap(img, border_px)` - cv2 `BORDER_WRAP` wrap-then-crop.
+  - `normal_from_albedo(albedo, strength)` - OpenCV Sobel gradient.
+  - `normal_from_depth(depth, fx, fy, cx, cy, strength)` - OpenCV 3D
+    point-cloud cross product.
+  - `height_from_normal(normal)` - FFT-based Poisson reconstruction.
+  - `displacement_from_height(height, scale)` - scale + offset.
+  - `upscale_image(img, scale, seamless_border)` - Real-ESRGAN with wrap.
+- **STEP 3 - core helpers.** `run_full_pbr(image_path, output_dir, **kwargs)`
+  writes a 6-PBR-map set per texture. `run_batch(input_dir, output_dir, **kwargs)`
+  processes a folder (skips already-done via `meta.json`). Plus
+  `normal_to_opengl()` / `normal_to_directx()` and `make_seamless_check()`.
+- **STEP 4 - Gradio UI.** All params exposed: depth method (marigold/lotus/skip),
+  steps, ensemble, resolution; normal method (marigold/lotus/opencv-sobel/opencv-depth),
+  steps, ensemble, resolution, strength, convention (opengl/directx);
+  IID model (appearance/lighting), steps, ensemble, resolution;
+  FLUX albedo (toggle + width/height/steps/LoRA weight/color match);
+  height from normal (toggle + displacement scale); upscale factor (1/2/4);
+  seamless border (0-256). 4 viewers: albedo, normal, depth, output folder.
+- **STEP 5 - keep-alive** (12 h, with model-state summary).
+- **STEP 6 - Colab single-texture picker** (20 form params + 1 button,
+  FileLink for meta.json + per-texture folder).
+- **STEP 7 - Colab batch** (17 form params + 1 button, same workflow).
+- **57 info= tooltips** on all form controls. 14 try/except. Drive cache
+  set BEFORE any `huggingface_hub` import. `clear_output()` before
+  `demo.launch`. `default_concurrency_limit=2`. `demo.load` welcome.
+- **License summary in every cell's docstring** (Apache-2.0 + RAIL++-M +
+  BSD-3 + OpenCV + FLUX-2.0). All weights are pre-cached to Drive.
+
 ### Pi3X — New notebook: Video-Native 3DGS, Permutation-Equivariant (ICLR 2026)
 New notebook at `Pi3X_Colab.ipynb`. **[π³ / Pi3X](https://yyfz.github.io/pi3/)**
 is a feed-forward neural network for visual geometry reconstruction from
