@@ -69,6 +69,50 @@ and adds info= tooltips to all form controls.
 - 2 new upstream param groups (`ignore_*_scale_inputs`, `conditions.npz`)
 - 0 new QA findings (only the pre-existing MOSS-TTS HF cache warning remains)
 
+### Polish pass: TextureMapPrep v2 (post-review fixes)
+
+Full review of the new `TextureMapPrep_Colab.ipynb` against the upstream
+`diffusers` Marigold pipeline source. Found and fixed several issues:
+
+- **CRITICAL FIX: Marigold IID `prediction` is `np.ndarray`, NOT a dict.**
+  The v1 code did `iid['albedo']` / `iid['roughness']` / `iid['metallicity']` which
+  would have raised `KeyError` at runtime. The v1 docs confused `prediction` with
+  the output of `pipe.image_processor.visualize_intrinsics(...)` (which IS a
+  list of dicts, but visualized). Fixed by:
+  1. Reading `target_names` from `pipe.target_properties` (the model knows its
+     own target order: `[albedo, roughness, metallicity]` for appearance,
+     `[albedo, shading, residual]` for lighting).
+  2. Slicing `out.prediction` of shape `(N*T, H, W, 3)` by index, returning
+     a proper `dict[str, HxWx3 float32]`.
+- **Added `ensembling_kwargs` (`reduction` radio button).** 'median' (default)
+  or 'mean' for depth/IID ensembles. The v1 code had `reduction` only on
+  the depth path. Now all 3 Marigold paths (depth/normals/IID) expose it.
+- **Added `output_uncertainty` toggle** for depth (with the upstream
+  requirement that `ensemble_size >= 3`). Saves `uncertainty_depth.png`
+  showing per-pixel predictive uncertainty.
+- **Added `resample_method` (bilinear/bicubic/nearest/nearest-exact/area)**
+  radio for all 3 Marigold paths. Default is 'bicubic' for best quality.
+- **Added `use_input_albedo_as_is` toggle.** When OFF (default), saves
+  Marigold IID's intrinsic albedo (linear -> sRGB) as `albedo.png` (removes
+  baked lighting, gives a cleaner PBR albedo). When ON, saves the input
+  image verbatim. The intrinsic albedo is ALWAYS saved as
+  `albedo_intrinsic.png` for comparison.
+- **Added `seed` parameter** for reproducibility across all 3 Marigold
+  pipelines (LOTUS already had it).
+- **Added `seed` to the metadata.json** so each run is reproducible.
+- **Normal-to-uint8 conversion now uses `np.clip`** to avoid values outside
+  [0, 255] from float drift.
+- **Height-from-normal uses FFT-based Poisson** (skimage was imported but
+  unused; replaced with the same approach used in MapAnything/Pi3X).
+- **Reduced vertical density of STEPS for IID appearance vs lighting** so
+  the IID slider block is cleaner.
+
+- **9-cell standard pattern** (matches `tools/validate.py`).
+- **94 info= tooltips** on all form controls (was 57 in v1).
+- **15 try/except** blocks.
+- All Y's (Drive cache, concurrency_limit, clear_output, demo.load welcome).
+- **FileLink in Step 6** (output folder + meta.json).
+
 ### TextureMapPrep — New notebook: Seamless PBR Maps for Game Assets
 New notebook at `TextureMapPrep_Colab.ipynb`. Unified batch pipeline for
 converting seamless albedo PNGs into the full **6-map PBR set** (albedo,
