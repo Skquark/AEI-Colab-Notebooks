@@ -5,6 +5,86 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### New notebook: HY-World 2.0 (Tencent-Hunyuan, WorldMirror 2.0)
+
+Adds **HY-World-2.0_Colab.ipynb**, a Colab port of the official
+[Tencent-Hunyuan/HY-World-2.0](https://huggingface.co/tencent/HY-World-2.0)
+**WorldMirror 2.0** multi-modal world-reconstruction model.  Upload a
+handful of images (or a short video) and the model predicts a full 3D
+scene: point cloud + 3DGS PLY + GLB mesh + per-view depth + per-view
+surface normals + camera poses + Rerun recordings, viewable in-browser
+via `gradio_rerun`.
+
+**Weights:** `tencent/HY-World-2.0` → `HY-WorldMirror-2.0/model.safetensors`
+(5.05 GB fp32, ~1.2 B params).  The 17 B WorldStereo and 80 B HY-Pano
+variants in the same repo are not runnable on a single 24 GB Colab GPU.
+
+**License — most restrictive of any notebook in the suite:**
+* Tencent HY-WORLD 2.0 **Community License** (Apache-2.0 for the code)
+* **Territory exclusion: EU, UK, South Korea** — not licensed at all
+* **>1 M MAU** requires separate commercial license from `hunyuan3d@tencent.com`
+* Otherwise permissive (commercial OK below 1 M MAU)
+* The verbatim §3(d) Notice text is included in STEP 2 for downstream
+  distributions, and the territory restriction is repeated in the header
+
+**Architecture decisions:**
+* **Pinned PyTorch 2.4.0 + cu124** to match the only available
+  `gsplat==1.5.3` wheel (`pt24cu124-cp310`).  The Space uses
+  `torch==2.8.0` to match a flash-attn wheel, but no gsplat wheel exists
+  for torch 2.8 — so flash-attn was incompatible.  We use the pre-built
+  gsplat wheel and let PyTorch SDPA on bf16 replace flash-attn at
+  inference time.
+* **Patched `hyworldmirror/models/layers/attention.py`**: replaces the
+  bf16/fp16 `flash_attn_func` branch with a single
+  `F.scaled_dot_product_attention` call.  The flash-attn import lines
+  at the top of the file are replaced with a stub that raises on
+  call.  The original file is backed up to `attention.py.bak`.  This
+  is a 4-line functional change with a `.bak` rollback available.
+* **Pinned Gradio 6.12.0 + gradio_rerun 0.32.2**.  The Space is on
+  Gradio 6.12.0; `gradio_rerun` requires `gradio>=6.0.0`.  All other
+  AEI notebooks stay on 5.49.1.  In Gradio 6.x, `theme=` and `css=`
+  are passed to `.launch()` (not `gr.Blocks()`).
+* **git-clones the Space repo** (`prithivMLmods/HY-World-2.0-Demo`)
+  into `/content/hyworld_work/hyworldmirror_repo/` to get the
+  vendored `hyworldmirror/` package — there's no PyPI release.
+* Also clones [Tencent-Hunyuan/HY-World-2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0)
+  for the README + License + usage examples.
+
+**Polish state (10 tips, 32 try, 30 except, all Y's):**
+* 9-cell Pixal3D pattern (view-in-github, header, step1-step7)
+* Tooltips on every `gr.Slider` / `gr.Checkbox` / `gr.File` / `gr.Dropdown`
+* Drive cache prologue (HF_HOME, HUGGINGFACE_HUB_CACHE) before any HF
+  import
+* `clear_output()` + `clear_output(wait=True)` before `demo.launch`
+* `default_concurrency_limit=2`, `demo.load` welcome, `gr.DownloadButton`
+  for GLB + PLY + RRD + zipped folder
+* `save_gs_ply_aes()` writes a 3DGS binary PLY matching the upstream
+  format (x,y,z, nx,ny,nz, f_dc_0..2, opacity, scale_0..2, rot_0..3)
+  that opens in SuperSplat, PlayCanvas, gsplat.js
+* `save_camera_params_json()` writes OpenCV c2w + K matrices
+* `_voxel_prune_gaussians()` caps the splat count, subsamples to a
+  user-controlled `max_gaussians` (default 2 M, max 5 M)
+* `free_cuda()` after every inference to keep batch loops stable
+* Per-view depth + normal galleries with prev/next navigation
+* STEP 7 batch processor with JSONL progress log + resume-after-disconnect
+
+**Outputs per scene:**
+```
+scene_<selector>.glb          # mesh (or point cloud)
+gaussians.ply                 # 3DGS splats (≤max_gaussians)
+depth_NNN.png + depth_NNN.npy # per-view depth (turbo colormap + raw metric)
+normal_NNN.png                # per-view normals
+camera_poses.json             # c2w + K per frame
+reconstruction.rrd            # Rerun 3D + cameras + normals
+gaussians.rrd                 # Rerun splat cloud
+```
+
+**First-run setup:** ~8 min (5 GB weight download + torch re-install +
+gsplat wheel).  Subsequent runs reuse the Drive cache and take ~30 s.
+
+**QA result:** passes `tools/validate.py` (AST-parse) and
+`tools/qa_check.py` (polish audit) cleanly.  Suite now at **38 notebooks**.
+
 ### Polish pass: MapAnything + Pi3X (v2)
 
 Full review of both new 3DGS-from-images notebooks against the upstream APIs

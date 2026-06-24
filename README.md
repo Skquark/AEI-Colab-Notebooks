@@ -20,6 +20,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Wild Gaussian Splatting — Video / Image Folder → 3DGS (MASt3R + INRIA)](#wild-gaussian-splatting--video--image-folder--3dgs-cc-by-nc-sa--inria)
 - [MapAnything — Universal 3DGS-from-Images (Meta, Apache 2.0)](#mapanything--universal-3dgs-from-images-meta-apache-20)
 - [Pi3X — Video-Native 3DGS, Permutation-Equivariant (BSD-3 + CC BY-NC-4.0)](#pi3x--video-native-3dgs-permutation-equivariant-bsd-3--cc-by-nc-40)
+- [HY-World 2.0 — WorldMirror 2.0 Multi-Modal World Reconstruction (Tencent-Hunyuan, ⚠️ territory-excluded)](#hy-world-20--worldmirror-20-multi-modal-world-reconstruction-tencent-hunyuan-territory-excluded)
 - [TextureMapPrep — Seamless PBR Maps for Game Assets](#texturemapprep--seamless-pbr-maps-for-game-assets)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
@@ -592,6 +593,133 @@ gsplat (1-3 min training on T4)
 * **TextureMapPrep** — generate the 6 PBR maps (albedo+normal+depth+height+rough+metal) from an albedo
 * **SplatTransform** — post-process 3DGS for game engines (SOG/SPLAT/SPZ/GLB)
 * **Asset_Library_Browser** — browse, tag, and ship your library to a game engine
+
+---
+
+## HY-World 2.0 — WorldMirror 2.0 Multi-Modal World Reconstruction (Tencent-Hunyuan, ⚠️ territory-excluded)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/HY-World-2.0_Colab.ipynb)
+
+A Colab port of the
+[Tencent-Hunyuan/HY-World-2.0](https://huggingface.co/tencent/HY-World-2.0)
+**WorldMirror 2.0** world-reconstruction model.  Upload a handful of images
+(or a short video) and the model predicts a full 3D scene in one forward pass:
+
+* 3D scene point cloud with per-view colors
+* 3DGS `.ply` (opens in [SuperSplat](https://supersplat.xyz) / PlayCanvas / gsplat.js)
+* GLB mesh (triangulated **or** colored point cloud)
+* Per-view depth maps (`.png` + raw metric `.npy`)
+* Per-view surface normals
+* Camera poses (OpenCV c2w + K matrices in `camera_poses.json`)
+* Two Rerun `.rrd` recordings (full 3D + splat cloud) for desktop viewing
+* In-browser 3D + splat visualisation via [`gradio_rerun`](https://pypi.org/project/gradio_rerun/)
+
+### How it differs from our other 3DGS-from-X notebooks
+
+| Notebook | Inputs | Speed | Pose-free | Splat output | License |
+|---|---|---|---|---|---|
+| **HY-World 2.0** | images **or** video | ~10 s | yes | yes (native) | ⚠️ Tencent (EU/UK/KR excluded) |
+| **MapAnything** | 1-100 images | ~10 s | yes | yes (via colmap→gsplat) | Apache 2.0 |
+| **NoPoSplat** | 2-3 photos | ~10 s | yes | yes (native) | MIT |
+| **Pi3X** | 5-60 video frames | ~15 s | yes | yes (via colmap→gsplat) | BSD-3 code / CC BY-NC-4.0 weights |
+| **WildGaussianSplatting** | image folder / video | 5-15 min | no (SfM first) | yes (per-scene train) | CC BY-NC-SA + INRIA |
+| **TripoSplat** | text / image | ~10 s | yes | yes (native) | MIT |
+
+WorldMirror is the only model in the suite that **also outputs a complete
+3D mesh, normals, and depth maps** in a single forward pass.  Trade-off:
+the 5 GB weight download + the territory-excluding license.
+
+### ⚠️ License — Territory Restriction + MAU Cap
+
+This notebook bundles the **HY-WorldMirror-2.0** weights, released under
+the **Tencent HY-WORLD 2.0 Community License Agreement** (see
+`License.txt` in the model repo):
+
+* **Territory**: this license **does not apply in the European Union, the
+  United Kingdom, or South Korea**.  If you are located in any of those
+  jurisdictions, you are **not licensed** to use these weights and should
+  not run this notebook there.  Continuing past the header cell is your
+  acceptance of the license.
+* **Commercial use cap**: if your product or service exceeds **1 M
+  MAU**, you must request a separate commercial license from
+  `hunyuan3d@tencent.com`.
+* **Output ownership**: Tencent claims no rights in the outputs you
+  generate.  You are solely responsible for outputs and their subsequent
+  uses.
+* **The vendored `hyworldmirror/` Python package** is the official code
+  from [Tencent-Hunyuan/HY-World-2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0)
+  and is **Apache-2.0 licensed**.  Only the **weights** carry the
+  restricted license above.
+
+This is the **most restrictive license of any notebook in the suite**.
+MOSS-TTS (non-commercial) is comparable in restrictiveness; everything
+else is MIT / Apache-2.0 / BSD-3 / CC-BY-NC-*.
+
+### Pipeline
+
+1. **STEP 1** — installs PyTorch 2.4.0 + cu124 (the only torch that has a
+   pre-built `gsplat==1.5.3` wheel), `pip install`s gsplat, gradio 6.12.0,
+   gradio_rerun 0.32.2, the inference deps, then `git clone`s the Space
+   repo + the upstream Tencent repo.  Patches
+   `hyworldmirror/models/layers/attention.py` to drop flash-attn and use
+   PyTorch SDPA on bf16 instead (flash-attn wheels require torch 2.8 and
+   conflict with gsplat's torch 2.4 requirement).  Pre-downloads the
+   5.05 GB safetensors into the Drive cache.
+
+2. **STEP 2** — Drive cache prologue, version checks, `load_worldmirror()`
+   singleton loader, and the verbatim §3(d) Notice text.
+
+3. **STEP 3** — `extract_video_frames()`, `process_uploaded_files()`,
+   `render_depth_colormap()` / `render_normal_colormap()`, and
+   `save_gs_ply_aes()` (3DGS binary PLY matching the upstream format
+   that SuperSplat / PlayCanvas / gsplat.js all open).  Also loads the
+   briaai/RMBG-1.4 ONNX for sky segmentation.
+
+4. **STEP 4** — the full Gradio UI: file upload, frame gallery, frame
+   selector, 7 reconstruction options (mesh / point cloud, sky filtering,
+   confidence percentile, max-image-side, max-gaussians cap), per-view
+   depth + normal galleries with prev/next navigation, 2 Rerun viewers
+   (3D scene + Gaussian splat cloud), and 4 download buttons (GLB + PLY +
+   RRD + zipped folder).  Defaults to 2-concurrent queue.
+
+5. **STEP 6** — single-image quick test path (Colab file picker → 1-view
+   reconstruction → zipped download via `FileLink`).
+
+6. **STEP 7** — batch processor for a folder of scene sub-folders.  Writes
+   a JSONL progress log so you can resume after a Colab disconnect.
+
+### Requirements
+
+* **GPU**: 24 GB VRAM recommended (A100, L4, RTX 4090).  T4 (16 GB) may
+  OOM during inference; drop `Max image side` to 322 in that case.
+* **Disk**: ~5.2 GB for the weights (cached on Drive after first run) +
+  ~2 GB for gsplat + gradio_rerun + vendored hyworldmirror/.
+* **RAM**: 12 GB Colab RAM is sufficient; the model loads weights via
+  `safetensors` (memory-mapped, no full load).
+* **First-run setup**: ~8 min (5 GB weight download + torch re-install +
+  gsplat wheel).
+* **Subsequent runs**: ~30 s (reuses Drive cache).
+
+### Outputs per scene
+
+```
+scene_<selector>.glb          # mesh (or point cloud) you can open anywhere
+gaussians.ply                 # 3DGS splats → SuperSplat / PlayCanvas
+depth_NNN.png + depth_NNN.npy # per-view depth (turbo colormap + raw metric)
+normal_NNN.png                # per-view normals
+camera_poses.json             # c2w + K per frame
+reconstruction.rrd            # Rerun recording (3D + cameras + normals)
+gaussians.rrd                 # Rerun recording (Gaussian splat cloud)
+```
+
+### Related notebooks
+
+* **MapAnything** — universal 3DGS-from-images, Apache 2.0 (commercial-OK alternative)
+* **WildGaussianSplatting** — video → 3DGS with per-scene optimization
+* **NoPoSplat** — 2-3 photos → 3DGS in ~10s, MIT
+* **Pi3X** — video-native 3DGS, BSD-3 / CC BY-NC-4.0
+* **SplatTransform** — post-process the 3DGS for game engines
+* **TextureMapPrep** — generate the 6 PBR maps from an albedo
 
 ---
 
