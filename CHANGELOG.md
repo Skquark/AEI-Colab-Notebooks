@@ -5,6 +5,63 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Polish pass: HY-World 2.0 (v2)
+
+Code review of the new HY-World 2.0 notebook found 4 real bugs and 4
+polish issues. All fixed.
+
+**Bug fixes (4):**
+
+* **Gradio `6.12.0` → `6.9.0`**: the Space pins `gradio==6.12.0` but
+  that release does **not exist on PyPI** (the highest 6.x is 6.9.0).
+  Switched to `6.9.0` to actually install.  Cell 4 title + docstring
+  updated to match.
+* **`compute_sky_mask` API mismatch**: the vendored function
+  signature is `compute_sky_mask(img_paths, H, W, S, predictions=None,
+  source='auto', model_threshold=0.5, processed_aspect_ratio=None)`.
+  My code was passing `onnx_session=` (not a kwarg) and `source='onnx'`
+  (not a valid source value), so it would have raised `TypeError` and
+  silently disabled the sky mask.  Now uses `source='auto'` only and
+  pre-downloads the `JianyuanWang/skyseg/skyseg.onnx` (not
+  `briaai/RMBG-1.4` as the old comment claimed) into
+  `/content/hyworld_work/skyseg/`, chdir'ing into that dir for the
+  call.  Also relaxed the numpy pin from `<2.0` to `>=2.0,<2.3` since
+  `rerun-sdk==0.32.2` requires `numpy>=2`.
+* **3DGS PLY writer wrong activations**: `save_gs_ply_aes()` was
+  writing the model's **post-activation** values (exp'd scales,
+  sigmoid'd opacities) directly into the PLY.  The 3DGS convention
+  (SuperSplat / PlayCanvas / gsplat.js) expects **pre-activation
+  log scale + logit opacity**.  Now applies `np.log(scale)` and
+  `logit(opacity) = log(p / (1-p))` before writing — same conversion
+  the upstream `_build_gs_ply_data` does in `save_utils.py`.
+* **"Download folder" button served a non-existent path**: the zip
+  was only created inside the `dl_outdir.click` handler, so clicking
+  immediately after a reconstruction gave a 404.  Now the zip is
+  created at the end of `run_reconstruction_pipeline()` and the path
+  is set on the `DownloadButton` value, so the first click always
+  succeeds.
+
+**Polish fixes (4):**
+
+* **Reset depth/normal idx states on new reconstruction**: added
+  `depth_idx_state, normal_idx_state` to the `btn_reconstruct.click`
+  outputs (returns `0, 0`) so the prev/next counter always starts at
+  `0 / N-1` after each new scene, not at the last-clicked index of
+  the previous one.
+* **Batch: distinguish `resume` from `reject`**: step 7 now reports
+  `[resume]` for scenes already in `batch_log.jsonl` and `[reject]`
+  for scenes with `< 2` images, instead of conflating both as
+  `n_skip`.  Summary line reports `n_resume` and `n_reject` separately.
+* **Removed dead `HAS_SPACES` / `_DummySpaces` stub**: was imported
+  in step 4 but never used (the `@spaces.GPU` decorator was missing
+  on `run_reconstruction_pipeline`).  Replaced with a comment
+  explaining why we don't decorate.
+* **Updated cell 4 title + docstring** from `Gradio 6.12.0` to
+  `Gradio 6.9.0`.
+
+**Result:** 10 tooltips / 33 try / 29 except / all Y's on qa_check,
+validates cleanly, 38/38 notebooks still parse.
+
 ### New notebook: HY-World 2.0 (Tencent-Hunyuan, WorldMirror 2.0)
 
 Adds **HY-World-2.0_Colab.ipynb**, a Colab port of the official
