@@ -5,6 +5,44 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fix: Pixal3D_Colab — pin `transformers==4.57.3` in STEP 1
+
+Step 7 (and any stage that calls `DinoV3FeatureExtractor`) was failing
+with:
+
+```
+AttributeError: 'DINOv3ViTModel' object has no attribute 'layer'
+```
+
+**Root cause:** Pixal3D's
+`pixal3d/modules/image_feature_extractor.py` does:
+
+```python
+for i, layer_module in enumerate(self.model.layer):
+    hidden_states = layer_module(hidden_states, ...)
+```
+
+That works in `transformers 4.57.x` (where the encoder is exposed as
+`DINOv3ViTModel.layer` directly), but breaks in `transformers 5.x`
+where the encoder was wrapped in a new `DINOv3ViTModel.model =
+DINOv3ViTEncoder` and the `layer` attribute moved to
+`DINOv3ViTModel.model.layer`.  Colab's default `transformers`
+upgraded to 5.12.1 sometime in Q2 2026, which broke every Pixal3D
+session that hadn't already pinned.
+
+**Fix:** In STEP 1, before any other Python dependency install, the
+notebook now checks the installed `transformers` version and re-runs
+`pip install transformers==4.57.3` if it isn't already 4.57.x.  It also
+purges the in-process `transformers.*` modules from `sys.modules` so
+the reload actually takes effect (needed for users who re-run STEP 1
+on an existing Colab session where the previous import is still
+cached).
+
+We pin instead of monkey-patching Pixal3D's `extract_features`
+because the upstream is the source of truth and changing it would
+require re-cloning every run.  When Pixal3D publishes an upstream fix
+for transformers 5.x, this pin can be relaxed.
+
 ### Polish pass: HY-World 2.0 (v2)
 
 Code review of the new HY-World 2.0 notebook found 4 real bugs and 4
