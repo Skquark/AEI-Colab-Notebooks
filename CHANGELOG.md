@@ -5,6 +5,31 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fix: Pixal3D_Colab STEP 3 — silence noisy SyntaxWarning spam from `\\c` in Pixal3D docstrings
+
+Step 7 (Batch) was printing this same line once per `run_inference()`
+call, which is once per batch item:
+
+```
+/content/Pixal3D/pixal3d/models/sparse_structure_vae.py:103:
+  SyntaxWarning: invalid escape sequence '\c'
+  Encoder for Sparse Structure (\mathcal{E}_S in the paper Sec. 3.3).
+```
+
+**Root cause:** Python 3.12 makes all unrecognized escape sequences in
+*non-raw* strings emit a `SyntaxWarning`.  Pixal3D's docstrings use
+LaTeX syntax like `\mathcal{E}` (intentional in `.tex` workflow but
+not valid Python).  Colab defaults `warnings.simplefilter("default")`,
+so the warning prints every time the module is compiled (once per
+`init_models()` call).
+
+**Fix:** at the top of STEP 3, install a targeted
+`warnings.filterwarnings('ignore', category=SyntaxWarning,
+message=r'.*invalid escape sequence.*')`.  Only the `invalid escape
+sequence` class of SyntaxWarnings is silenced — every other warning
+(DeprecationWarning, UserWarning, etc.) stays loud, so we don't
+hide real problems.
+
 ### Fix: Pixal3D_Colab STEP 1 — install `trimesh` before `__import__` verify, bump `pydantic` for google-adk
 
 Two related install-ordering bugs in Pixal3D STEP 1:
