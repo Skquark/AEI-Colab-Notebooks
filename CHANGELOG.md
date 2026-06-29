@@ -5,6 +5,32 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fix: Pixal3D_Colab STEP 1 — install `trimesh` before `__import__` verify, bump `pydantic` for google-adk
+
+Two related install-ordering bugs in Pixal3D STEP 1:
+
+1. **`[FAIL] o_voxel` in wheel verification.**  The CUDA wheels
+   (`o_voxel`, `cumesh`, `flex_gemm`, `nvdiffrec_render`) were
+   installed with `--no-deps` to keep them pinned against the
+   project-specific torch version.  STEP 1 then immediately ran
+   `__import__('o_voxel')` etc. to verify them.  `o_voxel` imports
+   `trimesh` at module load (see
+   `/usr/local/lib/python3.12/dist-packages/o_voxel/convert/volumetic_attr.py:7`),
+   but `trimesh` was only installed **later** in the Python-deps
+   block, so the `__import__` failed with
+   `ModuleNotFoundError: No module named 'trimesh'`.  Fix: install
+   `trimesh` + a few small Python deps (`pygltflib`, `plyfile`,
+   `easydict`, `huggingface_hub`, `tqdm`) right after the CUDA
+   wheels are installed and **before** the verification block.
+2. **pydantic / google-adk resolver warning.**  Colab pre-installs
+   `google-adk 1.29.0` which needs `pydantic<3,>=2.12`, but
+   Pixal3D's transitive dep tree drags in `pydantic 2.11.10`, which
+   trips a noisy "resolver does not take into account all the
+   packages installed" warning at every `pip install`.  Fix: detect
+   the legacy version and `pip install pydantic>=2.12,<3` to
+   satisfy google-adk.  No known downstream impact on Pixal3D —
+   none of its deps pin pydantic.
+
 ### Fix: Pixal3D_Colab — pin `transformers==4.57.3` in STEP 1
 
 Step 7 (and any stage that calls `DinoV3FeatureExtractor`) was failing
