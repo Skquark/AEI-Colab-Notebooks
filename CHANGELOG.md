@@ -5,6 +5,39 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fix: Pixal3D_Colab STEP 1 — `o_voxel` wheel verify now happens AFTER nvdiffrast install
+
+Step 1 was running `__import__('o_voxel')` immediately after the four
+`--no-deps` wheel installs, but `o_voxel` does
+`import nvdiffrast.torch as dr` at module load (see
+`/usr/local/lib/python3.12/dist-packages/o_voxel/postprocess.py:10`).
+The nvdiffrast build only fires later in the cell, so the import
+failed with `ModuleNotFoundError: No module named 'nvdiffrast'`,
+which then cascaded downstream as a `CUDA error: no kernel image
+is available for execution on the device` because the model never
+loaded its CUDA extensions.
+
+**Fix:** move the `__import__` verify block to run AFTER the
+`nvdiffrast` install completes. The verify block is now line 81-91
+(after the `[nvdiffrast] Done` print at line 78), so all four
+CUDA wheels can be loaded with their actual dependencies in place.
+
+### Fix: Pixal3D_Colab STEP 1 — fail fast on unsupported GPU SM archs
+
+The `arch_tag` map only knew about `sm_75` (T4), `sm_80` (A100), and
+`sm_89` (L4). Anything else — including `sm_90` (H100) and `sm_100`
+(Blackwell B200/H200) — silently fell back to `t4` (sm_75) wheels,
+which then fail at runtime with `CUDA error: no kernel image is
+available for execution on the device` because sm_75 binary kernels
+can't run on sm_90 / sm_100 hardware.
+
+**Fix:** change the `.get(arch, 't4')` fallback to `.get(arch, None)`
+and add an explicit `if arch_tag is None: raise SystemExit(...)` with
+a clear message pointing the user at `Pixal3D_Wheel_Builder.ipynb`
+to build their own wheels. (To unblock H100 / Blackwell users we
+still need to compile wheels for those archs — see the `H100` /
+`B200` / `H200` TODO in the wheel builder.)
+
 ### Fix: Pixal3D_Colab STEP 3 — silence noisy SyntaxWarning spam from `\\c` in Pixal3D docstrings
 
 Step 7 (Batch) was printing this same line once per `run_inference()`
