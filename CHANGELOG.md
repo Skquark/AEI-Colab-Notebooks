@@ -5,6 +5,28 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fix: Pixal3D_Colab STEP 3 — set `CUDA_LAUNCH_BLOCKING=1` for real CUDA stack traces
+
+Step 7 was failing at runtime with:
+
+```
+[ERROR] CUDA error: no kernel image is available for execution on the device
+CUDA kernel errors might be asynchronously reported at some other API call,
+so the stacktrace below might be incorrect.
+```
+
+CUDA errors are normally async, so the "stacktrace below" message is
+often useless — it points to whatever *next* CUDA call happened, not
+the actual bad kernel.  Setting `CUDA_LAUNCH_BLOCKING=1` makes errors
+synchronous so the printed trace points to the real offending call
+(e.g. inside `o_voxel.postprocess.to_glb` after the two SLat sampling
+stages complete).  This is set in STEP 3 (where the inference env is
+configured), so every `run_inference()` call gets the synchronous
+behavior without needing to add it to step 7.
+
+Comment out the line to restore the default async behavior if the
+synchronous errors slow the batch down noticeably.
+
 ### Fix: Pixal3D_Colab STEP 1 — `o_voxel` wheel verify now happens AFTER nvdiffrast install
 
 Step 1 was running `__import__('o_voxel')` immediately after the four
