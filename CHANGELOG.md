@@ -5,6 +5,36 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fix: Pixal3D_Colab STEP 1 — pin `torch==2.11.0+cu128` to match wheel build
+
+The persistent "CUDA error: no kernel image is available for execution
+on the device" error at inference time — even though STEP 1's
+`__import__()` verify block passes — was a **torch ABI mismatch**.
+
+The prebuilt L4 wheels in `pixal3d_wheels/sm89/` were compiled on
+**2026-05-29** against the Colab default torch at that time, which
+was `torch==2.11.0+cu128` (per the `ddb524d` commit's "Colab torch
+2.11" reference + the `natten==0.21.6+torch2110cu128` pin).  Colab
+auto-upgrades torch over time, so the user's current runtime has
+`torch 2.12.x` or later.  C++ extensions built for torch 2.11
+have a different `c10::IValue` arg-packing layout than 2.12+, so
+the actual **kernel launch** fails with "no kernel image" — even
+though the module loads cleanly at import time (Python ABI matches,
+only the C++ dispatch breaks).
+
+Note: setting `CUDA_LAUNCH_BLOCKING=1` (previous fix) does NOT help
+with this error, because the error originates in a C++ extension
+that has no Python frames to print.
+
+**Fix:** at the top of STEP 1, check `torch.__version__`.  If it's
+not 2.11.x, reinstall `torch==2.11.0+cu128` (and matching
+torchvision, torchaudio) from the cu128 index, then call
+`os.execv` to restart the kernel so the new torch takes effect.
+The re-run sees the new torch, the pin check is a no-op, and the
+cell continues with the wheel install.  Idempotent: a runtime
+that already has 2.11.x runs through the cell with no install
+overhead.
+
 ### Fix: Pixal3D_Colab STEP 1 — comprehensive Colab-dep pin cleanup (pydantic + starlette + gradio-client)
 
 The earlier pydantic-only fix was incomplete. Colab now ships
