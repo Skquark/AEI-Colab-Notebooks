@@ -5,6 +5,35 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fix: Pixal3D_Colab STEP 1 — comprehensive Colab-dep pin cleanup (pydantic + starlette + gradio-client)
+
+The earlier pydantic-only fix was incomplete. Colab now ships
+`google-adk 2.3.0`, `google-genai 2.10.0`, `hf-gradio 0.4.1`, and
+`python-fasthtml 0.14.3` as pre-installed packages. All four pin
+modern deps that conflict with the versions Pixal3D's transitive
+deps drag in:
+
+* `google-adk 2.3.0` / `google-genai 2.10.0` / `hf-gradio` →
+  `pydantic<3,>=2.12`
+* `google-adk 2.3.0` / `python-fasthtml 0.14.3` →
+  `starlette<2,>=1.0.1`
+* `hf-gradio 0.4.1` → `gradio-client<3.0,>=2.0`
+
+None of these are Pixal3D runtime deps — they're just noise from
+Colab's pre-installed AI Agent packages.  This commit:
+
+1. **Expands the early-install pin checks** to cover all three
+   (pydantic, starlette, gradio-client).  Each is checked + bumped
+   only if its installed version is too old; modern versions are
+   left alone.  Uses `--disable-pip-version-check --no-input` for
+   quieter pip output.
+2. **Re-runs the same checks at the end of the cell** (right
+   before the `[DONE]` print).  This catches the case where MoGe,
+   nvdiffrast, or any other `pip install` between the early check
+   and the end downgraded one of these packages to satisfy its own
+   pins.  Idempotent — the second pass is a no-op if everything is
+   already at the bumped version.
+
 ### Fix: Pixal3D_Colab STEP 3 — set `CUDA_LAUNCH_BLOCKING=1` for real CUDA stack traces
 
 Step 7 was failing at runtime with:
