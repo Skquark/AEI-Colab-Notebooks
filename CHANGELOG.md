@@ -5,6 +5,52 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fix: Pixal3D_Colab STEP 1 — pin `torchvision==0.26.0+cu128` to match torch 2.11
+
+The torch pin in `11c0128` correctly pins `torch==2.11.0+cu128`
+(the version the L4 wheels were built against) but pinned
+`torchvision==0.22.0+cu128` — which is the torchvision version for
+**torch 2.10**, not 2.11.  The matching torchvision for torch 2.11 is
+0.26.0+cu128 (this is what Colab's master branch freeze ships
+alongside `torch==2.11.0+cpu`).
+
+A wrong torchvision version doesn't directly cause "no kernel
+image" (the wheels don't depend on torchvision), but it can cause
+`torchvision` import errors later in the pipeline that surface
+as secondary failures and confuse debugging.  This commit fixes
+the pin to `torchvision==0.26.0+cu128`.
+
+### Note: persistent "no kernel image" — wheel-vs-runtime mismatch
+
+After 7 attempts at various install-order / ABI / torch-pin fixes,
+the persistent `cudaErrorNoKernelImageForDevice` at inference time
+has not been reproducible in static analysis.  The L4 wheels in
+`pixal3d_wheels/sm89/` were built on **2026-05-29** against a
+Colab runtime that has long since been superseded.  The user's
+current runtime (with `torch 2.11.0+cu128`, `pydantic 2.11.10`,
+CUDA 12.8) doesn't match any of the four documented past runtimes
+(2025.07 through 2026.04) — so they're on an undocumented newer
+runtime whose `libcudart.so.12` may have changed enough to break
+the wheel's binary kernel dispatch.
+
+Recommended unblock:
+
+1. **Re-build the wheels on the current Colab session.** Open
+   `Pixal3D_Wheel_Builder.ipynb`, run all cells in an L4 Colab
+   session.  The build takes ~15 min.  Replace the four wheels in
+   `pixal3d_wheels/sm89/` (or upload a new GitHub Release tag like
+   `wheels-l4-v1.1`) with the freshly-built ones.  This guarantees
+   the wheels match whatever torch/CUDA Colab ships today.
+
+2. **Or pin the Colab runtime** to `2026.04` (the closest documented
+   runtime to the wheel build era) via Runtime → Change runtime
+   type → Runtime version → "2026.04".  This should be a stopgap
+   until the wheels get rebuilt.
+
+The prebuilt wheels on the GitHub Release tag `wheels-l4-v1.0`
+are still the May 29 2026 builds; the user is encouraged to
+rebuild rather than rely on the cached ones.
+
 ### Fix: Pixal3D_Colab STEP 1 — pin `torch==2.11.0+cu128` to match wheel build
 
 The persistent "CUDA error: no kernel image is available for execution
