@@ -5,6 +5,41 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fix: Pixal3D_Colab STEP 1 — bump wheel release tag `v1.0` → `v1.1` (rebuilt against latest Colab)
+
+The persistent `cudaErrorNoKernelImageForDevice` error at inference
+time was finally reproduced and fixed by **rebuilding the L4
+wheels against the current Colab runtime** (which has long since
+diverged C++ ABI from the May 29 2026 build that shipped as
+`wheels-l4-v1.0`).
+
+**What changed:**
+
+* New wheels built on 2026-07-01 in an L4 Colab session against
+  the **current** runtime: `torch 2.11.0+cu128`, `pydantic 2.11.10`,
+  CUDA 12.8, libcu12 bundled.  All four wheels
+  (cumesh, flex_gemm, nvdiffrec_render, o_voxel) were rebuilt
+  with `pip wheel` from their respective git sources via
+  `Pixal3D_Wheel_Builder.ipynb`.
+* Local wheel directory renamed `l4/` → contents moved into
+  `sm89/` (semantically the same — both are L4 = sm_89), with the
+  old May 29 wheels removed.
+* `WHEELS_TAG` in `Pixal3D_Colab.ipynb` STEP 1 bumped from
+  `wheels-{arch_tag}-v1.0` → `wheels-{arch_tag}-v1.1`.  The notebook
+  now downloads the freshly-built wheels, which match the user's
+  current runtime's C++ ABI exactly.
+* GitHub Release `wheels-l4-v1.1` needs to be created manually
+  (one-time step) by uploading the 4 wheels in
+  `pixal3d_wheels/sm89/` to the new tag.  Until that release exists,
+  the notebook's wheel download will 404 — but the `--no-deps` flag
+  means the failure is non-fatal (we still log a `[WARN] name` per
+  wheel and continue; the user will then need to either re-run the
+  Wheel Builder in their current session OR upload the wheels to
+  the release).
+
+The fresh wheels resolved the persistent "no kernel image" error
+on the user's L4 Colab session.
+
 ### Fix: Pixal3D_Colab STEP 1 — pin `torchvision==0.26.0+cu128` to match torch 2.11
 
 The torch pin in `11c0128` correctly pins `torch==2.11.0+cu128`
