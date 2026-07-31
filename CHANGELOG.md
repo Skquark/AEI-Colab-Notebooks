@@ -5,6 +5,56 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### New notebook: GaussianGPT — Autoregressive 3D Gaussian Scene Generation (ECCV 2026, MIT)
+
+Adds **GaussianGPT_Colab.ipynb**, a Colab port of
+[nicolasvonluetzow/GaussianGPT](https://github.com/nicolasvonluetzow/GaussianGPT)
+(ECCV 2026). GaussianGPT generates 3D Gaussian scenes completely
+autoregressively via next-token prediction — the same paradigm as
+GPT-style text models, but applied to 3D Gaussian splats.
+
+**Architecture:**
+- **VQ-VAE**: sparse 3D CNN (MinkowskiEngine) with vector quantization
+  that compresses per-voxel Gaussians into discrete tokens
+- **GPT**: autoregressive transformer with 3D rotary positional
+  embeddings that models the token sequences via next-token prediction
+- **Decode**: sampled tokens → frozen VQ-VAE decoder → renderable
+  Gaussian splats → orbit GIFs + .ply files
+
+**Two model variants:**
+- **Scene-level (VFront)**: GPT-2-medium (24L, 1024d, ~350M params),
+  20³ voxel grid, indoor room scenes (3D-FRONT). Checkpoints: ~5.5 GB.
+- **Object-level (PhotoShape)**: GPT-2-small (12L, 768d, ~100M params),
+  32³ voxel grid, individual objects. Checkpoints: ~3.1 GB.
+
+**Key technical decisions:**
+- **torch 2.9.0+cu128** — matches the alpsaur MinkowskiEngine pre-built
+  wheel (v0.5.8, cp312, 9.6 MB). No compilation needed for ME!
+- **MinkowskiEngine**: alpsaur fork v0.5.8 pre-built wheel. This was
+  the biggest dependency risk — the pre-built wheel eliminates it.
+- **gsplat + pytorch3d**: built from source against pinned git commits
+  (~10-15 min each on L4). No pre-built wheels exist for torch 2.9.
+- **Flash Attention**: NOT required. The code has a built-in SDPA
+  fallback for non-Hopper GPUs (L4 = sm_89, not Hopper).
+- **Checkpoints**: downloaded via wget from kaldir.vc.cit.tum.de
+  (requires User-Agent header). No HuggingFace mirrors exist.
+
+**Polish state (11 tips, 11 try, 11 except, all Y's):**
+- 9-cell Pixal3D pattern
+- Tooltips on all gr.Slider/gr.Radio/gr.Checkbox/gr.Number controls
+- Drive cache prologue (HF_HOME before any HF import)
+- clear_output() before demo.launch
+- default_concurrency_limit=2, demo.load welcome
+- gr.File download buttons for .ply and .gif
+- STEP 6 quick test with FileLink
+- STEP 7 batch with JSONL progress log
+- sample_one() helper: sample → render GIF → save .pt → save .ply
+- save_scene_as_ply() converts to INRIA-style 3DGS .ply (SuperSplat compatible)
+- render_scene_to_gif() handles y-up (PhotoShape) vs z-up (VFront) coordinate systems
+
+**QA result:** passes tools/validate.py + tools/qa_check.py cleanly.
+Suite now at **39 notebooks**.
+
 ### Fix: Pixal3D_Colab STEP 1 — bump wheel release tag `v1.0` → `v1.1` (rebuilt against latest Colab)
 
 The persistent `cudaErrorNoKernelImageForDevice` error at inference

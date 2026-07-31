@@ -21,6 +21,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [MapAnything — Universal 3DGS-from-Images (Meta, Apache 2.0)](#mapanything--universal-3dgs-from-images-meta-apache-20)
 - [Pi3X — Video-Native 3DGS, Permutation-Equivariant (BSD-3 + CC BY-NC-4.0)](#pi3x--video-native-3dgs-permutation-equivariant-bsd-3--cc-by-nc-40)
 - [HY-World 2.0 — WorldMirror 2.0 Multi-Modal World Reconstruction (Tencent-Hunyuan, ⚠️ territory-excluded)](#hy-world-20--worldmirror-20-multi-modal-world-reconstruction-tencent-hunyuan-territory-excluded)
+- [GaussianGPT — Autoregressive 3D Gaussian Scene Generation (ECCV 2026, MIT)](#gaussiangpt--autoregressive-3d-gaussian-scene-generation-eccv-2026-mit)
 - [TextureMapPrep — Seamless PBR Maps for Game Assets](#texturemapprep--seamless-pbr-maps-for-game-assets)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
@@ -720,6 +721,76 @@ gaussians.rrd                 # Rerun recording (Gaussian splat cloud)
 * **Pi3X** — video-native 3DGS, BSD-3 / CC BY-NC-4.0
 * **SplatTransform** — post-process the 3DGS for game engines
 * **TextureMapPrep** — generate the 6 PBR maps from an albedo
+
+---
+
+## GaussianGPT — Autoregressive 3D Gaussian Scene Generation (ECCV 2026, MIT)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/GaussianGPT_Colab.ipynb)
+
+A Colab port of [GaussianGPT](https://github.com/nicolasvonluetzow/GaussianGPT) (ECCV 2026, Nicolas von Lützow et al.). GaussianGPT generates **3D Gaussian scenes completely autoregressively** via next-token prediction — the same paradigm as GPT-style text models, but applied to 3D Gaussian splats.
+
+### How it differs from our other 3DGS notebooks
+
+| | GaussianGPT | MapAnything | NoPoSplat | HY-World 2.0 |
+|--|-------------|-------------|-----------|--------------|
+| **Input** | None (unconditional) | 1-100 images | 2-3 photos | Images or video |
+| **Method** | Autoregressive GPT | Feed-forward | Feed-forward | Feed-forward |
+| **Output** | 3DGS .ply + GIF | 3DGS .ply + GLB | 3DGS .ply | 3DGS .ply + GLB + depth |
+| **Speed** | ~5-15s per scene | ~10s | ~10s | ~10s |
+| **License** | MIT | Apache 2.0 | MIT | ⚠️ Tencent (EU/UK/KR excluded) |
+| **Use case** | Generate new scenes from scratch | Reconstruct from images | Reconstruct from photos | Reconstruct from multi-view |
+
+GaussianGPT is the only notebook in the suite that **generates new scenes without any input image** — it's a generative model, not a reconstruction model. It also supports completion (keep part of a scene, fill in the rest) and outpainting (extend scenes spatially).
+
+### Two model variants
+
+| Variant | Grid | GPT size | Checkpoints | Use case |
+|---|---|---|---|---|
+| **Scene-level (VFront)** | 20³ voxels | GPT-2-medium (24L, 1024d, ~350M) | ~5.5 GB | Indoor room scenes (3D-FRONT) |
+| **Object-level (PhotoShape)** | 32³ voxels | GPT-2-small (12L, 768d, ~100M) | ~3.1 GB | Individual objects |
+
+### Pipeline
+
+1. **STEP 1** — installs torch 2.9.0+cu128, MinkowskiEngine (pre-built wheel from alpsaur fork v0.5.8, no compilation needed), gsplat + pytorch3d from source (~10-15 min each), remaining pip deps. First run: ~25-35 min.
+2. **STEP 2** — downloads checkpoints from `kaldir.vc.cit.tum.de/gaussiangpt/` to Drive cache. ~5.5 GB (scene-level) or ~3.1 GB (object-level).
+3. **STEP 3** — imports + lazy model loader + render/PLY helpers.
+4. **STEP 4** — Gradio UI: model variant selector, temperature/top-k/top-p/num_samples/seed, render options, .ply + .gif download buttons.
+5. **STEP 6** — single-sample quick test with FileLink.
+6. **STEP 7** — batch generation with JSONL progress log.
+
+### Requirements
+
+* **GPU**: L4 (22 GB) or A100 (40 GB) recommended. T4 (15 GB) may be tight.
+* **Disk**: ~5.5 GB for scene-level checkpoints (cached on Drive after first run).
+* **First-run setup**: ~25-35 min (gsplat + pytorch3d compilation).
+* **Subsequent runs**: ~30s (reuses Drive cache).
+
+### Technical notes
+
+- **MinkowskiEngine**: Uses the [alpsaur fork](https://github.com/alpsaur/MinkowskiEngine) v0.5.8 pre-built wheel (9.6 MB, cp312, torch 2.9.x+cu128). No compilation needed — the biggest dependency risk is eliminated.
+- **Flash Attention**: NOT required. The code has a built-in SDPA fallback for non-Hopper GPUs (L4 = sm_89, not Hopper).
+- **torch 2.9.0+cu128**: Matches the MinkowskiEngine wheel's build version. Force-reinstalled over whatever Colab ships.
+
+### Outputs
+
+```
+sample_0000.pt          # Gaussian payload (means, sh0, opacities, scales, quats)
+sample_0000.gif         # Orbit render (120 frames @ 24 fps)
+sample_0000.ply         # INRIA-style 3DGS .ply (SuperSplat / PlayCanvas compatible)
+```
+
+### License
+
+MIT License (Copyright © 2026 Nicolas von Lützow). Fully compatible with our suite.
+
+### Related notebooks
+
+* **MapAnything_Colab** — universal 3DGS-from-images, Apache 2.0
+* **NoPoSplat_Colab** — 2-3 photos → 3DGS in ~10s, MIT
+* **HY-World-2.0_Colab** — multi-view → 3DGS + GLB + depth + normals
+* **SplatTransform_Colab** — 3DGS format converter + voxel collision mesh
+* **TripoSplat_Colab** — text/image → 3DGS
 
 ---
 
