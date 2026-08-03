@@ -33,6 +33,7 @@ NOTEBOOKS = [
     ('Higgs-Audio_Colab.ipynb',      'authored'),
     ('HY-World-2.0_Colab.ipynb',     'authored'),
     ('Hunyuan3D-2.1_Colab.ipynb',    'authored'),
+    ('InfiniSplat_Colab.ipynb',      'authored'),
     ('Hunyuan3D-2_Colab.ipynb',      'authored'),
     ('Hunyuan3D-3_Colab.ipynb',      'authored'),
     ('IndicF5_Colab.ipynb',          'authored'),

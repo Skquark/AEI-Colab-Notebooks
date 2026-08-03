@@ -22,6 +22,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Pi3X — Video-Native 3DGS, Permutation-Equivariant (BSD-3 + CC BY-NC-4.0)](#pi3x--video-native-3dgs-permutation-equivariant-bsd-3--cc-by-nc-40)
 - [HY-World 2.0 — WorldMirror 2.0 Multi-Modal World Reconstruction (Tencent-Hunyuan, ⚠️ territory-excluded)](#hy-world-20--worldmirror-20-multi-modal-world-reconstruction-tencent-hunyuan-territory-excluded)
 - [GaussianGPT — Autoregressive 3D Gaussian Scene Generation (ECCV 2026, MIT)](#gaussiangpt--autoregressive-3d-gaussian-scene-generation-eccv-2026-mit)
+- [InfiniSplat — Single-Image 3D Gaussian Reconstruction (SIGGRAPH Asia 2026, Apache 2.0)](#infinisplat--single-image-3d-gaussian-reconstruction-siggraph-asia-2026-apache-20)
 - [TextureMapPrep — Seamless PBR Maps for Game Assets](#texturemapprep--seamless-pbr-maps-for-game-assets)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
@@ -791,6 +792,79 @@ MIT License (Copyright © 2026 Nicolas von Lützow). Fully compatible with our s
 * **HY-World-2.0_Colab** — multi-view → 3DGS + GLB + depth + normals
 * **SplatTransform_Colab** — 3DGS format converter + voxel collision mesh
 * **TripoSplat_Colab** — text/image → 3DGS
+
+---
+
+## InfiniSplat — Single-Image 3D Gaussian Reconstruction (SIGGRAPH Asia 2026, Apache 2.0)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/InfiniSplat_Colab.ipynb)
+
+A Colab port of [InfiniSplat](https://github.com/zju3dv/InfiniSplat) (SIGGRAPH Asia 2026 Journal Track). InfiniSplat reconstructs a 3D Gaussian Splat scene from a **single RGB image** using a ViT-L/16 backbone + implicit Gaussian decoder.
+
+### How it differs from our other 3DGS notebooks
+
+| | InfiniSplat | MapAnything | NoPoSplat | TripoSplat | GaussianGPT |
+|--|-------------|-------------|-----------|------------|--------------|
+| **Input** | 1 image | 1-100 images | 2-3 photos | text/image | None (generative) |
+| **Method** | ViT + implicit decoder | Feed-forward | Feed-forward | TripoSR + gsplat | Autoregressive GPT |
+| **Output** | 3DGS .ply + video | 3DGS .ply + GLB | 3DGS .ply | 3DGS .ply/.splat | 3DGS .ply + GIF |
+| **Speed** | 10-30s | ~10s | ~10s | ~30s | 5-15s |
+| **License** | Apache 2.0 | Apache 2.0 | MIT | MIT | MIT |
+| **Model size** | ~3 GB | ~3-5 GB | ~1-2 GB | ~1-2 GB | ~5.5 GB |
+| **Custom builds** | None | None | None | None | gsplat + pytorch3d from source |
+| **Use for** | Single-image 3DGS | Multi-image 3DGS | Pose-free 3DGS | Text/image 3DGS | Generative 3DGS |
+
+InfiniSplat is the simplest notebook in the suite — no custom CUDA builds, small model, fits on T4, Apache 2.0. Best for indoor scenes (trained on HyperSim).
+
+### Two modes
+
+| Mode | Input | Checkpoint | Use case |
+|---|---|---|---|
+| **RGB-only** | 1 image | `infinisplat_rgb.ckpt` (2.93 GB) | Monocular 3DGS from a single image |
+| **Depth-guided** | RGB + depth file | `infinisplat_lidar.ckpt` (2.49 GB) | Higher-accuracy 3DGS with depth sensor input |
+
+### Pipeline
+
+1. **STEP 1** — installs torch 2.9.1+cu128 + pip deps (no custom CUDA builds!), clones repo, downloads checkpoints (~3 GB). First run: ~5-10 min.
+2. **STEP 2** — imports + lazy model loader + PLY/video export helpers.
+3. **STEP 3** — Gradio UI: image upload, mode selector, focal length override, floater filter toggle, render video toggle, .ply + .mp4 downloads.
+4. **STEP 4** — keep alive.
+5. **STEP 5** — single-image quick test with FileLink.
+6. **STEP 6** — batch processing with JSONL progress log.
+7. **STEP 7** — help / format reference / pipeline overview.
+
+### Requirements
+
+* **GPU**: T4 (15 GB) is sufficient. L4 / A100 are faster but not required.
+* **Disk**: ~3 GB for checkpoints (cached on Drive after first run).
+* **First-run setup**: ~5-10 min (pip installs + checkpoint download).
+* **Subsequent runs**: ~15s (model load from cache).
+* **No custom CUDA builds** — all deps are pre-built pip wheels.
+
+### Outputs
+
+```
+scene.ply     # INRIA-style 3DGS (SuperSplat / PlayCanvas compatible)
+orbit.mp4     # Novel-view orbit video (60 frames @ 10 fps, optional)
+```
+
+### License
+
+Apache License 2.0. Fully compatible with our suite.
+
+### Limitations
+
+- **Occluded regions are hallucinated.** The model cannot see behind objects — it infers 3D from a single 2D image.
+- **Best for indoor scenes.** Trained on HyperSim (synthetic indoor scenes). Outdoor scenes may produce artifacts.
+- **Depth-guided mode requires a depth file.** The `lidar` mode needs a matching `.npy` / `.npz` / `.h5` / `.exr` depth file.
+
+### Related notebooks
+
+- **MapAnything_Colab** — universal 3DGS-from-images, Apache 2.0
+- **NoPoSplat_Colab** — 2-3 photos → 3DGS, MIT
+- **TripoSplat_Colab** — text/image → 3DGS, MIT
+- **GaussianGPT_Colab** — generative 3DGS (no input), MIT
+- **SplatTransform_Colab** — 3DGS format converter
 
 ---
 

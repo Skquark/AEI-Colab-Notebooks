@@ -5,6 +5,49 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### New notebook: InfiniSplat — Single-Image 3D Gaussian Reconstruction (SIGGRAPH Asia 2026, Apache 2.0)
+
+Adds **InfiniSplat_Colab.ipynb**, a Colab port of
+[zju3dv/InfiniSplat](https://github.com/zju3dv/InfiniSplat) (SIGGRAPH
+Asia 2026 Journal Track). InfiniSplat reconstructs a 3D Gaussian Splat
+scene from a **single RGB image** using a ViT-L/16 backbone + implicit
+Gaussian decoder.
+
+**Architecture:**
+- **Encoder**: ViT-L/16 image backbone → latent features
+- **Decoder**: Implicit Gaussian decoder → ~1.5M Gaussians
+- **Post-processing**: kNN floater filter (spatial outlier removal)
+- **Output**: INRIA-style 3DGS .ply (SuperSplat / PlayCanvas compatible)
+  + optional orbit video (gsplat, 60 frames @ 10 fps)
+
+**Two modes:**
+- **RGB-only** (`infinisplat_rgb.ckpt`, 2.93 GB) — monocular
+  reconstruction from a single image
+- **Depth-sensor-guided** (`infinisplat_lidar.ckpt`, 2.49 GB) —
+  RGB + depth map → higher-accuracy 3DGS
+
+**Key advantages:**
+- **No custom CUDA builds** — all deps are pre-built pip wheels
+  (gsplat is optional, only for video rendering)
+- **Small model** (~3 GB per checkpoint) — fits on T4 (15 GB)
+- **Apache 2.0** — no territory restrictions
+- **Clean codebase** — Hydra configs, well-structured src/ layout
+- **Fast inference** — ~10-30s per image depending on GPU
+
+**Polish state (4 tips, 10 try, 10 except, all Y's):**
+- 9-cell Pixal3D pattern
+- Tooltips on gr.Slider / gr.Checkbox / gr.Number / gr.Radio
+- Drive cache prologue
+- clear_output() before demo.launch
+- default_concurrency_limit=2, demo.load welcome
+- gr.File download for .ply and .mp4
+- STEP 5 quick test with FileLink
+- STEP 6 batch with JSONL progress log
+- STEP 7 help / format reference / pipeline overview
+
+**QA result:** passes tools/validate.py + tools/qa_check.py cleanly.
+Suite now at **40 notebooks**.
+
 ### New notebook: GaussianGPT — Autoregressive 3D Gaussian Scene Generation (ECCV 2026, MIT)
 
 Adds **GaussianGPT_Colab.ipynb**, a Colab port of
