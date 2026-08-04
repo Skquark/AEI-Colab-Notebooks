@@ -23,6 +23,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [HY-World 2.0 — WorldMirror 2.0 Multi-Modal World Reconstruction (Tencent-Hunyuan, ⚠️ territory-excluded)](#hy-world-20--worldmirror-20-multi-modal-world-reconstruction-tencent-hunyuan-territory-excluded)
 - [GaussianGPT — Autoregressive 3D Gaussian Scene Generation (ECCV 2026, MIT)](#gaussiangpt--autoregressive-3d-gaussian-scene-generation-eccv-2026-mit)
 - [InfiniSplat — Single-Image 3D Gaussian Reconstruction (SIGGRAPH Asia 2026, Apache 2.0)](#infinisplat--single-image-3d-gaussian-reconstruction-siggraph-asia-2026-apache-20)
+- [MiniMax-H3 — Video + Audio Generation (33B, INT4, ⚠️ territory-excluded)](#minimax-h3--video--audio-generation-33b-int4-territory-excluded)
 - [TextureMapPrep — Seamless PBR Maps for Game Assets](#texturemapprep--seamless-pbr-maps-for-game-assets)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
@@ -865,6 +866,73 @@ Apache License 2.0. Fully compatible with our suite.
 - **TripoSplat_Colab** — text/image → 3DGS, MIT
 - **GaussianGPT_Colab** — generative 3DGS (no input), MIT
 - **SplatTransform_Colab** — 3DGS format converter
+
+---
+
+## MiniMax-H3 — Video + Audio Generation (33B, INT4, ⚠️ territory-excluded)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MiniMax-H3_Colab.ipynb)
+
+A Colab port of [MiniMax-H3](https://huggingface.co/MiniMaxAI/MiniMax-H3) — a 33B parameter video generation model that produces **video with synchronized audio** (ambience, foley, speech). Supports text-to-video, image-to-video (first/last frame), and reference-based generation.
+
+### How it differs from our other video notebooks
+
+| | MiniMax-H3 | Wan 2.2 | Wan 2.2 Animate |
+|--|------------|---------|-----------------|
+| **Output** | Video + **audio** | Video only | Video only |
+| **Model** | 33B DiT | 14B DiT | 14B DiT |
+| **VRAM** | ~18.5 GB (INT4) | ~12 GB | ~14 GB |
+| **License** | ⚠️ MiniMax (excludes USA/EU/UK/KR) | Apache 2.0 | Apache 2.0 |
+| **Use for** | Video + synced audio | Text/image → video | Character animation |
+
+MiniMax-H3 is the only notebook in the suite that generates **audio alongside video**. It uses a split deployment: remote conditioner (HF Space) for text encoding + local INT4-quantized denoiser for video+audio generation.
+
+### Architecture
+
+```
+prompt + images → [remote conditioner HF Space] → prompt_embeds
+                                                    ↓
+              INT4 DiT (15.5 GB) → denoise → VAEs → video.mp4 + audio
+```
+
+1. **Remote conditioner** (`multimodalart/qwen3vl-conditioner` HF Space): encodes prompt + optional keyframes via `gradio_client`. Saves 62 GB download + 14 GB VRAM.
+2. **Local denoiser** (Colab GPU): 33B transformer INT4-quantized with torchao (~15.5 GB VRAM). VAEs loaded sequentially after denoising (~10.3 GB). Peak VRAM: ~18.5 GB.
+
+### ⚠️ License — Territory Restriction
+
+MiniMax H3 Community License excludes **EU, UK, South Korea, AND USA**. More restrictive than HY-World 2.0 (which excluded EU/UK/KR but not USA). Not gated — anyone can download.
+
+### Pipeline
+
+1. **STEP 1** — installs torch 2.11.0+cu128, diffusers from PR commit, torchao, transformers 5.8.0, av, stubs `spaces` module. First run: ~10-15 min.
+2. **STEP 2** — downloads FL2VA transformer (61.7 GB) + VAEs (10.3 GB) to Drive cache. First run: ~30-60 min.
+3. **STEP 3** — imports, remote conditioner, lazy model loader with torchao INT4 quantization.
+4. **STEP 4** — Gradio UI: prompt + optional first/last frame, canvas selector, duration/steps/seed, prompt rewrite toggle.
+5. **STEP 5** — keep alive.
+6. **STEP 6** — quick test (single video).
+7. **STEP 7** — batch generation from prompt list.
+
+### Requirements
+
+* **GPU**: L4 (22 GB) or A100 (40 GB). T4 is too small for INT4.
+* **Disk**: ~72 GB for FL2VA weights (cached on Drive).
+* **First-run**: ~45-75 min total (download + install + quantization).
+* **Subsequent**: ~5-10 min (load from Drive + quantize).
+* **Inference**: ~2-10 min per video depending on canvas/frames/steps.
+* **Network**: Requires access to `multimodalart/qwen3vl-conditioner` HF Space.
+
+### Outputs
+
+```
+output.mp4    # Video + synchronized stereo audio (32 kHz)
+```
+
+### Related notebooks
+
+- **Wan2.2_Colab** — text/image-to-video (no audio)
+- **Wan2.2_Animate_Colab** — character animation
+- **GaussianGPT_Colab** — autoregressive 3D scene generation
+- **InfiniSplat_Colab** — single-image 3DGS reconstruction
 
 ---
 

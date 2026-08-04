@@ -5,6 +5,54 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### New notebook: MiniMax-H3 — Video + Audio Generation (33B, INT4 quantized)
+
+Adds **MiniMax-H3_Colab.ipynb**, a Colab port of
+[MiniMax-H3](https://huggingface.co/MiniMaxAI/MiniMax-H3) — a 33B
+parameter video generation model that produces video with synchronized
+audio (ambience, foley, speech). Supports text-to-video,
+image-to-video (first/last frame), and reference-based generation.
+
+**Split deployment architecture:**
+- **Remote conditioner** (via `gradio_client` →
+  `multimodalart/qwen3vl-conditioner` HF Space): encodes text prompt +
+  optional keyframe images into `prompt_embeds` + `text_token_tags`.
+  Runs on HuggingFace ZeroGPU — saves 62 GB download + 14 GB VRAM.
+- **Local denoiser** (on Colab GPU): 33B transformer (DiT) denoises
+  video+audio latents, then VAEs decode into frames + stereo audio.
+  Transformer is INT4-quantized on-the-fly with torchao (~15.5 GB VRAM).
+  VAEs loaded sequentially after denoising (~10.3 GB).
+  **Peak VRAM: ~18.5 GB — fits on L4!**
+
+**Key technical decisions:**
+- **torch 2.11.0+cu128**: diffusers PR requires torch>=2.6. We pin
+  2.11.0+cu128 (matches Colab's CUDA 12.8). No cu130 needed.
+- **diffusers from PR commit 665f578**: MiniMax-H3 support is in an open
+  WIP PR (#14371), not on PyPI. Installed from the specific commit.
+- **torchao INT4**: 62 GB bf16 transformer quantized to INT4 on-the-fly
+  (~15.5 GB VRAM). Adds ~5 min startup but makes the model fit on L4.
+- **Remote conditioner**: 62 GB Qwen3-VL text encoder runs on HF Space.
+  Saves 62 GB download + 14 GB VRAM. Called via `gradio_client`.
+- **`spaces` stub**: upstream uses `import spaces` for HF ZeroGPU.
+  We install a stub module so the code runs on Colab.
+- **Sequential VAE offload**: VAEs stay on CPU during denoising, moved
+  to GPU only for decode, then moved back. Keeps peak VRAM low.
+
+**License:** MiniMax H3 Community License — excludes EU, UK, South
+Korea, AND USA. More restrictive than HY-World 2.0.
+
+**Polish state (6 tips, 10 try, 10 except, all Y's):**
+- 9-cell Pixal3D pattern
+- Tooltips on all gr.Slider / gr.Dropdown / gr.Checkbox / gr.Number
+- Drive cache prologue
+- clear_output() before demo.launch
+- default_concurrency_limit=1 (video gen is heavy), demo.load welcome
+- STEP 6 quick test with FileLink
+- STEP 7 batch generation from prompt list
+
+**QA result:** passes tools/validate.py + tools/qa_check.py cleanly.
+Suite now at **41 notebooks**.
+
 ### New notebook: InfiniSplat — Single-Image 3D Gaussian Reconstruction (SIGGRAPH Asia 2026, Apache 2.0)
 
 Adds **InfiniSplat_Colab.ipynb**, a Colab port of

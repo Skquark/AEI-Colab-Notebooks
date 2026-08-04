@@ -39,6 +39,7 @@ NOTEBOOKS = [
     ('IndicF5_Colab.ipynb',          'authored'),
     ('Kokoro-82M_Colab.ipynb',       'authored'),
     ('Mesh_Optimizer_Colab.ipynb',   'authored'),
+    ('MiniMax-H3_Colab.ipynb',       'authored'),
     ('SplatTransform_Colab.ipynb',   'authored'),
     ('MOSS-TTS_Colab.ipynb',         'authored'),
     ('MisoTTS_Colab.ipynb',          'authored'),
