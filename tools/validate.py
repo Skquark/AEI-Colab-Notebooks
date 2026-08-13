@@ -85,7 +85,9 @@ def validate(path):
     with open(path) as f:
         nb = json.load(f)
     cells = nb['cells']
-    ids = [c['metadata'].get('id') for c in cells]
+    # Accept cell id in either nbformat 4.x (metadata.id) or 5.x (top-level)
+    # location - whichever the notebook uses.
+    ids = [c.get('id') or c['metadata'].get('id') for c in cells]
     # Standard 9-cell layout: view-in-github, header, step1..step7
     # Some notebooks legitimately have a different count (e.g. TTS_Model_Loader has 7,
     # TTS_Voice_Library has 10, Pixal3D_Wheel_Builder has 12). For those we only enforce
