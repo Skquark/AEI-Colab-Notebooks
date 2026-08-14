@@ -1,0 +1,5 @@
+# Force LF line endings for all text files, regardless of OS.
+# Prevents the CRLF contamination that Gemini's Windows tooling keeps introducing.
+# *.ipynb stays as text but LF-only so diffs stay clean across contributors.
+
+* text=auto eol=lf
