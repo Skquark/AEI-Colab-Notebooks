@@ -53,6 +53,9 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 ### Voice Conversion
 - [OpenVoice V2](#openvoice-v2)
 
+### Music
+- [MiniMax-Music3 — Lyrics + Caption-to-Music (Qwen3 + DiT, ⚠️ ≥24 GB VRAM)](#minimax-music3--lyrics--caption-to-music)
+
 ### Video
 - [Wan 2.2 — Text & Image-to-Video](#wan-22--text--image-to-video)
 - [Wan 2.2 Animate — Character Animation & Replacement](#wan-22-animate--character-animation--replacement)
@@ -933,6 +936,95 @@ output.mp4    # Video + synchronized stereo audio (32 kHz)
 - **Wan2.2_Animate_Colab** — character animation
 - **GaussianGPT_Colab** — autoregressive 3D scene generation
 - **InfiniSplat_Colab** — single-image 3DGS reconstruction
+
+---
+
+## MiniMax-Music3 — Lyrics + Caption-to-Music
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MiniMax-Music3_Colab.ipynb)
+
+A Colab port of [MiniMax-Music3](https://huggingface.co/MiniMaxAI/MiniMax-Music3) — a 11B parameter lyrics- and caption-conditioned music generation model. Produces **44.1 kHz stereo WAV** files up to several minutes long, with structure-aware singing, instrumentation, and arrangement from a single (caption, lyrics) pair.
+
+### How it differs from our other audio notebooks
+
+| | MiniMax-Music3 | Higgs-Audio | MisoTTS | Qwen3-TTS |
+|--|----------------|-------------|---------|-----------|
+| **Output** | Music (with vocals) | Speech + sound | Speech | Speech |
+| **Model** | 11B modular | 3B | 0.6B | 1.7B |
+| **VRAM** | ~24 GB (bf16) | ~6 GB | ~3 GB | ~4 GB |
+| **License** | MIT | Apache 2.0 | Apache 2.0 | Apache 2.0 |
+| **Use for** | Songs, jingles, BGM | Dialogue, narration | TTS | TTS |
+
+### Architecture
+
+```
+caption + tagged lyrics
+        ↓
+  Qwen3-8B LM + RVQ depth decoder  →  text tokens
+                                        ↓
+  2.4B flow-matching DiT (30 steps, 200-frame windows, 100-frame overlap)
+                                        ↓
+  Flow-VAE vocoder  →  44.1 kHz stereo WAV
+```
+
+Three modular stages wired by `diffusers.ModularPipeline`: (1) **condition encoder** (Qwen3-8B + RVQ) turns caption + tagged lyrics into discrete codes, (2) **denoise** stage runs a 2.4B flow-matching DiT in 200-frame windows with 100-frame overlap, (3) **vocoder** (Flow-VAE) decodes codes to stereo audio.
+
+### ⚠️ License — Territory Restriction
+
+MiniMax-Music3 is MIT-licensed, but the model weights are distributed under the [MiniMax Music Generation Model License Agreement](https://huggingface.co/MiniMaxAI/MiniMax-Music3) which **excludes EU, UK, South Korea, AND USA** (same territory restriction as MiniMax-H3). Not gated — anyone with a HF account can download.
+
+### ⚠️ Hardware — ≥24 GB VRAM required
+
+Unlike most notebooks in this suite, Music3 **will not run on T4 (16 GB)**. The `ModularPipeline` does not yet expose `enable_sequential_cpu_offload()` (as of diffusers main, August 2026), so the entire 11B pipeline must be loaded into VRAM in bf16. Recommended GPUs:
+
+| GPU | VRAM | Works? | Notes |
+|-----|------|--------|-------|
+| A100 (Colab Pro) | 40 GB | Yes | Best. ~2 min/song at 30 steps. |
+| L4 (Colab free / Pro) | 22 GB | Marginal | Will OOM during first song. Use A100 for batch. |
+| T4 (Colab free) | 16 GB | No | Insufficient. Use MiniMax-H3 for audio instead. |
+
+### Pipeline
+
+1. **STEP 1** — installs torch 2.7+cu128, diffusers from main (for `ModularPipeline` support), torchaudio, scipy, spaces stub. First run: ~5-10 min.
+2. **STEP 2** — downloads ~27 GB of Music3 weights to Drive cache: tokenizer, Qwen3-8B LM (4 shards), condition encoder, RVQ depth decoder, 2.4B DiT (2 shards), Flow-VAE vocoder, scheduler. First run: ~20-40 min depending on bandwidth.
+3. **STEP 3** — imports, lazy pipe loader (`_load_pipe()` loads on first call), `generate_song(prompt, lyrics, duration, steps, seed, output_dir)` returns path + audio ndarray.
+4. **STEP 4** — Gradio UI with caption + lyrics text boxes, duration/steps/seed sliders, randomize checkbox.
+5. **STEP 5** — keep alive.
+6. **STEP 6** — quick test (single song).
+7. **STEP 7** — batch generation from JSON scene list with hash-based skip + resume log.
+8. **STEP 9** — ffmpeg-based muxer: combine a generated song with a video file (from `LTX-2-5_Colab`, `MiniMax-H3_Colab`, etc.) to produce a music video. Three modes: **Replace** (swap audio), **Mix** (blend with `MIX_VOLUME` slider), **Concat** (loop video to song length).
+9. **STEP 8** — tail the latest log / errors (debug aid).
+
+### Output
+
+```
+output_<slug>_d<dur>s_s<steps>_seed<seed>_<ts>.wav   # 44.1 kHz stereo, float32
+```
+
+### Music Video Workflow (Music3 + LTX-2.5)
+
+Generate songs in this notebook, generate video clips in `LTX-2-5_ComfyUI_Colab`, then return here to run STEP 9 to mux them:
+
+```python
+# In Music3 STEP 9, set:
+VIDEO_PATH = '/content/drive/MyDrive/AEI_3D_Out/LTX-Video-2.5/scene_001.mp4'
+SONG_PATH  = '/content/drive/MyDrive/AEI_3D_Out/MiniMax-Music3/song_lofi_d60s_s30_seed42.wav'
+MUX_MODE   = 'Replace'   # or 'Mix' or 'Concat'
+```
+
+### Requirements
+
+* **GPU**: A100 (40 GB) recommended. L4 (22 GB) is marginal for first song.
+* **Disk**: ~27 GB for Music3 weights (cached on Drive).
+* **First-run**: ~30-60 min total (download + install + lazy pipe init).
+* **Subsequent**: ~30-60 s (load from Drive + lazy init).
+* **Inference**: ~2-15 min per song depending on duration + steps (A100).
+
+### Related notebooks
+
+- **MiniMax-H3_Colab** — joint audio+video (synchronized, 32 kHz). Use if you want a single model that generates both.
+- **LTX-2-5_ComfyUI_Colab** — video-only, muxes with Music3 output via STEP 9.
+- **Higgs-Audio_Colab** — speech + sound effects, not songs.
 
 ---
 

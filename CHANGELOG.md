@@ -5,6 +5,82 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### New notebook: MiniMax-Music3 — Lyrics + Caption-to-Music (11B, MIT)
+
+Adds **MiniMax-Music3_Colab.ipynb**, a Colab port of
+[MiniMax-Music3](https://huggingface.co/MiniMaxAI/MiniMax-Music3) — a
+11B parameter music generation model that produces 44.1 kHz stereo WAV
+files from a (caption, tagged-lyrics) pair. The model uses three
+modular stages wired by `diffusers.ModularPipeline`:
+
+1. **Condition encoder** — Qwen3-8B LM + RVQ depth decoder turns
+   caption + `[verse]/[chorus]/[bridge]/[instrumental]/...` tagged
+   lyrics into discrete codes.
+2. **Denoise** — 2.4B flow-matching DiT in 200-frame windows with
+   100-frame overlap (30 steps default).
+3. **Vocoder** — Flow-VAE turns codes into 44.1 kHz stereo audio.
+
+**Key technical decisions:**
+- **diffusers from main** (not a pinned commit): Music3 support landed
+  in `diffusers.modular_pipelines.minimax_music3` which requires a
+  recent enough diffusers. Installing from main ensures we have the
+  `ModularPipeline.from_pretrained(repo_dir).load_components(...)` API.
+- **Stepwise `snapshot_download` with `allow_patterns`**: the repo has
+  ~37 GB of files including legacy SGLang/transformers checkpoints
+  (`dav.pth`, `flowmatching_vae.pth`). We download only the 7
+  diffusers components (~27 GB) and skip the legacy files.
+- **Lazy pipe init** (`_load_pipe()`): the 11B model takes 30-60s to
+  load; we defer it until the first `generate_song()` call so STEP 4
+  Gradio can render instantly. The `PRECISION_MODE` form widget allows
+  'bf16' (only working mode) or 'auto' (detects VRAM and warns).
+- **No CPU offload**: `ModularPipeline` does not yet expose
+  `enable_sequential_cpu_offload()` (as of diffusers main, August
+  2026). The whole pipeline is moved to CUDA in bf16. T4 (16 GB) is
+  **insufficient** — A100 (40 GB) recommended. This limitation is
+  documented in the cell 1 header and the Memory table.
+- **STEP 9 ffmpeg muxer**: 3 modes — **Replace** (swap audio),
+  **Mix** (blend with `MIX_VOLUME` slider 0.0-2.0), **Concat**
+  (loop video to song length). Auto-installs ffmpeg via apt if missing.
+  Designed to combine Music3 songs with `LTX-2-5_ComfyUI_Colab` video
+  outputs into a finished music video.
+
+**Polish state (2 tips, 20 try, 20 except, all Y's):**
+- 11-cell Pixal3D pattern
+- Drive cache prologue + snapshot_download with verified allow_patterns
+- Tooltips on gr.Slider / gr.Number
+- clear_output() before demo.launch
+- default_concurrency_limit=2, demo.load welcome
+- STEP 7 batch with hash-based skip-existing + resume log
+- STEP 8 log tail (debug aid)
+- STEP 9 video+song muxer
+
+**QA result:** passes tools/validate.py + tools/qa_check.py cleanly.
+Suite now at **44 notebooks**.
+
+### Bug fixes for MiniMax-Music3 (post-`d523984` review)
+
+The initial commit `d523984` shipped the notebook incomplete (8 cells
+with no download step, no `generate_song()` function, and an
+unconditional call to `enable_sequential_cpu_offload` on a
+`ModularPipeline` that doesn't support it). This commit brings the
+notebook to a runnable state.
+
+- **Added STEP 2** (download ~27 GB via `snapshot_download` with
+  verified `allow_patterns`).
+- **Added STEP 3** (imports + lazy `_load_pipe()` + `generate_song()`
+  returning `path, audio`).
+- **Reordered cells**: STEP 2 between STEP 1 and STEP 3; STEP 9
+  placed between STEP 7 and STEP 8.
+- **Removed `cpu_offload` mode** (ModularPipeline doesn't support
+  it). Replaced with `pipe.to('cuda')` + comment. Updated Memory
+  table to mark T4 (16 GB) as N/A. Updated cell 1 opening line.
+- **Fixed orphan `gr.Markdown` welcome** that was outside the
+  `with gr.Blocks` block (the audit didn't catch this).
+- **Fixed mashed `print()` lines** and missing trailing newlines in
+  STEP 3.
+- **Exposed 6 names to `builtins`** with `MiniMax_MUSIC3_` prefix for
+  cross-cell use.
+
 ### New notebook: MiniMax-H3 — Video + Audio Generation (33B, INT4 quantized)
 
 Adds **MiniMax-H3_Colab.ipynb**, a Colab port of
