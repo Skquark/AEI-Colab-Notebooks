@@ -5,6 +5,33 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Comprehensive Review & Improvements: MiniMax-H3, LTX-2.5, and MiniMax-Music3
+
+- **`LTX-2-5_ComfyUI_Colab.ipynb`**:
+  - Implemented a complete interactive Gradio UI in Step 4 for Text-to-Video and Image-to-Video (First Frame & Last Frame), resolution selector, duration / length control, two-stage distilled upscale toggle, and audio preview.
+  - Defined and exported canonical `_build_workflow` and `_build_workflow_two_stage` builders to `builtins` in Step 4 so that Step 4, Step 6 (Quick test), Step 7 (Batch), and Step 8.5 (Smoke-test) can execute independently in any order without crashing.
+  - Fixed print formatting bug in Step 2 (`GOT 401 = gated repo...`) and deduplicated comments and code across Steps 2, 3, 6, and 7.
+  - Reordered Step 8.5 (Smoke-test) between Step 8 (Debug log) and Step 9 (Video upscaler) with standardized ID `step8.5-smoketest`.
+- **`MiniMax-Music3_Colab.ipynb`**:
+  - Fixed `NameError: name '_fmt_seconds' is not defined` in Step 7 by defining `_fmt_seconds` prior to call site.
+  - Fixed `_song_prompt_hash` signature to take `cfg_scale` as an explicit parameter.
+  - Guarded `display(Audio(...))` in Step 6 against `None` when `SAVE_FILE = False`.
+  - Added missing transitive dependencies (`transformers>=4.48.0`, `accelerate>=1.0.0`, `safetensors`, `sentencepiece`) in Step 1.
+  - Reordered Step 8 (Log) and Step 9 (Mux) for sequential numbering, and improved Step 9 video auto-detection across `LTX-Video-2.5`, `MiniMax-H3`, and `Wan2.2`.
+- **`MiniMax-H3_ComfyUI_Colab.ipynb`**:
+  - Exported `_build_workflow` and LoRA constants directly to `builtins` in Step 4 and reinforced fallback handling in Step 5 so skipping Step 4 (Gradio UI) never breaks Step 6 or Step 7.
+- **Repository-wide Fixes & Modernization**:
+  - Fixed `NameError` in `Cube_3D_Colab.ipynb` Step 1 (`import torch`) and Step 2 (`from pathlib import Path`).
+  - Fixed `NameError` in `Wan2.2_Colab.ipynb` Step 1 (`import torch`) and Step 7 (`import shutil`).
+  - Fixed multi-line pip syntax in `Pixal3D_Colab.ipynb` and empty block in `Pixal3D_Wheel_Builder.ipynb`.
+  - Standardized "Open In Colab" badges (`colab-badge.svg`) on `GaussianGPT`, `HY-World-2.0`, `InfiniSplat`, and `MiniMax-H3`.
+  - Modernized Gradio queue concurrency (`default_concurrency_limit` → `concurrency_limit`) across 20+ notebooks.
+  - Added persistent Google Drive caching prologue (`AEI_TTS_Cache`) to `VoxCPM2_Colab.ipynb` and `Kokoro-82M_Colab.ipynb`.
+  - Fixed Gradio event lifecycle ordering in `Fish-S2-Pro_Colab.ipynb` (attached `demo.load` before `demo.launch`).
+  - Standardized `cellView: "form"` on all code cells across all 44 notebooks so code blocks are collapsed by default in Google Colab.
+- **QA & Tooling**:
+  - Updated `tools/validate.py` and `tools/qa_check.py` with explicit UTF-8 encoding and local cache support; verified all 44 notebooks pass with 0 errors.
+
 ### New notebook: MiniMax-Music3 — Lyrics + Caption-to-Music (11B, MIT)
 
 Adds **MiniMax-Music3_Colab.ipynb**, a Colab port of

@@ -82,7 +82,7 @@ def _fix_empty(src):
 
 
 def validate(path):
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         nb = json.load(f)
     cells = nb['cells']
     # Accept cell id in either nbformat 4.x (metadata.id) or 5.x (top-level)

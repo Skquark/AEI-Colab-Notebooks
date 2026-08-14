@@ -33,3 +33,4 @@ opencode.json
 # Jupyter
 .ipynb_checkpoints/
 h3_split_blocks.py
+scratch/

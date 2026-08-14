@@ -57,6 +57,8 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [MiniMax-Music3 — Lyrics + Caption-to-Music (Qwen3 + DiT, ⚠️ ≥24 GB VRAM)](#minimax-music3--lyrics--caption-to-music)
 
 ### Video
+- [LTX-Video 2.5 — ComfyUI Audio/Video Generation](#ltx-video-25--comfyui-audiovideo-generation)
+- [MiniMax-H3 — ComfyUI Video + Audio Generation](#minimax-h3--comfyui-video--audio-generation)
 - [Wan 2.2 — Text & Image-to-Video](#wan-22--text--image-to-video)
 - [Wan 2.2 Animate — Character Animation & Replacement](#wan-22-animate--character-animation--replacement)
 - [Wan 2.2 S2V — Audio-Driven Cinematic Video](#wan-22-s2v--audio-driven-cinematic-video)
@@ -1620,6 +1622,34 @@ A **meta-tool** for adding new models to the AEI-Colab-Notebooks suite. Fill in 
 - **Batch mode**: Step 7 emits all 8 presets to `/content` in one click
 
 After generating, the only thing left to do is open the new notebook, replace the `=== TODO ===` markers in Step 3's `load()` and `infer()` methods with the actual model API, and the UI works.
+
+---
+
+## LTX-Video 2.5 — ComfyUI Audio/Video Generation
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/LTX-2-5_ComfyUI_Colab.ipynb)
+
+High-performance, joint **Audio-Video (AV)** generation pipeline powered by **Lightricks' LTX-2.5 (22B)** inside a headless ComfyUI backend on Google Colab. Supports photorealistic text-to-video, image-to-video (first frame and last frame conditioning), and two-stage distilled 2x spatial upscaling.
+
+- **Joint AV Synthesis**: Produces synchronized 24 fps video with matching ambient audio in a single denoise pass
+- **Gradio Web UI (Step 4)**: Interactive generation with text-to-video, image upload conditioning, canvas presets, seed controls, and integrated video player with audio
+- **Two-Stage Distilled Pipeline**: 1-stage fast generation (8 steps) or 2-stage spatial upscale with LTXVLatentUpsampler and 3-step refiner
+- **Batch Processing (Step 7)**: Sequential scene generation from JSON prompt files with resume capability
+- **Video Upscaler (Step 9)**: Dedicated latent video upscaler with VHS audio passthrough
+- **Hardware Support**: Runs on L4 (24 GB) and A100 (40 GB) with GGUF / int8-convrot quantization
+
+---
+
+## MiniMax-H3 — ComfyUI Video + Audio Generation
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MiniMax-H3_ComfyUI_Colab.ipynb)
+
+Headless ComfyUI workflow for **MiniMax-H3 (33B)** video generation with `--disable-pinned-memory` optimization. Generates cinematic video with native synchronized soundscapes from text prompts or first/last frame keyframe pairs.
+
+- **Memory-Optimized Backend**: Disables host memory pinning, enabling 33B model execution within standard Colab system RAM limits
+- **Gradio Interface (Step 4)**: Complete UI with 16 aspect ratio canvas presets, turbo LoRA controls (4-step and 8-step distillation), and live polling
+- **Attention Kernel Customization**: Supports `sage`, `sol`, `sage+sol`, and chunked SwiGLU FFN on 16 GB GPUs (T4 low-memory mode)
+- **Batch & Smoke-test**: Step 7 JSON batch generator and Step 8.5 lightweight diagnostic smoke-test
 
 ---
 

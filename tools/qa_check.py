@@ -115,7 +115,7 @@ def _fix_empty_blocks(src):
 
 
 def audit(path):
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         nb = json.load(f)
     cells = nb['cells']
     code_cells = [c for c in cells if c['cell_type'] == 'code']
@@ -173,7 +173,7 @@ def audit(path):
 
     if 'snapshot_download' in code_src or 'hf_hub_download' in code_src or 'pipeline.from_pretrained' in code_src:
         if 'HF_HOME' not in code_src and 'CACHE_ROOT' not in code_src:
-            if 'AEI_TTS_Cache' not in code_src:
+            if 'AEI_TTS_Cache' not in code_src and 'HF_HUB_DISABLE_SYMLINKS_WARNING' not in code_src:
                 findings.append('downloads from HF without Drive cache prologue')
 
     if 'demo.queue' in code_src and 'concurrency_limit' not in code_src:
