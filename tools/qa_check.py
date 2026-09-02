@@ -25,6 +25,7 @@ import ast, json, os, re, sys
 NOTEBOOKS = [
     ('Audio_PostProcessor_Colab.ipynb', 'authored'),
     ('Asset_Library_Browser_Colab.ipynb', 'authored'),
+    ('Breeze-TTS-2_Colab.ipynb',     'authored'),
     ('Cube_3D_Colab.ipynb',          'authored'),
     ('Dia_Colab.ipynb',              'authored'),
     ('Fish-S2-Pro_Colab.ipynb',      'authored'),

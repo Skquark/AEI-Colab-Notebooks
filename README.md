@@ -36,6 +36,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 
 ### Text-to-Speech
 - [Qwen3-TTS *(flagship)*](#qwen3-tts)
+- [Breeze TTS 2 — Voice Design, Clone & Direction (EN/ZH)](#breeze-tts-2--voice-design-clone--direction)
 - [Higgs-Audio](#higgs-audio)
 - [MisoTTS](#misotts)
 - [Supertonic-3](#supertonic-3)
@@ -1807,6 +1808,22 @@ A matching lineup of self-contained Colab notebooks for state-of-the-art text-to
 - **Base (Clone)** — 3-second reference clip + transcript → clone any voice
 
 Auto-picks the 0.6B variant for T4 (16 GB) and the 1.7B variant for L4/A100.
+
+### Breeze TTS 2 — Voice Design, Clone & Direction
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Breeze-TTS-2_Colab.ipynb)
+
+`BreezeBlue/Breeze-TTS-2` (3B) — bilingual (EN/ZH) TTS ranked **#1 among open-weight models** on the Artificial Analysis TTS leaderboard. Three modes:
+
+- **Voice Design** — create a voice from a natural-language description, no reference audio needed (CFG 4.0 recommended)
+- **Voice Clone** — clone a speaker from clean reference audio + its exact transcript (auto-transcribed with CPU Whisper in the UI)
+- **Voice Direction** — clone a reference voice while steering tone, emotion, and pace via an instruction ("Speak slowly with a restrained, serious tone.")
+
+Inline vocal events in the text: `(laugh)`, `(sigh)`, `(cough)`, `(clears throat)` (EN); `[笑]`, `[叹气]`, `[咳嗽]`, `[清嗓子]` (ZH). Architecture: Qwen3-1B backbone + 12-layer depth decoder (fills 16 RVQ codebooks) + Kyutai Mimi codec → 24 kHz mono. **≈7.7 GiB VRAM — works on T4.**
+
+**Audiobook chapter mode (STEP 7)**: point it at a plain-text file (paragraphs separated by blank lines), and it splits long paragraphs at sentence boundaries, generates each chunk with the same voice/seed, inserts 0.35 s pauses between paragraphs, and concatenates into **one full-chapter WAV** (+ individual per-paragraph WAVs). Resume-safe via a hash-keyed JSONL log.
+
+⚠️ **License**: code is Apache 2.0, but **weights & outputs are research / non-commercial only** (RESONIA, INC. — commercial use requires written authorization). Fine for personal/indie audiobooks; commercial audiobooks need a license from contact@breeze.blue.
 
 ### Higgs-Audio
 

@@ -5,6 +5,60 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### New notebook: Breeze TTS 2 — Voice Design, Clone & Direction (EN/ZH, 3B)
+
+Adds **Breeze-TTS-2_Colab.ipynb**, a Colab port of
+[BreezeBlue/Breeze-TTS-2](https://huggingface.co/BreezeBlue/Breeze-TTS-2) —
+the open-weight bilingual (English/Chinese) TTS model ranked #1 among
+open-weight models on the Artificial Analysis TTS leaderboard.
+
+**Three modes (tabbed Gradio UI mirroring the official Space):**
+- **Voice Design** — voice from a natural-language description, no
+  reference audio needed (CFG 4.0 recommended).
+- **Voice Clone** — voice from clean reference audio + its exact
+  transcript. The UI auto-transcribes reference audio with CPU
+  Whisper (`openai/whisper-small`) into an editable transcript field.
+- **Voice Direction** — clone a reference voice while steering tone,
+  emotion, and pace via an instruction (CFG 4.0).
+
+**Architecture:** Qwen3-1B autoregressive backbone (first codebook
+token per 12.5 Hz frame) + 12-layer llama-100M depth decoder (remaining
+15 of 16 RVQ codebooks) + Kyutai Mimi codec → 24 kHz mono WAV.
+Checkpoint ≈7.2 GB on Drive (2 safetensors shards + bundled Mimi
+audio tokenizer). **≈7.7 GiB VRAM eager — works on T4 (16 GB).**
+
+**Audiobook chapter mode (STEP 7):** BATCH_MODE='chapter' reads a
+plain-text file (paragraphs separated by blank lines), splits long
+paragraphs at sentence boundaries (MAX_CHUNK_CHARS, default 400),
+generates each chunk with the same voice/instruction/seed, inserts
+0.35 s pauses between paragraphs, and concatenates into one
+full-chapter WAV plus individual per-paragraph WAVs. Resume-safe via
+a hash-keyed `batch_speech.log.jsonl` (text+mode+instruction+cfg
+SHA-256 → wav path). A JSON batch mode (BATCH_MODE='json') covers
+per-scene overrides in the same cell.
+
+**Implementation notes:**
+- Clones `github.com/breezeblue-ai/breeze-tts` (Apache 2.0) to Drive
+  in STEP 1 and imports `breeze_infer` from it; pins the official
+  Space's deps (`transformers==4.57.3`, `qwen-tts==0.1.1`,
+  `accelerate==1.12.0`).
+- `generate_speech()` wraps the `FastBreezeStreamingRuntime`
+  (eager mode, `fast_all=None` — CUDA-graph warmup is not worth it
+  for one-shot Colab use) and handles the three template paths
+  (`tts_instruction` vs `ref_edit_tata`), mode-specific CFG defaults
+  (design 4.0 / clone 1.0 / direction 4.0), and seed handling.
+- Inline vocal events work as-is: `(laugh)`, `(sigh)`, `(cough)`,
+  `(clears throat)` in English; `[笑]` `[叹气]` `[咳嗽]` `[清嗓子]`
+  in Chinese.
+
+**License:** code Apache 2.0; weights & outputs are BreezeBlue
+Research and **Non-Commercial** License (RESONIA, INC.). Documented in
+the notebook header and README.
+
+**QA result:** passes tools/validate.py + tools/qa_check.py cleanly
+(5 tips, 21 try/except, all 8 audit dimensions). Suite now at
+**45 notebooks**.
+
 ### Comprehensive Review & Improvements: MiniMax-H3, LTX-2.5, and MiniMax-Music3
 
 - **`LTX-2-5_ComfyUI_Colab.ipynb`**:
