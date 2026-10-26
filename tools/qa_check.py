@@ -35,10 +35,12 @@ NOTEBOOKS = [
     ('HY-World-2.0_Colab.ipynb',     'authored'),
     ('Hunyuan3D-2.1_Colab.ipynb',    'authored'),
     ('InfiniSplat_Colab.ipynb',      'authored'),
+    ('InfiniteTalk_Colab.ipynb',     'authored'),
     ('Hunyuan3D-2_Colab.ipynb',      'authored'),
     ('Hunyuan3D-3_Colab.ipynb',      'authored'),
     ('IndicF5_Colab.ipynb',          'authored'),
     ('Kokoro-82M_Colab.ipynb',       'authored'),
+    ('LongCat-Video-Avatar-1.5_Colab.ipynb', 'authored'),
     ('Mesh_Optimizer_Colab.ipynb',   'authored'),
     ('LTX-2-5_ComfyUI_Colab.ipynb',  'authored'),
     ('MiniMax-H3_Colab.ipynb',       'authored'),
@@ -165,7 +167,7 @@ def audit(path):
         if 'from tqdm' not in code_src and 'tqdm.notebook' not in code_src:
             findings.append('no tqdm in pip install / downloads')
 
-    if n_info == 0 and 'gr.' in code_src:
+    if n_info == 0 and re.search(r'\bgr\.', code_src):
         findings.append('zero info= tooltips on Gradio widgets')
 
     em = src.count('\u2014')
@@ -183,7 +185,7 @@ def audit(path):
     if 'demo.launch' in code_src:
         idx_launch = code_src.find('demo.launch')
         before = code_src[:idx_launch + 200]
-        if 'clear_output()' not in before and '_clear()' not in before:
+        if 'clear_output(' not in before and '_clear()' not in before:
             findings.append('demo.launch without prior clear_output()')
 
     if 'gr.Blocks' in code_src and 'demo.load' not in code_src and 'tab_ip.select' not in code_src:
@@ -214,7 +216,7 @@ def audit(path):
         'try_pairs':       (n_try, n_exc),
         'em_dash_count':   em,
         'hf_home':         'HF_HOME' in code_src,
-        'clear_output':    'clear_output()' in code_src or '_clear()' in code_src,
+        'clear_output':    'clear_output(' in code_src or '_clear()' in code_src,
         'concurrency':     'concurrency_limit' in code_src,
         'demo_load':       'demo.load' in code_src,
         'queue':           'demo.queue' in code_src,
@@ -230,6 +232,12 @@ def main():
 
     rows = []
     fail_count = 0
+    registered = {p for p, _ in NOTEBOOKS}
+    for disk_nb in sorted(f for f in os.listdir('.') if f.endswith('.ipynb')):
+        if disk_nb not in registered:
+            print(f'  {disk_nb}: UNREGISTERED in tools/qa_check.py NOTEBOOKS')
+            fail_count += 1
+
     for path, kind in NOTEBOOKS:
         if not os.path.exists(path):
             print(f'  {path}: MISSING')

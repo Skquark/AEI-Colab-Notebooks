@@ -20,10 +20,9 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Wild Gaussian Splatting — Video / Image Folder → 3DGS (MASt3R + INRIA)](#wild-gaussian-splatting--video--image-folder--3dgs-cc-by-nc-sa--inria)
 - [MapAnything — Universal 3DGS-from-Images (Meta, Apache 2.0)](#mapanything--universal-3dgs-from-images-meta-apache-20)
 - [Pi3X — Video-Native 3DGS, Permutation-Equivariant (BSD-3 + CC BY-NC-4.0)](#pi3x--video-native-3dgs-permutation-equivariant-bsd-3--cc-by-nc-40)
-- [HY-World 2.0 — WorldMirror 2.0 Multi-Modal World Reconstruction (Tencent-Hunyuan, ⚠️ territory-excluded)](#hy-world-20--worldmirror-20-multi-modal-world-reconstruction-tencent-hunyuan-territory-excluded)
+- [HY-World 2.0 — WorldMirror 2.0 Multi-Modal World Reconstruction (Tencent-Hunyuan, ⚠️ territory-excluded)](#hy-world-20--worldmirror-20-multi-modal-world-reconstruction-tencent-hunyuan--territory-excluded)
 - [GaussianGPT — Autoregressive 3D Gaussian Scene Generation (ECCV 2026, MIT)](#gaussiangpt--autoregressive-3d-gaussian-scene-generation-eccv-2026-mit)
 - [InfiniSplat — Single-Image 3D Gaussian Reconstruction (SIGGRAPH Asia 2026, Apache 2.0)](#infinisplat--single-image-3d-gaussian-reconstruction-siggraph-asia-2026-apache-20)
-- [MiniMax-H3 — Video + Audio Generation (33B, INT4, ⚠️ territory-excluded)](#minimax-h3--video--audio-generation-33b-int4-territory-excluded)
 - [TextureMapPrep — Seamless PBR Maps for Game Assets](#texturemapprep--seamless-pbr-maps-for-game-assets)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
@@ -59,10 +58,13 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 
 ### Video
 - [LTX-Video 2.5 — ComfyUI Audio/Video Generation](#ltx-video-25--comfyui-audiovideo-generation)
+- [MiniMax-H3 — Video + Audio Generation (33B, INT4, ⚠️ territory-excluded)](#minimax-h3--video--audio-generation-33b-int4--territory-excluded)
 - [MiniMax-H3 — ComfyUI Video + Audio Generation](#minimax-h3--comfyui-video--audio-generation)
 - [Wan 2.2 — Text & Image-to-Video](#wan-22--text--image-to-video)
 - [Wan 2.2 Animate — Character Animation & Replacement](#wan-22-animate--character-animation--replacement)
 - [Wan 2.2 S2V — Audio-Driven Cinematic Video](#wan-22-s2v--audio-driven-cinematic-video)
+- [LongCat-Video-Avatar 1.5 — Audio-Driven Avatar Video Studio](#longcat-video-avatar-15--audio-driven-avatar-video-studio)
+- [InfiniteTalk — Sparse-Frame Audio-Driven Video Generation & Dubbing](#infinitetalk--sparse-frame-audio-driven-video-generation--dubbing)
 
 ---
 
@@ -875,73 +877,6 @@ Apache License 2.0. Fully compatible with our suite.
 
 ---
 
-## MiniMax-H3 — Video + Audio Generation (33B, INT4, ⚠️ territory-excluded)
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MiniMax-H3_Colab.ipynb)
-
-A Colab port of [MiniMax-H3](https://huggingface.co/MiniMaxAI/MiniMax-H3) — a 33B parameter video generation model that produces **video with synchronized audio** (ambience, foley, speech). Supports text-to-video, image-to-video (first/last frame), and reference-based generation.
-
-### How it differs from our other video notebooks
-
-| | MiniMax-H3 | Wan 2.2 | Wan 2.2 Animate |
-|--|------------|---------|-----------------|
-| **Output** | Video + **audio** | Video only | Video only |
-| **Model** | 33B DiT | 14B DiT | 14B DiT |
-| **VRAM** | ~18.5 GB (INT4) | ~12 GB | ~14 GB |
-| **License** | ⚠️ MiniMax (excludes USA/EU/UK/KR) | Apache 2.0 | Apache 2.0 |
-| **Use for** | Video + synced audio | Text/image → video | Character animation |
-
-MiniMax-H3 is the only notebook in the suite that generates **audio alongside video**. It uses a split deployment: remote conditioner (HF Space) for text encoding + local INT4-quantized denoiser for video+audio generation.
-
-### Architecture
-
-```
-prompt + images → [remote conditioner HF Space] → prompt_embeds
-                                                    ↓
-              INT4 DiT (15.5 GB) → denoise → VAEs → video.mp4 + audio
-```
-
-1. **Remote conditioner** (`multimodalart/qwen3vl-conditioner` HF Space): encodes prompt + optional keyframes via `gradio_client`. Saves 62 GB download + 14 GB VRAM.
-2. **Local denoiser** (Colab GPU): 33B transformer INT4-quantized with torchao (~15.5 GB VRAM). VAEs loaded sequentially after denoising (~10.3 GB). Peak VRAM: ~18.5 GB.
-
-### ⚠️ License — Territory Restriction
-
-MiniMax H3 Community License excludes **EU, UK, South Korea, AND USA**. More restrictive than HY-World 2.0 (which excluded EU/UK/KR but not USA). Not gated — anyone can download.
-
-### Pipeline
-
-1. **STEP 1** — installs torch 2.11.0+cu128, diffusers from PR commit, torchao, transformers 5.8.0, av, stubs `spaces` module. First run: ~10-15 min.
-2. **STEP 2** — downloads FL2VA transformer (61.7 GB) + VAEs (10.3 GB) to Drive cache. First run: ~30-60 min.
-3. **STEP 3** — imports, remote conditioner, lazy model loader with torchao INT4 quantization.
-4. **STEP 4** — Gradio UI: prompt + optional first/last frame, canvas selector, duration/steps/seed, prompt rewrite toggle.
-5. **STEP 5** — keep alive.
-6. **STEP 6** — quick test (single video).
-7. **STEP 7** — batch generation from prompt list.
-
-### Requirements
-
-* **GPU**: L4 (22 GB) or A100 (40 GB). T4 is too small for INT4.
-* **Disk**: ~72 GB for FL2VA weights (cached on Drive).
-* **First-run**: ~45-75 min total (download + install + quantization).
-* **Subsequent**: ~5-10 min (load from Drive + quantize).
-* **Inference**: ~2-10 min per video depending on canvas/frames/steps.
-* **Network**: Requires access to `multimodalart/qwen3vl-conditioner` HF Space.
-
-### Outputs
-
-```
-output.mp4    # Video + synchronized stereo audio (32 kHz)
-```
-
-### Related notebooks
-
-- **Wan2.2_Colab** — text/image-to-video (no audio)
-- **Wan2.2_Animate_Colab** — character animation
-- **GaussianGPT_Colab** — autoregressive 3D scene generation
-- **InfiniSplat_Colab** — single-image 3DGS reconstruction
-
----
-
 ## MiniMax-Music3 — Lyrics + Caption-to-Music
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MiniMax-Music3_Colab.ipynb)
@@ -1641,6 +1576,66 @@ High-performance, joint **Audio-Video (AV)** generation pipeline powered by **Li
 
 ---
 
+## MiniMax-H3 — Video + Audio Generation (33B, INT4, ⚠️ territory-excluded)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MiniMax-H3_Colab.ipynb)
+
+A Colab port of [MiniMax-H3](https://huggingface.co/MiniMaxAI/MiniMax-H3) — a 33B parameter video generation model that produces **video with synchronized audio** (ambience, foley, speech). Supports text-to-video, image-to-video (first/last frame), and reference-based generation.
+
+### How it differs from our other video notebooks
+
+| | MiniMax-H3 | Wan 2.2 | Wan 2.2 Animate |
+|--|------------|---------|-----------------|
+| **Output** | Video + **audio** | Video only | Video only |
+| **Model** | 33B DiT | 14B DiT | 14B DiT |
+| **VRAM** | ~18.5 GB (INT4) | ~12 GB | ~14 GB |
+| **License** | ⚠️ MiniMax (excludes USA/EU/UK/KR) | Apache 2.0 | Apache 2.0 |
+| **Use for** | Video + synced audio | Text/image → video | Character animation |
+
+MiniMax-H3 is the only notebook in the suite that generates **audio alongside video** via a split deployment: remote conditioner (HF Space) for text encoding + local INT4-quantized denoiser for video+audio generation.
+
+### Architecture
+
+```
+prompt + images → [remote conditioner HF Space] → prompt_embeds
+                                                    ↓
+              INT4 DiT (15.5 GB) → denoise → VAEs → video.mp4 + audio
+```
+
+1. **Remote conditioner** (`multimodalart/qwen3vl-conditioner` HF Space): encodes prompt + optional keyframes via `gradio_client`. Saves 62 GB download + 14 GB VRAM.
+2. **Local denoiser** (Colab GPU): 33B transformer INT4-quantized with torchao (~15.5 GB VRAM). VAEs loaded sequentially after denoising (~10.3 GB). Peak VRAM: ~18.5 GB.
+
+### ⚠️ License — Territory Restriction
+
+MiniMax H3 Community License excludes **EU, UK, South Korea, AND USA**. More restrictive than HY-World 2.0 (which excluded EU/UK/KR but not USA). Not gated — anyone can download.
+
+### Pipeline
+
+1. **STEP 1** — installs torch 2.11.0+cu128, diffusers from PR commit, torchao, transformers 5.8.0, av, stubs `spaces` module. First run: ~10-15 min.
+2. **STEP 2** — downloads FL2VA transformer (61.7 GB) + VAEs (10.3 GB) to Drive cache. First run: ~30-60 min.
+3. **STEP 3** — imports, remote conditioner, lazy model loader with torchao INT4 quantization.
+4. **STEP 4** — Gradio UI: prompt + optional first/last frame, canvas selector, duration/steps/seed, prompt rewrite toggle.
+5. **STEP 5** — keep alive.
+6. **STEP 6** — quick test (single video).
+7. **STEP 7** — batch generation from prompt list.
+
+### Requirements
+
+* **GPU**: L4 (22 GB) or A100 (40 GB). T4 is too small for INT4.
+* **Disk**: ~72 GB for FL2VA weights (cached on Drive).
+* **First-run**: ~45-75 min total (download + install + quantization).
+* **Subsequent**: ~5-10 min (load from Drive + quantize).
+* **Inference**: ~2-10 min per video depending on canvas/frames/steps.
+* **Network**: Requires access to `multimodalart/qwen3vl-conditioner` HF Space.
+
+### Outputs
+
+```
+output.mp4    # Video + synchronized stereo audio (32 kHz)
+```
+
+---
+
 ## MiniMax-H3 — ComfyUI Video + Audio Generation
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MiniMax-H3_ComfyUI_Colab.ipynb)
@@ -1778,9 +1773,88 @@ Apache 2.0 — the model weights are yours to use commercially. The cloud API is
 
 ---
 
+## LongCat-Video-Avatar 1.5 — Audio-Driven Avatar Video Studio
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/LongCat-Video-Avatar-1.5_Colab.ipynb)
+
+Self-contained Colab studio for **Meituan LongCat Team's** [`meituan-longcat/LongCat-Video-Avatar`](https://huggingface.co/meituan-longcat/LongCat-Video-Avatar) (`LongCat-Video-Avatar 1.5`, 13.6B DiT backbone) based on the [`victor/LongCat-Video-Avatar-1.5`](https://huggingface.co/spaces/victor/LongCat-Video-Avatar-1.5) Hugging Face Space. Generates expressive, lip-synced 480p and 720p avatar videos at 25 fps with coupled Text+Audio Classifier-Free Guidance (`text_guidance_scale=4.0`, `audio_guidance_scale=4.0`), Identity-Preserving Reference Sink long-video continuation (`ref_img_index=10`, `mask_frame_range=3`), and **DBCache** dynamic block caching.
+
+### Three Generation Modes
+
+1. **Single-Avatar Image + Audio to Video (`AI2V` + Long-Video `AVC`)**:
+   - Animate any reference portrait or character image with speech or singing audio.
+   - Multi-segment **Audio-Video Continuation (`AVC`)** seamlessly chains 93-frame (`3.72s`) segments using a latent Reference Sink (`ref_img_index=10`) with 13 overlapping frames and masked boundary transitions (`mask_frame_range=3`) to prevent identity or background drift across long clips.
+2. **Audio + Text Only (`AT2V` — No Reference Image Required)**:
+   - Synthesizes a complete talking character and scene from scratch using only a driving audio track and a descriptive text prompt.
+3. **Dual-Speaker Multi-Person Conversation (`Multi-AI2V`)**:
+   - Drives two characters in a single scene using two independent audio tracks in either **Sequential Turn-Taking (`add`)** or **Simultaneous / Duet (`para`)** mode with automatic left/right half splitting or custom pixel bounding boxes (`y_min, x_min, y_max, x_max`).
+
+### Colab Engineering Highlights
+
+- **Zero-Spike Streaming INT8 Quantizer (`Step 3`)**: Streams the 30.8 GB BF16 Single-Avatar (or 34.0 GB Multi-Avatar) safetensors shards tensor-by-tensor directly into `torchao` INT8 weight-only linear layers on CPU and saves a pre-quantized `~15 GB` `.pt` cache to Google Drive — avoiding the `>52 GB` host RAM spike that otherwise crashes Colab runtimes.
+- **Stage-Separated Execution (`L4 24GB` & `A100 40GB`)**: Runs Stage 1 (`Kim_Vocal_2.onnx` vocal separation + `chinese-wav2vec2-base` 12-layer audio features), Stage 2 (`umt5-xxl` text encoding), Stage 3 (INT8 DiT denoising with DBCache), and Stage 4 (Wan2.1 3D causal VAE decode + FFmpeg AAC muxing) sequentially with explicit CPU/GPU handoffs so peak VRAM stays within **22.4 GB on L4**.
+- **Gradio Studio UI (`Step 4`), Direct Cell (`Step 6`), and JSON Batch Queue (`Step 7`)**: Full 3-tab Gradio interface with built-in single and dual-speaker examples, direct form-based single/AVC generation, resume-safe JSON batch processing, and a **📂 Cross-Notebook Drive Audio Picker** that discovers recent `.wav`/`.mp3` files from your AEI TTS (`Qwen3-TTS`, `Breeze-TTS-2`, `VoxCPM2`), `Audio_PostProcessor`, and `MiniMax-Music3` Google Drive folders (also accessible via `AUDIO_PATH = "LATEST_DRIVE_AUDIO"` in Step 6).
+
+### GPU Support
+
+| GPU | VRAM | Precision Mode | Resolution | Notes |
+|-----|------|----------------|------------|-------|
+| **A100** | 40 GB / 80 GB | `bf16` or `int8` (auto) | 480p / 720p | Native BF16 or fast INT8 + DBCache |
+| **L4** | 24 GB | `int8` (auto) | 480p (recommended) / 720p | Uses Zero-Spike INT8 DiT (~15 GB) + stage-separated offload |
+| **T4** | 16 GB | ❌ | — | Insufficient VRAM for the 13.6B DiT + activations |
+
+### License
+
+MIT ([`meituan-longcat/LongCat-Video`](https://github.com/meituan-longcat/LongCat-Video)).
+
+---
+
+## InfiniteTalk — Sparse-Frame Audio-Driven Video Generation & Dubbing
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/InfiniteTalk_Colab.ipynb)
+
+Self-contained Colab studio for **MeiGen-AI's** [`MeiGen-AI/InfiniteTalk`](https://huggingface.co/MeiGen-AI/InfiniteTalk) ([GitHub](https://github.com/MeiGen-AI/InfiniteTalk) · [arXiv 2508.14033](https://arxiv.org/abs/2508.14033)) — a **14B sparse-frame audio-driven video generation and video dubbing** framework built on `Wan2.1-I2V-14B-480P`. Unlike mouth-inpainting lip-sync models, InfiniteTalk conditions on sparse keyframes to synchronize **lip movements, facial expressions, head rotation, and upper-body posture** simultaneously while preserving camera trajectory in video-to-video (`V2V`) dubbing.
+
+### Three Workflows Out of the Box
+
+1. **🖼️ Single-Person Image-to-Video (`I2V`)**:
+   - Animate any portrait or character image with speech or singing audio of arbitrary length (`streaming` mode across overlapping 81-frame chunks with `motion_frame=9`).
+   - Includes a dedicated **Step 7 Pan/Zoom Conditioning Video Helper** that converts static portraits into subtle cosine-eased pan/zoom `.mp4` inputs for `>60s` generations without color drift.
+2. **🎞️ Sparse-Frame Video Dubbing (`V2V`)**:
+   - Supply an existing `.mp4` video and a new audio track to re-dub lip movements, head pose, and facial expressions while preserving original camera motion and scene dynamics.
+   - Optional automatic **PySceneDetect (`split_video_lib`)** shot-boundary splitting and Lab color-transfer correction (`color_correction_strength`).
+3. **👥 Multi-Speaker Conversation (`Multi-I2V` / `Multi-V2V`)**:
+   - Drive two speakers in the same image or video using two separate audio tracks in either **Sequential Turn-Taking (`add`)** or **Parallel / Duet (`para`)** mode with spatial reference-attention routing (`get_attn_map_with_target`) and automatic left/right or custom bounding-box overlays.
+
+### Fast 8-Step FusionX LoRA Default & Smart Selective Downloader
+
+- **⚡ `7.5x` Faster Inference (`fast_8step_lora` Default)**:
+  - Uses MeiGen-AI's official pre-merged **INT8/FP8 + FusionX LoRA** checkpoints (`infinitetalk_single_int8_lora.safetensors` / `infinitetalk_multi_int8_lora.safetensors`) with `sampling_steps=8`, `shift=2.0`, `text_guide_scale=1.0`, `audio_guide_scale=2.0` — requiring only **16 DiT forward passes per 81-frame chunk instead of 120** (the 40-step standard mode runs 3 passes per step for dual CFG, whereas `text_guide_scale=1.0` triggers a 2-pass fast path).
+  - Switchable via a single dropdown to `standard_40step` (`steps=40`, `shift=3.0/5.0`, `text_guide_scale=5.0`, `audio_guide_scale=4.0`).
+- **💾 Selective `~30.5 GB` Weight Download (vs `~258 GB` Full Repos)**:
+  - Downloads only the required `Wan2.1-I2V-14B-480P` components (`Wan2.1_VAE.pth`, CLIP ViT-H-14, tokenizers = `5.11 GB`), `TencentGameMate/chinese-wav2vec2-base` (`0.36 GB`), `t5_fp8.safetensors` (`6.42 GB`), and the selected pre-quantized InfiniteTalk DiT (`18.60 GB`), skipping `~228 GB` of redundant unquantized checkpoints.
+- **🛠️ 11 Built-In Single-GPU Colab Patches**:
+  - Automatic PyTorch 2.x SDPA fallback when `flash_attn` / `xfuser` are absent, `quant="int8"` T5 fallback to `t5_fp8.safetensors`, removal of 240 per-step `torch.cuda.empty_cache()` stalls, removal of `@lru_cache` GPU RoPE leak (`21.47 GB` saved in multi-speaker mode), `AutoWrappedQLinear` persistent VRAM budgeting (`~6.5 GB` pinned on L4 24GB, full resident on A100 40GB+), automatic DiT offload before 3D VAE decoding, and automatic short-audio (`<3.24s`) silence padding + exact frame trimming.
+- **🎛️ Gradio Studio UI (`Step 8`), JSON Batch Queue (`Step 9`), & Cross-Notebook Drive Audio Picker**:
+  - Includes both interactive Colab form cells (`Steps 5–7`) and a 2-tab **Gradio Studio UI (`Step 8`)** with a **📂 Cross-Notebook Drive Audio Picker** that scans your `AEI_TTS_Out`, `AEI_3D_Out`, and `AEI_TTS_Cache/voices` Google Drive folders for one-click TTS/Music $\rightarrow$ Video chaining (or via `INPUT_SOURCE = "latest_drive_tts_audio"` in Step 5), plus a hash-keyed, resume-safe **JSON Batch Scene Processor (`Step 9`)**.
+
+### GPU Support
+
+| GPU | VRAM | DiT Residency | 81-Frame Chunk (`fast_8step_lora`) | Notes |
+|-----|------|---------------|------------------------------------|-------|
+| **A100** | 40 GB / 80 GB | Full quantized DiT in VRAM (`num_persistent_param_in_dit=None`) | ~35–50 sec | Supports 480p and 720p natively; `--fp8` supported on H100/Ada |
+| **L4** | 24 GB | `6B` params pinned (`~6.5 GB`) + `AutoWrappedQLinear` streaming | ~90–130 sec | Supports `int8` (and `fp8` on Ada CC 8.9) at 480p |
+| **T4** | 16 GB | Full layer-by-layer streaming (`num_persistent_param_in_dit=0`) | ~4–6 min | 480p `clip` / short `streaming` only (`int8`) |
+
+### License
+
+Apache 2.0 ([`MeiGen-AI/InfiniteTalk`](https://github.com/MeiGen-AI/InfiniteTalk)).
+
+---
+
 ## Text-to-Speech
 
-A matching lineup of self-contained Colab notebooks for state-of-the-art text-to-speech — **eleven models** covering English, Chinese, French, German, Spanish, Japanese, Korean, 11 Indian languages, 30 languages (VoxCPM2), and 80+ others. Every notebook follows the same 7-step pattern: **Install → Pre-cache → Core functions → Gradio UI → Keep-alive → Quick test → Batch synthesis**. No token or sign-up needed for any notebook except `IndicF5` (HF-gated). See [OpenVoice V2](#openvoice-v2) below for **voice conversion** (audio → audio with a cloned voice), which complements the TTS suite.
+A matching lineup of self-contained Colab notebooks for state-of-the-art text-to-speech — **twelve models** covering English, Chinese, French, German, Spanish, Japanese, Korean, 11 Indian languages, 30 languages (VoxCPM2), and 80+ others. Every notebook follows the same 7-step pattern: **Install → Pre-cache → Core functions → Gradio UI → Keep-alive → Quick test → Batch synthesis**. No token or sign-up needed for any notebook except `IndicF5` (HF-gated). See [OpenVoice V2](#openvoice-v2) below for **voice conversion** (audio → audio with a cloned voice), which complements the TTS suite.
 
 ### Quick Start
 
@@ -1792,9 +1866,9 @@ A matching lineup of self-contained Colab notebooks for state-of-the-art text-to
 
 | GPU | VRAM | Notebooks that fit | Notes |
 |-----|------|--------------------|-------|
-| **A100** | 40 GB | All 11 | Recommended flagship target |
-| **L4** | 24 GB | All 11 (MisoTTS, Fish S2 Pro need bf16 + careful memory) | Best price/perf for cloning |
-| **T4** | 16 GB | 9 of 11 (excludes MisoTTS, Fish S2 Pro) | Qwen3 auto-falls back to 0.6B variant |
+| **A100** | 40 GB | All 12 | Recommended flagship target |
+| **L4** | 24 GB | All 12 (MisoTTS, Fish S2 Pro need bf16 + careful memory) | Best price/perf for cloning |
+| **T4** | 16 GB | 10 of 12 (excludes MisoTTS, Fish S2 Pro) | Qwen3 auto-falls back to 0.6B variant; Breeze TTS 2 fits in ~7.7 GiB |
 | **CPU** | — | Supertonic-3, Kokoro-82M | 99M ONNX / 82M StyleTTS — runs anywhere |
 
 ### Qwen3-TTS
@@ -1968,6 +2042,7 @@ Curated reference voice clips with transcripts, ready to drop into the voice-clo
 | Notebook | Model | Size | Languages | License |
 |----------|-------|------|-----------|---------|
 | **Qwen3-TTS** *(flagship)* | Qwen3-TTS-12Hz | 0.6B / 1.7B | 10 | Apache 2.0 |
+| **Breeze TTS 2** | Breeze-TTS-2 | 3B (Qwen3-1B + Mimi) | 2 (EN/ZH) | Code Apache 2.0 · Weights Non-Commercial |
 | **Higgs-Audio** | Higgs-Audio v3 | 4B | 100+ | Research / Non-Commercial |
 | **MisoTTS** | MisoTTS 8B | 8B | English | Other (see card) |
 | **Supertonic-3** | Supertonic-3 | 99M (ONNX) | 31 | MIT code · OpenRAIL-M model |
@@ -2067,7 +2142,7 @@ Two Python scripts in `tools/` keep the notebooks consistent:
 Both run from the repo root with no dependencies:
 
 ```bash
-python3 tools/validate.py    # OK: all 26 notebook(s) parse cleanly.
+python3 tools/validate.py    # OK: all 47 notebook(s) parse cleanly.
 python3 tools/qa_check.py    # OK: all authored notebooks pass the polish audit.
 ```
 
@@ -2091,9 +2166,13 @@ Every model in this repo is the work of its respective authors. We just wrap the
 
 | Notebook | Upstream repo | Hugging Face | Paper |
 |----------|---------------|--------------|-------|
+| LTX-Video 2.5 (ComfyUI) | [Lightricks/LTX-Video](https://github.com/Lightricks/LTX-Video) · [Lightricks/ComfyUI-LTXVideo](https://github.com/Lightricks/ComfyUI-LTXVideo) | [Lightricks/LTX-Video](https://huggingface.co/Lightricks/LTX-Video) | [arXiv 2501.00103](https://arxiv.org/abs/2501.00103) |
+| MiniMax-H3 (Direct & ComfyUI) | [MiniMax-AI](https://github.com/MiniMax-AI) | — | — |
 | Wan 2.2 (5B + 14B) | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-TI2V-5B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B-Diffusers) · [Wan-AI/Wan2.2-I2V-A14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-I2V-A14B-Diffusers) | [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
 | Wan 2.2 Animate | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-Animate-14B](https://huggingface.co/Wan-AI/Wan2.2-Animate-14B) | [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
 | Wan 2.2 S2V | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-S2V-14B](https://huggingface.co/Wan-AI/Wan2.2-S2V-14B) | [arXiv 2508.18621](https://arxiv.org/abs/2508.18621) · [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
+| LongCat-Video-Avatar 1.5 | [meituan-longcat/LongCat-Video](https://github.com/meituan-longcat/LongCat-Video) | [meituan-longcat/LongCat-Video-Avatar](https://huggingface.co/meituan-longcat/LongCat-Video-Avatar) · [spaces/victor/LongCat-Video-Avatar-1.5](https://huggingface.co/spaces/victor/LongCat-Video-Avatar-1.5) | [arXiv 2510.22200](https://arxiv.org/abs/2510.22200) |
+| InfiniteTalk | [MeiGen-AI/InfiniteTalk](https://github.com/MeiGen-AI/InfiniteTalk) | [MeiGen-AI/InfiniteTalk](https://huggingface.co/MeiGen-AI/InfiniteTalk) · [Wan-AI/Wan2.1-I2V-14B-480P](https://huggingface.co/Wan-AI/Wan2.1-I2V-14B-480P) | [arXiv 2508.14033](https://arxiv.org/abs/2508.14033) |
 
 ### 3D Models
 
@@ -2105,6 +2184,17 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | Hunyuan3D-2.1 | [Tencent-Hunyuan/Hunyuan3D-2.1](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) | [tencent/Hunyuan3D-2.1](https://huggingface.co/tencent/Hunyuan3D-2.1) | [arXiv 2506.15442](https://arxiv.org/abs/2506.15442) |
 | Hunyuan3D 3.0 (API) | [Tencent Cloud](https://www.tencentcloud.com/document/product/1665/119114) (Cloud API v3) | — | — |
 | **TripoSplat** | [VAST-AI-Research/TripoSplat](https://github.com/VAST-AI-Research/TripoSplat) | [VAST-AI/TripoSplat](https://huggingface.co/VAST-AI/TripoSplat) | [arXiv 2605.16355](https://arxiv.org/abs/2605.16355) |
+| NoPoSplat | [cvg/NoPoSplat](https://github.com/cvg/NoPoSplat) | [botaoye/NoPoSplat](https://huggingface.co/botaoye/NoPoSplat) | [arXiv 2410.24207](https://arxiv.org/abs/2410.24207) |
+| Wild Gaussian Splatting | [naver/mast3r](https://github.com/naver/mast3r) · [graphdeco-inria/gaussian-splatting](https://github.com/graphdeco-inria/gaussian-splatting) | — | [arXiv 2406.09756](https://arxiv.org/abs/2406.09756) |
+| MapAnything | [facebookresearch/map-anything](https://github.com/facebookresearch/map-anything) | [facebook/map-anything](https://huggingface.co/facebook/map-anything) | — |
+| Pi3X | [yyfz/Pi3](https://github.com/yyfz/Pi3) | [yyfz233/Pi3](https://huggingface.co/yyfz233/Pi3) | — |
+| HY-World 2.0 (WorldMirror 2.0) | [Tencent-Hunyuan/HunyuanWorld-Mirror](https://github.com/Tencent-Hunyuan/HunyuanWorld-Mirror) | [tencent/HunyuanWorld-Mirror-2.0](https://huggingface.co/tencent/HunyuanWorld-Mirror-2.0) | — |
+| GaussianGPT | [TencentARC/GaussianGPT](https://github.com/TencentARC/GaussianGPT) | [TencentARC/GaussianGPT](https://huggingface.co/TencentARC/GaussianGPT) | — |
+| InfiniSplat | [VAST-AI-Research/InfiniSplat](https://github.com/VAST-AI-Research/InfiniSplat) | [VAST-AI/InfiniSplat](https://huggingface.co/VAST-AI/InfiniSplat) | — |
+| SkinTokens (TokenRig) | [VAST-AI-Research/TokenRig](https://github.com/VAST-AI-Research/TokenRig) | [VAST-AI/TokenRig](https://huggingface.co/VAST-AI/TokenRig) | — |
+| SuGaR | [Anttwo/SuGaR](https://github.com/Anttwo/SuGaR) | — | [arXiv 2311.12775](https://arxiv.org/abs/2311.12775) |
+| GauStudio | [GAP-LAB-CUHK-SZ/gaustudio](https://github.com/GAP-LAB-CUHK-SZ/gaustudio) | — | [arXiv 2403.19632](https://arxiv.org/abs/2403.19632) |
+| SplatTransform | [playcanvas/splat-transform](https://github.com/playcanvas/splat-transform) | — | — |
 | Mesh Optimizer | [mikedh/trimesh](https://github.com/mikedh/trimesh) · [Kramer84/pyfqmr](https://github.com/Kramer84/pyfqmr-Fast-quadric-Mesh-Reduction) · [cnr-isti-vclab/PyMeshLab](https://github.com/cnr-isti-vclab/PyMeshLab) · [isl-org/Open3D](https://github.com/isl-org/Open3D) | — | — |
 | Audio Post-Processor | [jiaaro/pydub](https://github.com/jiaaro/pydub) · [imageio/imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) · [bastibe/python-soundfile](https://github.com/bastibe/python-soundfile) · [librosa/librosa](https://github.com/librosa/librosa) · [csteinmetz1/pyloudnorm](https://github.com/csteinmetz1/pyloudnorm) · [timsainb/noisereduce](https://github.com/timsainb/noisereduce) · [spotify/pedalboard](https://github.com/spotify/pedalboard) · [resemble-ai/resemble-enhance](https://github.com/resemble-ai/resemble-enhance) | — | — |
 
@@ -2113,6 +2203,7 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | Notebook | Upstream repo | Hugging Face | Paper |
 |----------|---------------|--------------|-------|
 | Qwen3-TTS | (Alibaba) | [Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice) | — |
+| Breeze TTS 2 | [BreezeBlue/Breeze-TTS-2](https://huggingface.co/BreezeBlue/Breeze-TTS-2) | [BreezeBlue/Breeze-TTS-2](https://huggingface.co/BreezeBlue/Breeze-TTS-2) | — |
 | Higgs-Audio | [boson-ai/higgs-audio](https://github.com/boson-ai/higgs-audio) | [bosonai/higgs-audio-v2-tokenizer](https://huggingface.co/bosonai/higgs-audio-v2-tokenizer) | — |
 | MisoTTS | (Miso Labs) | [MisoLabs/MisoTTS](https://huggingface.co/MisoLabs/MisoTTS) | — |
 | Supertonic-3 | [Supertone/supertonic](https://github.com/Supertone/supertonic) | [Supertone/supertonic-3](https://huggingface.co/Supertone/supertonic-3) | — |
@@ -2123,6 +2214,12 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | Fish S2 Pro | [fishaudio/fish-speech](https://github.com/fishaudio/fish-speech) | [fishaudio/s2-pro](https://huggingface.co/fishaudio/s2-pro) | — |
 | VoxCPM2 | [OpenBMB/VoxCPM](https://github.com/OpenBMB/VoxCPM) | [openbmb/VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) | [arXiv 2509.24650](https://arxiv.org/abs/2509.24650) |
 | Kokoro-82M | [hexgrad/kokoro](https://github.com/hexgrad/kokoro) | [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) | [arXiv 2306.07691](https://arxiv.org/abs/2306.07691) (StyleTTS 2) · [arXiv 2203.02395](https://arxiv.org/abs/2203.02395) (iSTFTNet) |
+
+### Music Models
+
+| Notebook | Upstream repo | Hugging Face | Paper |
+|----------|---------------|--------------|-------|
+| MiniMax-Music3 | [MiniMax-AI](https://github.com/MiniMax-AI) | — | — |
 
 ### Voice Conversion Models
 

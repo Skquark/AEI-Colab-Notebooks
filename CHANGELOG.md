@@ -5,6 +5,126 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### New notebook: InfiniteTalk — Sparse-Frame Audio-Driven Video Generation & Dubbing (14B)
+
+Adds **InfiniteTalk_Colab.ipynb**, a self-contained Colab studio for
+[MeiGen-AI/InfiniteTalk](https://huggingface.co/MeiGen-AI/InfiniteTalk)
+([GitHub](https://github.com/MeiGen-AI/InfiniteTalk) ·
+[arXiv 2508.14033](https://arxiv.org/abs/2508.14033)) — MeiGen-AI's
+14B sparse-frame audio-driven video generation and video dubbing
+framework built on `Wan2.1-I2V-14B-480P`.
+
+**Three workflows in one notebook:**
+- **Single-Person Image-to-Video (`I2V`)** — animate any portrait or
+  character image with speech or singing audio across unlimited-length
+  `streaming` chunks (`frame_num=81`, `motion_frame=9`, 25 FPS).
+  Includes a **Step 7 Pan/Zoom Conditioning Video Helper** that turns
+  static images into smooth cosine-eased pan/zoom `.mp4` inputs for
+  `>60s` generation without color drift.
+- **Sparse-Frame Video Dubbing (`V2V`)** — re-dub an existing `.mp4`
+  video to new speech or singing audio while synchronizing lip motion,
+  head rotation, facial expressions, and upper-body posture, with
+  optional `PySceneDetect` shot-boundary splitting (`split_video_lib`)
+  and Lab color-drift correction (`color_correction_strength`).
+- **Multi-Speaker Conversation (`Multi-I2V` / `Multi-V2V`)** — drive
+  two speakers in the same image or video using two separate audio
+  tracks in either sequential turn-taking (`add`) or parallel (`para`)
+  mode with spatial reference-attention routing and automatic
+  left/right or custom bounding-box overlays.
+
+**Colab engineering & upstream fixes:**
+- **Fast 8-Step FusionX LoRA Default (`7.5x` faster):** defaults to
+  `infinitetalk_single_int8_lora.safetensors` /
+  `infinitetalk_multi_int8_lora.safetensors` (`sampling_steps=8`,
+  `shift=2.0`, `text_guide_scale=1.0`, `audio_guide_scale=2.0`),
+  requiring only 16 DiT forward passes per 81-frame chunk instead of
+  120; switchable via dropdown to `standard_40step`.
+- **Smart Selective Downloader (`~30.5 GB` vs `~258 GB`):** downloads
+  only the required `Wan2.1-I2V-14B-480P` components (`5.11 GB`),
+  `TencentGameMate/chinese-wav2vec2-base` (`0.36 GB`),
+  `t5_fp8.safetensors` (`6.42 GB`), and the selected quantized
+  InfiniteTalk DiT (`18.60 GB`), skipping `~228 GB` of redundant
+  unquantized shards.
+- **11 Single-GPU Colab Patches (Step 2):**
+  1. `wan/modules/t5.py` fallback from missing `t5_int8.safetensors` to
+     `t5_fp8.safetensors` + immediate CPU RAM release (`del model_state_dict; gc.collect()`).
+  2. `wan/modules/attention.py` & `wan/modules/clip.py` fallback to
+     PyTorch 2.x `F.scaled_dot_product_attention` when `flash_attn` is
+     absent.
+  3. `wan/multitalk.py` removal of 240 per-step
+     `torch.cuda.empty_cache()` calls inside the 40-block transformer
+     loop.
+  4. `wan/multitalk.py` actual `optimum-quanto` quantized weight size
+     computation (`18.6 GB` instead of `num_params * 2 = 34.9 GB` BF16
+     assumption) so `6B` DiT parameters stay pinned on L4 24GB GPUs.
+  5. `wan/multitalk.py` TeaCache `previous_modulated_input` dual-stream
+     fix when `text_guide_scale == 1.0` (2-pass fast LoRA mode).
+  6. `wan/multitalk.py` DiT CPU offload right before `self.vae.decode(x0)`
+     to prevent L4 VRAM OOM during 3D VAE decoding.
+  7. `wan/multitalk.py` `miss_lengths = [0]` initialization and pure-Python
+     `ContextManagers` fallback for `diffusers >= 0.32`.
+  8. `wan/utils/multitalk_utils.py` removal of `@lru_cache(maxsize=32)`
+     on `RotaryPositionalEmbedding1D.precompute_freqs_cis_1d` (prevents
+     up to `21.47 GB` GPU VRAM leak in multi-speaker mode) and removal
+     of `@torch.compile` on `calculate_x_ref_attn_map`.
+  9. `src/audio_analysis/wav2vec2.py` forced `attn_implementation="eager"`
+     when extracting 12-layer hidden states via `output_hidden_states=True`.
+  10. Short-audio (`<3.24s` / `<81` frames) automatic silence padding
+      and post-generation frame trimming.
+  11. Step 4 `wan_i2v.clip.model.cpu()` offload after initialization to
+      save `4.55 GB` of idle GPU VRAM.
+
+- **Gradio Studio UI (Step 8), JSON Batch Queue (Step 9), & Cross-Notebook Drive Audio Picker:**
+  includes both Colab form cells (`Steps 5–7`) and a 2-tab Gradio
+  Studio UI (`Step 8`), a SHA-256 resume-safe JSON batch scene processor
+  (`Step 9`), and `discover_aei_drive_audio()` to load recent `.wav`/`.mp3`
+  outputs from `AEI_TTS_Out`, `AEI_3D_Out`, and `AEI_TTS_Cache/voices`
+  with one click (also added to `LongCat-Video-Avatar-1.5_Colab.ipynb`).
+
+**License:** Apache 2.0.
+
+### New notebook: LongCat-Video-Avatar 1.5 — Audio-Driven Avatar Video Studio (13.6B)
+
+Adds **LongCat-Video-Avatar-1.5_Colab.ipynb**, a self-contained Colab
+studio for Meituan LongCat Team's
+[meituan-longcat/LongCat-Video-Avatar](https://huggingface.co/meituan-longcat/LongCat-Video-Avatar)
+(`LongCat-Video-Avatar 1.5`, 13.6B DiT) based on the
+[victor/LongCat-Video-Avatar-1.5](https://huggingface.co/spaces/victor/LongCat-Video-Avatar-1.5)
+Hugging Face Space.
+
+**Three generation modes (3-tab Gradio UI + Step 6 direct cell + Step 7 JSON batch):**
+- **Single-Avatar Image + Audio to Video (`AI2V` + Long-Video `AVC`)** —
+  coupled Text+Audio Classifier-Free Guidance (`text_guidance_scale=4.0`,
+  `audio_guidance_scale=4.0`), DBCache dynamic block caching
+  (`balanced` / `quality` / `fast` / `off`), and multi-segment latent
+  Reference Sink continuation (`ref_img_index=10`, `mask_frame_range=3`,
+  13-frame overlap) for drift-free long videos.
+- **Audio + Text Only (`AT2V`)** — synthesizes a talking avatar and
+  scene from scratch using only driving audio + a text prompt (no
+  reference image required).
+- **Dual-Speaker Multi-Person Conversation (`Multi-AI2V`)** — drives
+  two characters in a single scene with two independent audio tracks in
+  sequential turn-taking (`add`) or simultaneous/duet (`para`) mode with
+  automatic left/right half splitting or custom pixel bounding boxes.
+
+**Colab engineering & runtime fixes:**
+- **Zero-Spike Streaming INT8 Quantizer (Step 3):** streams the 30.8 GB
+  Single-Avatar (or 34.0 GB Multi-Avatar) BF16 safetensors shards
+  tensor-by-tensor directly into `torchao` INT8 weight-only linear
+  layers on CPU and caches a `~15 GB` `.pt` file to Google Drive,
+  avoiding the `>52 GB` host RAM spike that crashes Colab runtimes.
+- **Stage-Separated 4-Stage Pipeline:** runs vocal separation
+  (`Kim_Vocal_2.onnx`) + `chinese-wav2vec2-base` 12-layer audio
+  extraction, `umt5-xxl` text encoding, INT8 DiT denoising, and Wan2.1
+  3D causal VAE decoding sequentially with explicit CPU/GPU handoffs so
+  peak VRAM stays within `22.4 GB` on L4.
+- **Python 3.12 & PyTorch 2.x Compatibility Shims:** pure-PyTorch
+  `torch_scatter` shim, `audio_separator` import bypass for direct
+  `Kim_Vocal_2.onnx` execution, and automatic PyTorch SDPA fallback in
+  `BlockSparseAttentionProcessor` when `flash_attn` is absent.
+
+**License:** MIT. Suite now at **47 notebooks**.
+
 ### New notebook: Breeze TTS 2 — Voice Design, Clone & Direction (EN/ZH, 3B)
 
 Adds **Breeze-TTS-2_Colab.ipynb**, a Colab port of
