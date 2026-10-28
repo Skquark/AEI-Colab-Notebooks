@@ -11,6 +11,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 ### 3D
 - [Pixal3D — Image to 3D with PBR Textures](#pixal3d--image-to-3d-with-pbr-textures)
 - [Pixal3D Wheel Builder](#pixal3d-wheel-builder)
+- [TRELLIS.2 — Microsoft Image to PBR 3D (4B O-Voxel, MIT)](#trellis2--microsoft-image-to-pbr-3d-4b-o-voxel-mit)
 - [Cube 3D + CubePart](#cube-3d--cubepart)
 - [Hunyuan3D 3.0 — Tencent Cloud API](#hunyuan3d-30--tencent-cloud-api-wrapper)
 - [Hunyuan3D-2.1 — Tencent PBR 3D Pipeline *(flagship)*](#hunyuan3d-21--tencent-pbr-3d-pipeline-flagship)
@@ -19,10 +20,12 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [NoPoSplat — 2-3 Photos → 3DGS, pose-free (MIT, ICLR 2025)](#noposplat--2-3-photos--3dgs-pose-free-mit-iclr-2025)
 - [Wild Gaussian Splatting — Video / Image Folder → 3DGS (MASt3R + INRIA)](#wild-gaussian-splatting--video--image-folder--3dgs-cc-by-nc-sa--inria)
 - [MapAnything — Universal 3DGS-from-Images (Meta, Apache 2.0)](#mapanything--universal-3dgs-from-images-meta-apache-20)
+- [Depth Anything 3 — Any-View Metric Depth, Pose & 3DGS (ByteDance, Apache 2.0 / CC BY-NC 4.0)](#depth-anything-3--any-view-metric-depth-pose--3dgs-bytedance-apache-20--cc-by-nc-40)
 - [Pi3X — Video-Native 3DGS, Permutation-Equivariant (BSD-3 + CC BY-NC-4.0)](#pi3x--video-native-3dgs-permutation-equivariant-bsd-3--cc-by-nc-40)
 - [HY-World 2.0 — WorldMirror 2.0 Multi-Modal World Reconstruction (Tencent-Hunyuan, ⚠️ territory-excluded)](#hy-world-20--worldmirror-20-multi-modal-world-reconstruction-tencent-hunyuan--territory-excluded)
 - [GaussianGPT — Autoregressive 3D Gaussian Scene Generation (ECCV 2026, MIT)](#gaussiangpt--autoregressive-3d-gaussian-scene-generation-eccv-2026-mit)
 - [InfiniSplat — Single-Image 3D Gaussian Reconstruction (SIGGRAPH Asia 2026, Apache 2.0)](#infinisplat--single-image-3d-gaussian-reconstruction-siggraph-asia-2026-apache-20)
+- [LHM / LHM++ — Large Animatable 3DGS Human Avatar (1–8 Photos → Animatable Character, Apache 2.0)](#lhm--lhm--large-animatable-3dgs-human-avatar-18-photos--animatable-character-apache-20)
 - [TextureMapPrep — Seamless PBR Maps for Game Assets](#texturemapprep--seamless-pbr-maps-for-game-assets)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
@@ -35,6 +38,8 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 
 ### Text-to-Speech
 - [Qwen3-TTS *(flagship)*](#qwen3-tts)
+- [Ming 3.0 TTS — 44.1 kHz Studio Speech, Voice Cloning, 482 Voices & Podcast Studio (MIT)](#ming-30-tts--441-khz-studio-speech-voice-cloning-482-voices--podcast-studio-mit)
+- [Chatterbox — Zero-Shot Voice Cloning, Emotion Exaggeration & Turbo Tags (MIT)](#chatterbox--zero-shot-voice-cloning-emotion-exaggeration--turbo-tags-mit)
 - [Breeze TTS 2 — Voice Design, Clone & Direction (EN/ZH)](#breeze-tts-2--voice-design-clone--direction)
 - [Higgs-Audio](#higgs-audio)
 - [MisoTTS](#misotts)
@@ -52,9 +57,12 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 
 ### Voice Conversion
 - [OpenVoice V2](#openvoice-v2)
+- [Seed-VC — Zero-Shot Speech & 44.1 kHz Singing Voice Conversion](#seed-vc--zero-shot-speech--441-khz-singing-voice-conversion)
 
-### Music
+### Music & Foley
 - [MiniMax-Music3 — Lyrics + Caption-to-Music (Qwen3 + DiT, ⚠️ ≥24 GB VRAM)](#minimax-music3--lyrics--caption-to-music)
+- [ACE-Step — Ultra-Fast Full-Song Generation, Lyric Editing & Repainting (3.5B, Apache 2.0)](#ace-step--ultra-fast-full-song-generation-lyric-editing--repainting-35b-apache-20)
+- [MMAudio — Synchronized Video-to-Audio Foley & Sound Effects (MIT)](#mmaudio--synchronized-video-to-audio-foley--sound-effects-mit)
 
 ### Video
 - [LTX-Video 2.5 — ComfyUI Audio/Video Generation](#ltx-video-25--comfyui-audiovideo-generation)
@@ -63,8 +71,12 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Wan 2.2 — Text & Image-to-Video](#wan-22--text--image-to-video)
 - [Wan 2.2 Animate — Character Animation & Replacement](#wan-22-animate--character-animation--replacement)
 - [Wan 2.2 S2V — Audio-Driven Cinematic Video](#wan-22-s2v--audio-driven-cinematic-video)
+- [Wan-VACE — All-in-One Video Creation, Inpainting & Reference-to-Video](#wan-vace--all-in-one-video-creation-inpainting--reference-to-video)
 - [LongCat-Video-Avatar 1.5 — Audio-Driven Avatar Video Studio](#longcat-video-avatar-15--audio-driven-avatar-video-studio)
 - [InfiniteTalk — Sparse-Frame Audio-Driven Video Generation & Dubbing](#infinitetalk--sparse-frame-audio-driven-video-generation--dubbing)
+- [LivePortrait — Fast Portrait Animation, Facial Reenactment & Expression Editor](#liveportrait--fast-portrait-animation-facial-reenactment--expression-editor)
+- [FramePack — 60-Second Constant-VRAM Next-Frame Video Generation](#framepack--60-second-constant-vram-next-frame-video-generation)
+- [SeedVR2 — 1-Step Diffusion Video Super-Resolution & Restoration (1080p/4K)](#seedvr2--1-step-diffusion-video-super-resolution--restoration-1080p4k)
 
 ---
 
@@ -143,6 +155,20 @@ Prebuilt wheels are hosted as GitHub Release assets, one release per GPU archite
 | T4 | sm75 | [`wheels-t4-v1.0`](https://github.com/Skquark/AEI-Colab-Notebooks/releases/tag/wheels-t4-v1.0) |
 
 Each release is ~40 MB. The main notebook auto-detects your GPU and downloads the correct one — nothing to configure.
+
+---
+
+## TRELLIS.2 — Microsoft Image to PBR 3D (4B O-Voxel, MIT)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/TRELLIS-2_Colab.ipynb)
+
+Self-contained Colab studio for **Microsoft's** [`microsoft/TRELLIS.2-4B`](https://huggingface.co/microsoft/TRELLIS.2-4B) ([GitHub](https://github.com/microsoft/TRELLIS.2)) — the #1 most-downloaded open-weight 3D generative model on Hugging Face. TRELLIS.2 introduces a field-free **O-Voxel (Omni-Voxel)** representation that handles open surfaces, non-manifold geometry, and internal structures natively while synthesizing full **4-channel PBR textures** (Base Color, Metallic, Roughness, Opacity) with `<100ms` CUDA mesh extraction (`cumesh` + `o_voxel`).
+
+- **Instant Prebuilt CUDA Wheel Stack**: Reuses our precompiled GitHub Release wheels (`o_voxel`, `cumesh`, `flex_gemm`, `nvdiffrec_render`) for **T4 (`sm75`)**, **L4 (`sm89`)**, and **A100 (`sm80`)** — zero CUDA compilation wait time.
+- **Two Workflows in Step 4 Gradio UI**:
+  1. **Image-to-3D O-Voxel PBR Generation** (`Trellis2ImageTo3DPipeline`): Supports `512`, `1024_cascade` (default), and `1536_cascade` resolutions, exporting PBR `.glb`, `.obj`, native `.vxz` O-Voxel grids, and turntable `.mp4` previews.
+  2. **Untextured Mesh PBR Texturing** (`Trellis2TexturingPipeline`): Upload any existing `.glb` / `.obj` / `.ply` mesh + reference image to bake 1K–4K PBR textures.
+- **Ungated & Low-VRAM Ready**: Automatic ungated fallbacks for `DinoV3FeatureExtractor` (`camenduru/dinov3-vitl16-pretrain-lvd1689m`) and `BiRefNet` (`ZhengPeng7/BiRefNet`) plus `low_vram` sub-model offloading (`keep_model_loaded=False`) for 16 GB T4 and 24 GB L4 GPUs. **MIT License (commercial-OK).**
 
 ---
 
@@ -551,6 +577,21 @@ gsplat (1-3 min training on T4)
 
 ---
 
+## Depth Anything 3 — Any-View Metric Depth, Pose & 3DGS (ByteDance, Apache 2.0 / CC BY-NC 4.0)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Depth-Anything-3_Colab.ipynb)
+
+A Colab port of **ByteDance Seed's** [`ByteDance-Seed/Depth-Anything-3`](https://github.com/ByteDance-Seed/Depth-Anything-3) ([`depth-anything/DA3NESTED-GIANT-LARGE-1.1`](https://huggingface.co/depth-anything/DA3NESTED-GIANT-LARGE-1.1) & [`depth-anything/DA3METRIC-LARGE`](https://huggingface.co/depth-anything/DA3METRIC-LARGE)). Depth Anything 3 unifies monocular metric depth estimation, multi-view camera pose estimation, 3D point-cloud reconstruction, and feed-forward **3D Gaussian Splatting (`.ply`)** into a single transformer backbone using cross-view self-attention.
+
+- **5 Selectable Checkpoints**:
+  - **`depth-anything/DA3NESTED-GIANT-LARGE-1.1` (1.4B Flagship)**: Nested Any-View Metric Depth + Camera Poses + direct 3DGS `.ply` & trajectory video rendering (`infer_gs=True`).
+  - **`depth-anything/DA3METRIC-LARGE` (0.35B, Apache 2.0)** & **`depth-anything/DA3-LARGE-1.1` / `DA3-BASE` (Apache 2.0)**: Commercial-OK metric and multi-view depth + pose models.
+- **Dual-Tab Gradio Studio**:
+  - **Tab 1 — Single / Multi-View Images → Depth, `.glb` Point Cloud & 3DGS `.ply`**: Exports colorized depth maps, 16-bit millimeter depth PNGs, raw `.npz` arrays, interactive 3D point cloud + camera frustum `.glb` scenes, and 3DGS `.ply` splats.
+  - **Tab 2 — Video → Multi-View 3DGS & Trajectory Render**: Extracts keyframes from any video clip and reconstructs a unified 3DGS scene with novel-view trajectory rendering (`extend`, `interp`, `circle`, `wander`, `dolly_zoom`).
+
+---
+
 ## Pi3X — Video-Native 3DGS, Permutation-Equivariant (BSD-3 + CC BY-NC-4.0)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Pi3X_Colab.ipynb)
@@ -866,6 +907,19 @@ Apache License 2.0. Fully compatible with our suite.
 
 ---
 
+## LHM / LHM++ — Large Animatable 3DGS Human Avatar (1–8 Photos → Animatable Character, Apache 2.0)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/LHM_Colab.ipynb)
+
+Self-contained Colab studio for **Alibaba XR Lab's** [`aigc3d/LHM-plusplus`](https://github.com/aigc3d/LHM-plusplus) ([`3DAIGC/LHMPP-700M`](https://huggingface.co/3DAIGC/LHMPP-700M)) and [`aigc3d/LHM`](https://github.com/aigc3d/LHM) ([`3DAIGC/LHM-1B`](https://huggingface.co/3DAIGC/LHM-1B), ICCV 2025 Highlight). Reconstructs a complete, **animatable 3D Gaussian Splatting (`.ply`) human avatar** from **1 to 8 uncalibrated character photos** in seconds and animates it with SMPL-X 3D body + hand + facial motion sequences.
+
+- **Supports Both LHM++ (Multi-View 1–8 Photos) & LHM (Single-View)**:
+  - **`3DAIGC/LHMPP-700M` (Default)**: Feed-forward 1–8 view character reconstruction with optional neural refinement (`neural_render`) or direct Gaussian splat rendering (`gs_render`).
+  - **`3DAIGC/LHM-1B` / `LHM-500M-HF` / `LHM-MINI`**: Single-photo animatable 3DGS human reconstruction that fits comfortably on T4 (16 GB) and L4 (24 GB).
+- **Outputs**: Canonical T-pose / posed **3D Gaussian Splatting `.ply`**, interactive **3D `.glb` preview**, and **animated character `.mp4` video** driven by built-in or custom SMPL-X motion sequences. **Apache 2.0 License.**
+
+---
+
 ## MiniMax-Music3 — Lyrics + Caption-to-Music
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MiniMax-Music3_Colab.ipynb)
@@ -952,6 +1006,35 @@ MUX_MODE   = 'Replace'   # or 'Mix' or 'Concat'
 - **MiniMax-H3_Colab** — joint audio+video (synchronized, 32 kHz). Use if you want a single model that generates both.
 - **LTX-2-5_ComfyUI_Colab** — video-only, muxes with Music3 output via STEP 9.
 - **Higgs-Audio_Colab** — speech + sound effects, not songs.
+
+---
+
+## ACE-Step — Ultra-Fast Full-Song Generation, Lyric Editing & Repainting (3.5B, Apache 2.0)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/ACE-Step_Colab.ipynb)
+
+Self-contained Colab studio for **StepFun + ACE Studio's** [`ACE-Step/ACE-Step-v1-3.5B`](https://huggingface.co/ACE-Step/ACE-Step-v1-3.5B) ([GitHub](https://github.com/ace-step/ACE-Step)) — a 3.5B diffusion-based music foundation model (`music_dcae_f8c8` + `ace_step_transformer` + `umt5-base` + `music_vocoder`) that generates up to **4 minutes (240s) of 48 kHz stereo music** in ~20 seconds on A100 and under 60 seconds on a free **T4 (16 GB)** GPU.
+
+- **4-Tab Music Production Studio**:
+  1. **Text & Lyrics to Song (`text2music`)**: Genre/instrument tags + structured `[verse]`/`[chorus]`/`[bridge]` lyrics across 19 languages with quick genre presets and APG/CFG/Euler/Heun/PingPong schedulers.
+  2. **Retake & Audio2Audio Variations (`retake` / `audio2audio`)**: Generate controlled variations or remix an uploaded reference song (`ref_audio_strength`).
+  3. **Repaint & Localized Lyric Editing (`repaint` / `edit`)**: Regenerate a specific time window (`repaint_start` to `repaint_end`) or edit lyrics in place without changing the rest of the vocal/instrumental arrangement.
+  4. **Song Outpainting (`extend`)**: Prepend an intro (`left_extend_length`) or append an outro (`right_extend_length`) to any track.
+- **Cross-Notebook Integration**: Saves outputs to both `/content/drive/MyDrive/AEI_3D_Out/ACE-Step/` and `/content/drive/MyDrive/AEI_TTS_Out/ACE-Step/` for instant discovery by `Seed-VC`, `InfiniteTalk`, and `LongCat-Video-Avatar`. **Apache 2.0 License.**
+
+---
+
+## MMAudio — Synchronized Video-to-Audio Foley & Sound Effects (MIT)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MMAudio_Colab.ipynb)
+
+Self-contained Colab studio for **Sony AI + UIUC's** [`hkchengrex/MMAudio`](https://github.com/hkchengrex/MMAudio) (`large_44k_v2`, 1.03B multimodal joint flow-matching transformer with 25 fps **Synchformer** visual-temporal alignment and **BigVGANv2** 44.1 kHz vocoder, CVPR 2025). Synthesizes **frame-accurate 44.1 kHz sound effects, footsteps, impacts, and environmental foley** directly from silent videos or text prompts in seconds on **T4 (16 GB)**, **L4 (24 GB)**, or **A100**.
+
+- **3-Tab Foley Studio**:
+  1. **Video-to-Audio Synchronized Foley**: Upload any silent video (`.mp4`/`.mov`/`.webm`) + optional text prompt and negative prompt to synthesize frame-accurate audio and automatically mux a finished `.mp4` (`make_video`) alongside standalone `.wav` export.
+  2. **Text-to-Audio Sound Effects & Ambience**: Visual-free 44.1 kHz SFX and ambient soundbed generation from text prompts alone.
+  3. **Multi-Variation Foley Explorer**: Generates up to 4 candidate soundtracks with distinct seeds in parallel for side-by-side auditioning.
+- **License**: **MIT License** (commercial-OK).
 
 ---
 
@@ -1746,6 +1829,22 @@ Apache 2.0 — the model weights are yours to use commercially. The cloud API is
 
 ---
 
+## Wan-VACE — All-in-One Video Creation, Inpainting & Reference-to-Video
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Wan-VACE_Colab.ipynb)
+
+Self-contained Colab studio for **Wan-AI's** [`Wan-AI/Wan2.1-VACE-1.3B-diffusers`](https://huggingface.co/Wan-AI/Wan2.1-VACE-1.3B-diffusers) and [`Wan-AI/Wan2.1-VACE-14B-diffusers`](https://huggingface.co/Wan-AI/Wan2.1-VACE-14B-diffusers) (**Video All-in-one Creation and Editing**) via native `diffusers.WanVACEPipeline`. Unifies Text-to-Video, Multi-Subject Reference-to-Video, Video-to-Video, Masked Video Inpainting, First/Last Keyframe interpolation, and Spatial Video Outpainting in a single model.
+
+- **Two Model Variants**:
+  - **`1.3B-VACE` (Default — T4 16 GB & L4 24 GB)**: Fast, lightweight VACE model requiring only ~8–12 GB VRAM.
+  - **`14B-VACE` (Flagship — L4 24 GB & A100 40 GB)**: Auto-enables `torchao` `Int8WeightOnlyConfig()` + `enable_group_offload(offload_type="block_level", use_stream=True)` on `<32 GB` GPUs.
+- **3-Tab Gradio Studio**:
+  1. **🖼️ Reference-to-Video (R2V) & Text-to-Video**: Upload 1–3 subject/character/object images (`reference_images`) + text prompt to synthesize new scenes preserving subject identity.
+  2. **🎭 Video-to-Video & Masked Video Inpainting (Swap / Move-Anything)**: Replace or edit regions inside an existing video using bounding-box masks (`x1, y1, x2, y2`), uploaded mask videos/images, or reference images.
+  3. **🎞️ First/Last Keyframe (`FLF2V`) & Spatial Outpainting**: Automatically constructs VACE neutral-gray `(128, 128, 128)` conditioning frames and binary `L`-mode masks from start/end keyframes or `top`/`bottom`/`left`/`right` outpainting margins. **Apache 2.0 License.**
+
+---
+
 ## LongCat-Video-Avatar 1.5 — Audio-Driven Avatar Video Studio
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/LongCat-Video-Avatar-1.5_Colab.ipynb)
@@ -1825,6 +1924,45 @@ Apache 2.0 ([`MeiGen-AI/InfiniteTalk`](https://github.com/MeiGen-AI/InfiniteTalk
 
 ---
 
+## LivePortrait — Fast Portrait Animation, Facial Reenactment & Expression Editor
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/LivePortrait_Colab.ipynb)
+
+Self-contained Colab studio for **Kuaishou Technology's** [`KwaiVGI/LivePortrait`](https://github.com/KwaiVGI/LivePortrait) ([Hugging Face](https://huggingface.co/KwaiVGI/LivePortrait)) — ultra-fast implicit-keypoint portrait animation, video-to-video facial reenactment, and interactive single-image expression editing running in **4–6 GB VRAM** on **T4 (16 GB)**, **L4**, or **A100**.
+
+- **3 Workflows in One Studio**:
+  1. **🖼️ Image-to-Video Portrait Animation (`I2V`)**: Animate any portrait image using a driving facial video or built-in `.pkl` motion template (`talking.pkl`, `laugh.pkl`, `wink.pkl`, `shy.pkl`) with stitching, eye/lip retargeting, and motion region (`all`, `exp`, `pose`, `lip`, `eyes`) controls.
+  2. **🎞️ Video-to-Video Facial Reenactment & Lip Silencing (`V2V`)**: Transfer facial expressions onto an existing portrait video with Kalman temporal smoothing, or run **V2V Lip-Silencing** to create closed-mouth idle avatar loops.
+  3. **🎛️ Interactive Portrait Expression Editor (Avatar Prep Tool)**: Fine-tune static portrait expressions with live sliders for **Head Pitch / Yaw / Roll**, **Lip-Open Ratio (`0.0` = gently close an open mouth before feeding into `InfiniteTalk` or `LongCat-Avatar`!)**, **Smile**, **Wink**, **Eyebrow**, and **Gaze X/Y**. **MIT License.**
+
+---
+
+## FramePack — 60-Second Constant-VRAM Next-Frame Video Generation
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/FramePack_Colab.ipynb)
+
+Self-contained Colab studio for **Lvmin Zhang (`lllyasviel`) & Maneesh Agrawala's** [`lllyasviel/FramePack`](https://github.com/lllyasviel/FramePack) ([`FramePack_F1_I2V_HY_20250503`](https://huggingface.co/lllyasviel/FramePack_F1_I2V_HY_20250503) & [`FramePackI2V_HY`](https://huggingface.co/lllyasviel/FramePackI2V_HY)) — $O(1)$ constant-VRAM next-frame-section video diffusion that compresses historical context frames by importance so a 13B HunyuanVideo backbone can generate **1-second to 60-second (1,800-frame at 30 FPS) videos** on a single **T4 (16 GB)**, **L4 (24 GB)**, or **A100 (40 GB)** GPU.
+
+- **Both Official Models Included**:
+  - **`FramePack-F1` (Default — `lllyasviel/FramePack_F1_I2V_HY_20250503`)**: Forward-only temporal generation for sharper motion and higher dynamics.
+  - **`FramePack Original` (`lllyasviel/FramePackI2V_HY`)**: Bidirectional inverted anti-drifting sampling that anchors endpoints early.
+- **Selective Drive Cache & `DynamicSwapInstaller`**: Downloads only the required encoders/VAE + packed 13B transformer (skipping 26 GB of unused base HunyuanVideo shards), with TeaCache speedup and tunable `gpu_memory_preservation`. **Apache 2.0 License.**
+
+---
+
+## SeedVR2 — 1-Step Diffusion Video Super-Resolution & Restoration (1080p/4K)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/SeedVR2_Colab.ipynb)
+
+Self-contained Colab studio for **ByteDance Seed's** [`ByteDance-Seed/SeedVR2-3B`](https://huggingface.co/ByteDance-Seed/SeedVR2-3B) & [`ByteDance-Seed/SeedVR2-7B`](https://huggingface.co/ByteDance-Seed/SeedVR2-7B) ([`numz/SeedVR2_comfyUI`](https://huggingface.co/numz/SeedVR2_comfyUI), ICLR 2026) — **one-step diffusion video and image super-resolution** viashifted-window adversarial post-training. Restores and upscales 480p AI videos and talking-avatar clips to crisp **1080p / 4K** in a **single diffusion step (`1 NFE`)**.
+
+- **📂 Cross-Notebook Drive Video Picker + Lossless Audio Remux**:
+  - Automatically scans your Google Drive outputs from **`InfiniteTalk`**, **`LongCat-Video-Avatar-1.5`**, **`Wan2.2`**, **`Wan-VACE`**, **`LTX-Video-2.5`**, **`MiniMax-H3`**, **`FramePack`**, and **`LivePortrait`** so you can 1-click upscale 480p avatar videos to 1080p/4K while automatically remuxing the original audio track via `ffmpeg`.
+- **Single-GPU BlockSwap + Tiled Causal Video VAE**:
+  - Supports 6 official FP8/FP16 checkpoints (`3B`, `7B`, `7B-Sharp`) with automatic `blocks_to_swap`, temporal chunk overlap, and Lab perceptual color transfer (`--color_correction lab`) on **T4 (16 GB)**, **L4 (24 GB)**, and **A100 (40 GB)**. **Apache 2.0 License.**
+
+---
+
 ## Text-to-Speech
 
 A matching lineup of self-contained Colab notebooks for state-of-the-art text-to-speech — **twelve models** covering English, Chinese, French, German, Spanish, Japanese, Korean, 11 Indian languages, 30 languages (VoxCPM2), and 80+ others. Every notebook follows the same 7-step pattern: **Install → Pre-cache → Core functions → Gradio UI → Keep-alive → Quick test → Batch synthesis**. No token or sign-up needed for any notebook except `IndicF5` (HF-gated). See [OpenVoice V2](#openvoice-v2) below for **voice conversion** (audio → audio with a cloned voice), which complements the TTS suite.
@@ -1855,6 +1993,29 @@ A matching lineup of self-contained Colab notebooks for state-of-the-art text-to
 - **Base (Clone)** — 3-second reference clip + transcript → clone any voice
 
 Auto-picks the 0.6B variant for T4 (16 GB) and the 1.7B variant for L4/A100.
+
+### Ming 3.0 TTS — 44.1 kHz Studio Speech, Voice Cloning, 482 Voices & Podcast Studio (MIT)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Ming-3-TTS_Colab.ipynb)
+
+[`inclusionAI/Ming-3.0-tts-0.5B`](https://huggingface.co/inclusionAI/Ming-3.0-tts-0.5B) (Dense 0.5B, ~4 GB VRAM) & [`inclusionAI/Ming-3.0-tts-tiny`](https://huggingface.co/inclusionAI/Ming-3.0-tts-tiny) (MoE 7.9B total / 1.3B active, ~19 GB VRAM) ([GitHub](https://github.com/inclusionAI/Ming-3.0-tts) · [Space](https://huggingface.co/spaces/hugging-apps/ming-3-tts-05b)) — **inclusionAI (Ant Group Bailing Team)'s** 44.1 kHz speech synthesis family (**MIT License**), ranked **#1 among open-weight models on Controlled Voice** (Arena Elo 1069) and **#1 overall on Pronunciation Robustness** (93.2% overall, 96.5% shorthand normalization) on the Artificial Analysis TTS Leaderboards:
+
+- **Tab 1 — Zero-Shot Voice Cloning & 14 Paralinguistic Tags**: Clone any 3–10s reference clip + transcript across **7 languages** (`Chinese`, `English`, `Japanese`, `Korean`, `German`, `French`, `Spanish`) with 1-click insertion buttons for all 14 paralinguistic tags (`[Laughter]`, `[Sigh]`, `[Breathing]`, `[Cough]`, `[Uhm]`, `[Surprise-ah]`, `[Surprise-oh]`, etc.) and Drive Voice Library integration.
+- **Tab 2 — Emotion, Dialect & Prosody Attribute Control**: Clone speaker timbre with explicit **7-emotion control** (`高兴/happy`, `悲伤/sad`, `愤怒/angry`, `恐惧/fearful`, `厌恶/disgusted`, `惊讶/surprised`, `中性/neutral`), **Cantonese / Sichuanese dialects**, or **Speed / Pitch / Volume (`BASIC`)** controls.
+- **Tab 3 — Voice Design & Freeform Delivery Instructions**: Create new voices from natural-language persona descriptions (`VOICE_DESIGN`) or steer delivery style (`FREEFORM`) with zero reference audio.
+- **Tab 4 — 482 Built-in Premium Voices (`IP`)**: 5 English voices (`US_James`, `US_Stella`, `US_Emma`, `UK_George`, `UK_Charlotte`), 48 Chinese base voices (`灵小柔`, `灵楷`, `灵小安`, etc.), and 429 Chinese emotion-specific variants.
+- **Tab 5 — Two-Speaker Podcast Studio**: Native multi-speaker `speaker_1:` / `speaker_2:` dialogue generation on `Ming-3.0-tts-tiny` (L4/A100) plus automatic turn-by-turn stitched multi-speaker synthesis on `Ming-3.0-tts-0.5B` (works on 16 GB T4!). Saves outputs to `/content/drive/MyDrive/AEI_TTS_Out/Ming-3-TTS/` for automatic discovery in `InfiniteTalk`, `LongCat-Avatar`, and `Seed-VC`.
+
+### Chatterbox — Zero-Shot Voice Cloning, Emotion Exaggeration & Turbo Tags (MIT)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Chatterbox_Colab.ipynb)
+
+[`ResembleAI/chatterbox`](https://huggingface.co/ResembleAI/chatterbox) & [`ResembleAI/chatterbox-turbo`](https://huggingface.co/ResembleAI/chatterbox-turbo) ([GitHub](https://github.com/resemble-ai/chatterbox)) — **Resemble AI's** flagship open-source TTS and voice-cloning family (**MIT License**, commercial-OK, fits comfortably in **6–10 GB VRAM on T4**). Combines 4 engines in a 4-tab studio:
+
+- **Tab 1 — Zero-Shot TTS (`ChatterboxTurboTTS` & `ChatterboxTTS`)**: Clone any voice from a 5–20s clip with first-of-its-kind **Emotion Exaggeration (`exaggeration=0.0..2.0`)** and **`cfg_weight`** pacing controls, plus 1-click paralinguistic tag buttons (`[laugh]`, `[chuckle]`, `[cough]`, `[sigh]`, `[gasp]`, `[clear throat]`) in Turbo mode.
+- **Tab 2 — Multilingual TTS (`ChatterboxMultilingualTTS`)**: Zero-shot voice cloning across **23 languages** (`ar`, `da`, `de`, `el`, `en`, `es`, `fi`, `fr`, `he`, `hi`, `it`, `ja`, `ko`, `ms`, `nl`, `no`, `pl`, `pt`, `ru`, `sv`, `sw`, `tr`, `zh`).
+- **Tab 3 — Zero-Shot Voice Conversion (`ChatterboxVC`)**: Direct speech-to-speech timbre conversion into any target reference voice.
+- **Tab 4 — Multi-Speaker Dialogue & Audiobook Studio**: Parse `[Speaker 1]: ...` scripts with up to 3 cloned voices into a stitched WAV in `/content/drive/MyDrive/AEI_TTS_Out/Chatterbox/` (auto-discovered by `InfiniteTalk` and `LongCat-Avatar`).
 
 ### Breeze TTS 2 — Voice Design, Clone & Direction
 
@@ -1989,6 +2150,16 @@ A single dedicated voice-conversion notebook, since it's a fundamentally differe
 
 > "OpenVoice can accurately clone the reference tone color and generate speech in multiple languages and accents." — [arXiv 2312.01479](https://arxiv.org/abs/2312.01479)
 
+### Seed-VC — Zero-Shot Speech & 44.1 kHz Singing Voice Conversion
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Seed-VC_Colab.ipynb)
+
+[`Plachta/Seed-VC`](https://huggingface.co/Plachta/Seed-VC) ([GitHub](https://github.com/Plachtaa/seed-vc)) — **zero-shot speech and singing voice conversion** using a flow-matching Diffusion Transformer (`DiT`), **CAM++** speaker timbre embeddings, **Whisper** linguistic features, **RMVPE** pitch extraction, and **NVIDIA BigVGAN v2** vocoding (`4–8 GB VRAM`, runs fast on **T4 16 GB**).
+
+- **Tab 1 — Speech Voice Conversion (22.05 kHz)**: Convert any spoken recording into a target speaker's voice from a 5–30s reference clip with zero training and sliding-window crossfade stitching for long recordings.
+- **Tab 2 — Singing Voice Conversion (44.1 kHz + F0 Conditioning + Pitch Shift)**: Convert any song or vocal stem into a target person's singing voice while preserving melody, vibrato, and expression, with automatic median pitch matching (`auto_f0_adjust`) and semitone transposition (`-12` to `+12` semitones) — ideal for creating custom singing tracks to animate in `InfiniteTalk` or `LongCat-Avatar`!
+- **Tab 3 — Batch Folder Voice Conversion**: Convert entire directories of audio files into a downloadable ZIP archive.
+
 ### TTS Model Loader
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/TTS_Model_Loader.ipynb)
@@ -2019,6 +2190,7 @@ Curated reference voice clips with transcripts, ready to drop into the voice-clo
 | Notebook | Model | Size | Languages | License |
 |----------|-------|------|-----------|---------|
 | **Qwen3-TTS** *(flagship)* | Qwen3-TTS-12Hz | 0.6B / 1.7B | 10 | Apache 2.0 |
+| **Chatterbox** | Chatterbox + Turbo + Multilingual + VC | 350M / 500M | 23 | MIT |
 | **Breeze TTS 2** | Breeze-TTS-2 | 3B (Qwen3-1B + Mimi) | 2 (EN/ZH) | Code Apache 2.0 · Weights Non-Commercial |
 | **Higgs-Audio** | Higgs-Audio v3 | 4B | 100+ | Research / Non-Commercial |
 | **MisoTTS** | MisoTTS 8B | 8B | English | Other (see card) |
@@ -2031,6 +2203,9 @@ Curated reference voice clips with transcripts, ready to drop into the voice-clo
 | **VoxCPM2** | VoxCPM2 | 2B | 30 (+ 9 ZH dialects) | Apache 2.0 |
 | **Kokoro-82M** | Kokoro-82M v1.0 & v1.1-zh | 82M | 9 (103 voices) | Apache 2.0 |
 | **OpenVoice V2** | OpenVoiceV2 | — | 7 (cross-lingual VC) | MIT |
+| **Seed-VC** | Seed-VC Speech & 44.1kHz Singing | ~200M DiT | Multilingual | GPL-3.0 |
+| **ACE-Step** | ACE-Step-v1-3.5B | 3.5B | 19 (Music & Lyrics) | Apache 2.0 |
+| **MMAudio** | MMAudio large_44k_v2 | 1.03B | Video/Text-to-Foley | MIT |
 | **Mesh Optimizer** | trimesh + pyfqmr + pymeshlab + Open3D | — | — | MIT (all deps) |
 | **Audio Post-Processor** | pydub + imageio-ffmpeg + soundfile + librosa + pyloudnorm + noisereduce + resemble-enhance + Kim_Vocal_2 / HDemucs + FlashSR | — | — | MIT/BSD/ISC (all deps) |
 
@@ -2121,7 +2296,7 @@ Two Python scripts in `tools/` keep the notebooks consistent:
 Both run from the repo root with no dependencies:
 
 ```bash
-python3 tools/validate.py    # OK: all 47 notebook(s) parse cleanly.
+python3 tools/validate.py    # OK: all 58 notebook(s) parse cleanly.
 python3 tools/qa_check.py    # OK: all authored notebooks pass the polish audit.
 ```
 
@@ -2150,14 +2325,19 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | Wan 2.2 (5B + 14B T2V/I2V + Lightning LoRA) | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-TI2V-5B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B-Diffusers) · [Wan-AI/Wan2.2-T2V-A14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B-Diffusers) · [Wan-AI/Wan2.2-I2V-A14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-I2V-A14B-Diffusers) · [lightx2v/Wan2.2-Distill-Loras](https://huggingface.co/lightx2v/Wan2.2-Distill-Loras) | [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
 | Wan 2.2 Animate (Animate-2 Distilled & v1) | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers) · [Wan-AI/Wan2.2-Animate-2-14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-Animate-2-14B-Diffusers) · [Wan-AI/Wan2.2-Animate-14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-Animate-14B-Diffusers) | [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
 | Wan 2.2 S2V (Local Single-GPU + Cloud) | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-S2V-14B](https://huggingface.co/Wan-AI/Wan2.2-S2V-14B) · [lightx2v/Wan2.2-Distill-Loras](https://huggingface.co/lightx2v/Wan2.2-Distill-Loras) | [arXiv 2508.18621](https://arxiv.org/abs/2508.18621) · [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
+| Wan-VACE (1.3B & 14B) | [ali-vilab/VACE](https://github.com/ali-vilab/VACE) | [Wan-AI/Wan2.1-VACE-1.3B-diffusers](https://huggingface.co/Wan-AI/Wan2.1-VACE-1.3B-diffusers) · [Wan-AI/Wan2.1-VACE-14B-diffusers](https://huggingface.co/Wan-AI/Wan2.1-VACE-14B-diffusers) | [arXiv 2503.07598](https://arxiv.org/abs/2503.07598) |
 | LongCat-Video-Avatar 1.5 | [meituan-longcat/LongCat-Video](https://github.com/meituan-longcat/LongCat-Video) | [meituan-longcat/LongCat-Video-Avatar](https://huggingface.co/meituan-longcat/LongCat-Video-Avatar) · [spaces/victor/LongCat-Video-Avatar-1.5](https://huggingface.co/spaces/victor/LongCat-Video-Avatar-1.5) | [arXiv 2510.22200](https://arxiv.org/abs/2510.22200) |
 | InfiniteTalk | [MeiGen-AI/InfiniteTalk](https://github.com/MeiGen-AI/InfiniteTalk) | [MeiGen-AI/InfiniteTalk](https://huggingface.co/MeiGen-AI/InfiniteTalk) · [Wan-AI/Wan2.1-I2V-14B-480P](https://huggingface.co/Wan-AI/Wan2.1-I2V-14B-480P) | [arXiv 2508.14033](https://arxiv.org/abs/2508.14033) |
+| LivePortrait | [KwaiVGI/LivePortrait](https://github.com/KwaiVGI/LivePortrait) | [KwaiVGI/LivePortrait](https://huggingface.co/KwaiVGI/LivePortrait) | [arXiv 2407.03168](https://arxiv.org/abs/2407.03168) |
+| FramePack (F1 & Original) | [lllyasviel/FramePack](https://github.com/lllyasviel/FramePack) | [lllyasviel/FramePack_F1_I2V_HY_20250503](https://huggingface.co/lllyasviel/FramePack_F1_I2V_HY_20250503) · [lllyasviel/FramePackI2V_HY](https://huggingface.co/lllyasviel/FramePackI2V_HY) | [arXiv 2504.12626](https://arxiv.org/abs/2504.12626) |
+| SeedVR2 (3B & 7B Video Upscaler) | [ByteDance-Seed/SeedVR](https://github.com/ByteDance-Seed/SeedVR) · [numz/ComfyUI-SeedVR2_VideoUpscaler](https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler) | [ByteDance-Seed/SeedVR2-3B](https://huggingface.co/ByteDance-Seed/SeedVR2-3B) · [ByteDance-Seed/SeedVR2-7B](https://huggingface.co/ByteDance-Seed/SeedVR2-7B) · [numz/SeedVR2_comfyUI](https://huggingface.co/numz/SeedVR2_comfyUI) | [arXiv 2506.05301](https://arxiv.org/abs/2506.05301) |
 
 ### 3D Models
 
 | Notebook | Upstream repo | Hugging Face | Paper |
 |----------|---------------|--------------|-------|
 | Pixal3D (Single-Image & Multi-View) | [TencentARC/Pixal3D](https://github.com/TencentARC/Pixal3D) | [TencentARC/Pixal3D](https://huggingface.co/TencentARC/Pixal3D) | [arXiv 2605.10922](https://arxiv.org/abs/2605.10922) |
+| TRELLIS.2 (4B O-Voxel PBR) | [microsoft/TRELLIS.2](https://github.com/microsoft/TRELLIS.2) | [microsoft/TRELLIS.2-4B](https://huggingface.co/microsoft/TRELLIS.2-4B) | — |
 | Cube 3D + CubePart | [Roblox/cube](https://github.com/Roblox/cube) | [Roblox/cubepart](https://huggingface.co/Roblox/cubepart) | — |
 | Hunyuan3D-2 (+ FlashVDM & Paint-Turbo) | [Tencent-Hunyuan/Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) | [tencent/Hunyuan3D-2](https://huggingface.co/tencent/Hunyuan3D-2) · [tencent/Hunyuan3D-2mini](https://huggingface.co/tencent/Hunyuan3D-2mini) · [tencent/Hunyuan3D-2mv](https://huggingface.co/tencent/Hunyuan3D-2mv) | [arXiv 2501.12202](https://arxiv.org/abs/2501.12202) |
 | Hunyuan3D-2.1 | [Tencent-Hunyuan/Hunyuan3D-2.1](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) | [tencent/Hunyuan3D-2.1](https://huggingface.co/tencent/Hunyuan3D-2.1) | [arXiv 2506.15442](https://arxiv.org/abs/2506.15442) |
@@ -2166,10 +2346,12 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | NoPoSplat + YoNoSplat | [cvg/YoNoSplat](https://github.com/cvg/YoNoSplat) · [cvg/NoPoSplat](https://github.com/cvg/NoPoSplat) | [botaoye/YoNoSplat](https://huggingface.co/botaoye/YoNoSplat) · [botaoye/NoPoSplat](https://huggingface.co/botaoye/NoPoSplat) | [arXiv 2410.24207](https://arxiv.org/abs/2410.24207) |
 | Wild Gaussian Splatting | [naver/mast3r](https://github.com/naver/mast3r) · [graphdeco-inria/gaussian-splatting](https://github.com/graphdeco-inria/gaussian-splatting) | — | [arXiv 2406.09756](https://arxiv.org/abs/2406.09756) |
 | MapAnything | [facebookresearch/map-anything](https://github.com/facebookresearch/map-anything) | [facebook/map-anything-apache](https://huggingface.co/facebook/map-anything-apache) · [facebook/map-anything](https://huggingface.co/facebook/map-anything) | — |
+| Depth Anything 3 (DA3-Nested & Metric) | [ByteDance-Seed/Depth-Anything-3](https://github.com/ByteDance-Seed/Depth-Anything-3) | [depth-anything/DA3NESTED-GIANT-LARGE-1.1](https://huggingface.co/depth-anything/DA3NESTED-GIANT-LARGE-1.1) · [depth-anything/DA3METRIC-LARGE](https://huggingface.co/depth-anything/DA3METRIC-LARGE) | [arXiv 2511.10647](https://arxiv.org/abs/2511.10647) |
 | Pi3X | [yyfz/Pi3](https://github.com/yyfz/Pi3) | [yyfz233/Pi3X](https://huggingface.co/yyfz233/Pi3X) | — |
 | HY-World 2.0 (WorldMirror 2.0) | [Tencent-Hunyuan/HY-World-2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0) | [tencent/HY-World-2.0](https://huggingface.co/tencent/HY-World-2.0) | — |
 | GaussianGPT | [nicolasvonluetzow/GaussianGPT](https://github.com/nicolasvonluetzow/GaussianGPT) | — | — |
 | InfiniSplat (v2 Multi-View/360° & v1) | [zju3dv/InfiniSplat](https://github.com/zju3dv/InfiniSplat) | [Edisoneh/InfiniSplat-v2](https://huggingface.co/Edisoneh/InfiniSplat-v2) · [PLUS-WAVE/InfiniSplat](https://huggingface.co/PLUS-WAVE/InfiniSplat) | — |
+| LHM / LHM++ (Animatable 3DGS Human) | [aigc3d/LHM-plusplus](https://github.com/aigc3d/LHM-plusplus) · [aigc3d/LHM](https://github.com/aigc3d/LHM) | [3DAIGC/LHMPP-700M](https://huggingface.co/3DAIGC/LHMPP-700M) · [3DAIGC/LHM-1B](https://huggingface.co/3DAIGC/LHM-1B) | [arXiv 2503.10625](https://arxiv.org/abs/2503.10625) |
 | TextureMapPrep | [prs-eth/Marigold](https://github.com/prs-eth/Marigold) · [EnVision-Research/Lotus](https://github.com/EnVision-Research/Lotus) | [prs-eth/marigold-depth-hr-v1-1](https://huggingface.co/prs-eth/marigold-depth-hr-v1-1) · [jingheya/Lotus-2](https://huggingface.co/jingheya/Lotus-2) · [huawei-bayerlab/marigold-v2-0](https://huggingface.co/huawei-bayerlab/marigold-v2-0) | — |
 | SkinTokens (TokenRig) | [VAST-AI-Research/SkinTokens](https://github.com/VAST-AI-Research/SkinTokens) | [VAST-AI/SkinTokens](https://huggingface.co/VAST-AI/SkinTokens) | — |
 | SuGaR | [Anttwo/SuGaR](https://github.com/Anttwo/SuGaR) | — | [arXiv 2311.12775](https://arxiv.org/abs/2311.12775) |
@@ -2183,6 +2365,8 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | Notebook | Upstream repo | Hugging Face | Paper |
 |----------|---------------|--------------|-------|
 | Qwen3-TTS | (Alibaba) | [Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice) | — |
+| Ming 3.0 TTS (`0.5B` Dense & `tiny` MoE) | [inclusionAI/Ming-3.0-tts](https://github.com/inclusionAI/Ming-3.0-tts) | [inclusionAI/Ming-3.0-tts-0.5B](https://huggingface.co/inclusionAI/Ming-3.0-tts-0.5B) · [inclusionAI/Ming-3.0-tts-tiny](https://huggingface.co/inclusionAI/Ming-3.0-tts-tiny) | — |
+| Chatterbox (TTS, Turbo, Multilingual, VC) | [resemble-ai/chatterbox](https://github.com/resemble-ai/chatterbox) | [ResembleAI/chatterbox](https://huggingface.co/ResembleAI/chatterbox) · [ResembleAI/chatterbox-turbo](https://huggingface.co/ResembleAI/chatterbox-turbo) | — |
 | Breeze TTS 2 | [breezeblue-ai/breeze-tts](https://github.com/breezeblue-ai/breeze-tts) | [BreezeBlue/Breeze-TTS-2](https://huggingface.co/BreezeBlue/Breeze-TTS-2) | — |
 | Higgs-Audio | [boson-ai/higgs-audio](https://github.com/boson-ai/higgs-audio) | [bosonai/higgs-audio-v2-tokenizer](https://huggingface.co/bosonai/higgs-audio-v2-tokenizer) | — |
 | MisoTTS | (Miso Labs) | [MisoLabs/MisoTTS](https://huggingface.co/MisoLabs/MisoTTS) | — |
@@ -2195,17 +2379,20 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | VoxCPM2 | [OpenBMB/VoxCPM](https://github.com/OpenBMB/VoxCPM) | [openbmb/VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) | [arXiv 2509.24650](https://arxiv.org/abs/2509.24650) |
 | Kokoro-82M (v1.0 & v1.1-zh) | [hexgrad/kokoro](https://github.com/hexgrad/kokoro) | [hexgrad/Kokoro-82M-v1.1-zh](https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh) · [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) | [arXiv 2306.07691](https://arxiv.org/abs/2306.07691) (StyleTTS 2) · [arXiv 2203.02395](https://arxiv.org/abs/2203.02395) (iSTFTNet) |
 
-### Music Models
+### Music & Foley Models
 
 | Notebook | Upstream repo | Hugging Face | Paper |
 |----------|---------------|--------------|-------|
 | MiniMax-Music3 | [MiniMax-AI](https://github.com/MiniMax-AI) | — | — |
+| ACE-Step (3.5B Music Studio) | [ace-step/ACE-Step](https://github.com/ace-step/ACE-Step) | [ACE-Step/ACE-Step-v1-3.5B](https://huggingface.co/ACE-Step/ACE-Step-v1-3.5B) | [arXiv 2506.00045](https://arxiv.org/abs/2506.00045) |
+| MMAudio (Synchronized Foley) | [hkchengrex/MMAudio](https://github.com/hkchengrex/MMAudio) | [hkchengrex/MMAudio](https://huggingface.co/hkchengrex/MMAudio) | [arXiv 2412.15322](https://arxiv.org/abs/2412.15322) |
 
 ### Voice Conversion Models
 
 | Notebook | Upstream repo | Hugging Face | Paper |
 |----------|---------------|--------------|-------|
 | OpenVoice V2 | [myshell-ai/OpenVoice](https://github.com/myshell-ai/OpenVoice) | [myshell-ai/OpenVoiceV2](https://huggingface.co/myshell-ai/OpenVoiceV2) | [arXiv 2312.01479](https://arxiv.org/abs/2312.01479) |
+| Seed-VC (Speech & 44.1 kHz Singing) | [Plachtaa/seed-vc](https://github.com/Plachtaa/seed-vc) | [Plachta/Seed-VC](https://huggingface.co/Plachta/Seed-VC) | [arXiv 2411.09943](https://arxiv.org/abs/2411.09943) |
 
 ### Reference voices
 

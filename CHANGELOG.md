@@ -5,6 +5,43 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added 12 New Notebooks Across Video, Audio/TTS/Music & 3D/Avatars (Suite Now at 59 Notebooks)
+
+Implemented 12 new self-contained Google Colab notebooks covering the top open-weight releases across Video/Editing/Upscaling, Voice Cloning/Conversion/Music/Foley, and 3D/3DGS/Animatable Avatars:
+
+#### Video, Editing, Portrait Animation & Upscaling (4)
+- **`Wan-VACE_Colab.ipynb` (`Wan-AI/Wan2.1-VACE-1.3B-diffusers` & `Wan-AI/Wan2.1-VACE-14B-diffusers`, Apache 2.0)**:
+  - All-in-one video creation and editing via `diffusers.WanVACEPipeline` + `AutoencoderKLWan` with `torchao` INT8 quantization and `enable_group_offload(offload_type="block_level", use_stream=True)` for 14B on L4/A100.
+  - 3-tab Gradio UI supporting **Reference-to-Video (`R2V`, 1–3 subject images) & Text-to-Video**, **Video-to-Video & Masked Video Inpainting (Swap/Move-Anything)**, and **First/Last Keyframe (`FLF2V`) + Spatial Outpainting**.
+- **`SeedVR2_Colab.ipynb` (`ByteDance-Seed/SeedVR2-3B` & `SeedVR2-7B` / `numz/SeedVR2_comfyUI`, Apache 2.0)**:
+  - One-step (`1 NFE`) diffusion video and image super-resolution to 1080p/4K using 6 official FP8/FP16 3B & 7B checkpoints with single-GPU BlockSwap (`blocks_to_swap`), tiled Causal Video VAE, temporal chunk overlap, and Lab perceptual color transfer.
+  - Includes a **Cross-Notebook Drive Video Picker** (`InfiniteTalk`, `LongCat-Video-Avatar-1.5`, `Wan2.2`, `Wan-VACE`, `LTX-Video-2.5`, `MiniMax-H3`, `FramePack`, `LivePortrait`) with lossless `ffmpeg` audio stream remuxing.
+- **`FramePack_Colab.ipynb` (`lllyasviel/FramePack_F1_I2V_HY_20250503` & `lllyasviel/FramePackI2V_HY`, Apache 2.0)**:
+  - $O(1)$ constant-VRAM next-frame-section video generation (1s to 60s / 1,800 frames at 30 FPS) supporting both **FramePack-F1** (forward-only) and **FramePack Original** (bidirectional anti-drifting) with selective Drive caching (skipping the unused 26 GB base HunyuanVideo transformer), `DynamicSwapInstaller`, and TeaCache speedup.
+- **`LivePortrait_Colab.ipynb` (`KwaiVGI/LivePortrait`, MIT)**:
+  - Fast implicit-keypoint portrait animation (`I2V` from driving videos or `.pkl` motion templates), video-to-video facial reenactment & lip-silencing (`V2V` with Kalman temporal smoothing), and an **Interactive Portrait Expression Editor** (head Pitch/Yaw/Roll, Lip-Open Ratio `0.0` mouth-closing prep for `InfiniteTalk` / `LongCat-Avatar`, Smile, Wink, Eyebrow, and Gaze sliders).
+
+#### Audio, Voice Cloning, Voice Conversion, Music & Foley (5)
+- **`Ming-3-TTS_Colab.ipynb` (`inclusionAI/Ming-3.0-tts-0.5B` Dense & `inclusionAI/Ming-3.0-tts-tiny` MoE, MIT)**:
+  - 5-tab 44.1 kHz speech synthesis studio supporting both **`Ming-3.0-tts-0.5B` (Dense 0.5B, ~4 GB VRAM)** and **`Ming-3.0-tts-tiny` (MoE 7.9B total / 1.3B active, ~19 GB VRAM)** in a unified runtime (`transformers==4.46.3` with KV-cache `attention_mask=None` patch, Turing `sm_75` SDPA fallback, `soundfile` I/O, and `pynini` FST text normalization).
+  - Covers **Zero-Shot Voice Cloning across 7 languages** with 1-click buttons for all **14 inline paralinguistic tags** (`[Laughter]`, `[Sigh]`, `[Breathing]`, `[Cough]`, `[Uhm]`, etc.), **Emotion / Dialect (`Cantonese`, `Sichuanese`) / Prosody (`BASIC` Speed/Pitch/Volume) Control**, **Voice Design & Freeform Delivery**, **482 Built-in IP Voices** (`US_James`, `US_Stella`, `UK_George`, `灵小柔`, `灵楷`, + 429 emotion variants), and a **Two-Speaker Podcast Studio** (native `podcast` mode on `tiny` + turn-stitched synthesis on `0.5B`).
+- **`Chatterbox_Colab.ipynb` (`ResembleAI/chatterbox` & `ResembleAI/chatterbox-turbo`, MIT)**:
+  - 4-tab voice studio combining `ChatterboxTurboTTS` (fast distilled TTS with paralinguistic tags `[laugh]`, `[chuckle]`, `[cough]`, `[sigh]`, `[gasp]`), `ChatterboxTTS` (zero-shot voice cloning with Emotion Exaggeration `0.0..2.0` & `cfg_weight` sliders), `ChatterboxMultilingualTTS` (23 languages), `ChatterboxVC` (zero-shot speech-to-speech voice conversion), and a multi-speaker Dialogue/Audiobook script builder.
+- **`Seed-VC_Colab.ipynb` (`Plachta/Seed-VC`, GPL-3.0)**:
+  - Zero-shot speech voice conversion (22.05 kHz with CAM++ timbre + Whisper Small + BigVGAN v2) and **44.1 kHz Singing Voice Conversion** (`f0_condition=True` with RMVPE pitch tracking, automatic median pitch adjustment, and `-12..+12` semitone transposition).
+- **`ACE-Step_Colab.ipynb` (`ACE-Step/ACE-Step-v1-3.5B`, Apache 2.0)**:
+  - 4-tab music production studio (`ACEStepPipeline`) supporting full-song generation (`10s–240s` across 19 languages), Retake & Audio2Audio remixing, time-window Repainting & localized Lyric Editing, and Left/Right Song Outpainting.
+- **`MMAudio_Colab.ipynb` (`hkchengrex/MMAudio`, MIT)**:
+  - Multimodal flow-matching Video-to-Audio and Text-to-Audio foley studio (`mmaudio_large_44k_v2` + 25 fps Synchformer + BigVGANv2 44.1 kHz vocoder) with automatic `.mp4` audio muxing and a Multi-Variation Foley Explorer.
+
+#### 3D Generation, Any-View Depth/3DGS & Animatable Avatars (3)
+- **`TRELLIS-2_Colab.ipynb` (`microsoft/TRELLIS.2-4B`, MIT)**:
+  - Microsoft's 4B O-Voxel Image-to-PBR-3D and Mesh-Texturing pipelines (`Trellis2ImageTo3DPipeline` & `Trellis2TexturingPipeline`) using our prebuilt CUDA extension wheels (`o_voxel`, `cumesh`, `flex_gemm`, `nvdiffrec_render`) for T4, L4, and A100, ungated `DinoV3`/`BiRefNet` fallbacks, and `.glb`/`.obj`/`.vxz`/`.mp4` exports.
+- **`Depth-Anything-3_Colab.ipynb` (`depth-anything/DA3NESTED-GIANT-LARGE-1.1` & `DA3METRIC-LARGE`, Apache 2.0 / CC BY-NC 4.0)**:
+  - Unified monocular/multi-view metric depth, camera pose estimation, interactive `.glb` 3D point-cloud + camera frustum export, and feed-forward 3D Gaussian Splatting (`.ply` + trajectory `.mp4` renders) across 5 selectable DA3 checkpoints.
+- **`LHM_Colab.ipynb` (`3DAIGC/LHMPP-700M` & `3DAIGC/LHM-1B`, Apache 2.0)**:
+  - Reconstructs an animatable 3D Gaussian Splatting (`.ply`) human avatar from 1–8 uncalibrated character photos (`LHM++` multi-view & `LHM` single-view) and animates it with SMPL-X 3D motion sequences to `.mp4`.
+
 ### Upgraded 20 Existing Notebooks to Latest Upstream Models & Local Pipelines
 
 Upgraded 20 existing Video, 3D/Gaussian Splatting, and Audio/TTS/Post-Processing notebooks across the repository to the latest upstream model releases, repo structures, and local single-GPU implementations:
