@@ -5,6 +5,59 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Upgraded 20 Existing Notebooks to Latest Upstream Models & Local Pipelines
+
+Upgraded 20 existing Video, 3D/Gaussian Splatting, and Audio/TTS/Post-Processing notebooks across the repository to the latest upstream model releases, repo structures, and local single-GPU implementations:
+
+#### Video & Avatar Notebooks (4)
+- **`Wan2.2_Animate_Colab.ipynb` (`P0` Local GPU Inference + Wan-Animate-2 Distilled)**:
+  - Replaced the `NotImplementedError` stub in `WanAnimateLocalEngine` with full Diffusers inference supporting **`Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers`** (10-step Euler flow solver, `guidance_scale=1.0`, end-to-end without external DWPose preprocessing), **`Wan-AI/Wan2.2-Animate-2-14B-Diffusers`** (40-step), and **`Wan-AI/Wan2.2-Animate-14B-Diffusers`** (Move/Mix).
+  - Added `torchao` `Int8WeightOnlyConfig()` quantization + `enable_group_offload(offload_type="block_level", use_stream=True)` so 14B models run on L4 (24 GB) and T4 (15 GB) alongside DashScope Cloud API mode.
+- **`Wan2.2_S2V_Colab.ipynb` (`P0` Local Single-GPU Inference + 4-Step Lightning LoRA)**:
+  - Replaced the `NotImplementedError` stub in `WanS2VLocalEngine` with working single-GPU local inference via `wan.WanS2V` (`Wan-AI/Wan2.2-S2V-14B`, CPU initialization to prevent OOM, `t5_cpu=True`, `convert_model_dtype=True`, `offload_model=True`, PyTorch SDPA fallback, `torchao` `Int8WeightOnlyConfig()` DiT quantization, and optional 4-step `lightx2v/Wan2.2-Distill-Loras` acceleration) while preserving DashScope Cloud API mode.
+- **`Wan2.2_Colab.ipynb` (`P1` 14B-T2V + 4/8-Step Lightning LoRA + Block-Level Group Offload)**:
+  - Added `14B-T2V` (`Wan-AI/Wan2.2-T2V-A14B-Diffusers`) alongside `5B-TI2V` and `14B-I2V`.
+  - Added 4-Step and 8-Step Lightning LoRA toggles (`lightx2v/Wan2.2-Distill-Loras`, loading dual high-noise `transformer` + low-noise `transformer_2` rank-64 adapters with `guidance_scale=1.0`).
+  - Replaced slow leaf-level `enable_sequential_cpu_offload()` with `enable_group_offload(offload_type="block_level", use_stream=True)` + optional `torchao` `Int8WeightOnlyConfig()`, and fixed the `res_dd` definition order before `image_in.upload(...)`.
+- **`LTX-2-5_ComfyUI_Colab.ipynb` (`P2` Official LTX-2.5 IC-LoRA Suite + Stale GGUF Cleanup)**:
+  - Removed the dead `ChrisColeTech/LTX-2.5-turbo-GGUF` option and wired Lightricks' 6 official LTX-2.5 IC-LoRAs (`Layout-To-Render`, `Ingredients`, `Refine-Details`, `Alpha-Gen`, `SDR-To-HDR`, `Pixel-Spatial-Upscaler`) across Step 2, Step 4 Gradio UI, Step 7 JSON batch, and Step 9 ReDetail upscaler.
+
+#### 3D, Multi-View & Gaussian Splatting Notebooks (9)
+- **`InfiniSplat_Colab.ipynb` (`P0` Repo Restructure Fix + InfiniSplat v2)**:
+  - Fixed the upstream `zju3dv/InfiniSplat` directory reorganization (`InfiniSplat_v1/` and `InfiniSplat_v2/`) and added full support for **InfiniSplat v2** (`Edisoneh/InfiniSplat-v2` — 2–32+ unposed/posed multi-view images and calibrated 360° equirectangular panorama $\rightarrow$ 3DGS) alongside **InfiniSplat v1** (`PLUS-WAVE/InfiniSplat` — single RGB + optional LiDAR depth).
+- **`NoPoSplat_Colab.ipynb` (`P1` Official ICLR 2026 Successor `YoNoSplat`)**:
+  - Added **YoNoSplat** (`cvg/YoNoSplat`, `botaoye/YoNoSplat` `dl3dv_224x224_ctx2to32.ckpt` & `re10k_224x224_ctx2to32.ckpt`) as the default engine supporting **2 to 32 arbitrary uncalibrated views** with intrinsic prediction (`Free_Pose`) alongside **NoPoSplat** (2–3 views, including `re10k_3views.ckpt`).
+- **`Pixal3D_Colab.ipynb` (`P1` Official Multi-View Pixal3D Mode)**:
+  - Added `git pull --ff-only` for cached `TencentARC/Pixal3D` clones, pre-cached `pipeline_mv.json`, and implemented `Pixal3DMVImageTo3DPipeline` (`init_mv_models`, `load_mv_views`, `run_mv_inference` sharing sub-models with the single-image pipeline) plus a dedicated **Multi-View to 3D (2–4+ Views)** Gradio tab.
+- **`TextureMapPrep_Colab.ipynb` (`P1` High-Res Marigold v1.1, Lotus-2 & Marigold v2.0)**:
+  - Added `'marigold-hr'` (`prs-eth/marigold-depth-hr-v1-1` at `processing_resolution=1024`), `'lotus-2'` (`jingheya/Lotus-2`), and `'marigold-v2'` (`huawei-bayerlab/marigold-v2-0`) to `ModelHub` and the Height/Normal source selectors across Single-Image and Batch modes.
+- **`Hunyuan3D-2_Colab.ipynb` (`P2` FlashVDM Turbo VAE, Paint-Turbo & All 9 Shape Variants)**:
+  - Updated to latest `main` (`f8db6309`), expanded `MODEL_REGISTRY` to all 9 shape variants (`2mini-turbo`, `2mini-fast`, `2mini`, `2mv-turbo`, `2mv-fast`, `2mv`, `2-turbo`, `2-fast`, `2`), wired `enable_flashvdm()` with `hunyuan3d-vae-v2-0-turbo` / `hunyuan3d-vae-v2-mini-turbo`, and added `hunyuan3d-paint-v2-0-turbo` + `hunyuan3d-delight-v2-0`.
+- **`MapAnything_Colab.ipynb` (`P2` Upstream Pull + Checkpoint Variant Selector)**:
+  - Added `git pull --ff-only` on cached clones (eliminating the redundant 1.1 GB `torch.hub` DINOv2-giant download) and exposed a checkpoint selector (`facebook/map-anything-apache` Apache 2.0 default vs `facebook/map-anything` CC-BY-NC 4.0 research checkpoint).
+- **`Pi3X_Colab.ipynb` (`P2` Depth-Normal Edge Filtering & Inference Updates)**:
+  - Added `git pull --ff-only` for May 2026 upstream commits and wired `pi3.utils.geometry.depth_normal_edge` (`edge_mask`, `edge_rtol`, `edge_normal_tol_deg`, `conf_threshold`) into COLMAP and `.glb` exports.
+- **`SkinTokens_Colab.ipynb` (`P2` k-NN Post-Sampling Refinement & Export Polish)**:
+  - Added `git pull --ff-only` for commits `273b691` (k-NN `k=8` post-sampling skin weight refinement) and `3b431e4` (file-backed `bpy_server` payload transfer), plus checkpoint selection (`grpo_1400.ckpt` vs `last.ckpt`) and skeleton export controls (`group_per_vertex`, `connect_tail_to_unique_child`, `add_root`).
+- **`SplatTransform_Colab.ipynb` (`P2` PlayCanvas `splat-transform` v3.10+ Features)**:
+  - Added multi-format input discovery (`.ply`, `.compressed.ply`, `.spz` v2–v4, `.sog` v2 bundled/unbundled, `.ksplat`, `.splat`), `.spz` v3/v4 and unbundled `.sog` output toggles, 2DGS / mip-antialiasing metadata preservation (`SPLAT_RENDER_MODE`), and 360° equirectangular panorama rendering (`--projection equirect`).
+
+#### Audio, TTS & Post-Processing Notebooks (7)
+- **`Dia_Colab.ipynb` (`P1` Dia2-2B / Dia2-1B + Native `transformers` Dia v1)**:
+  - Added full support for **`nari-labs/Dia2-2B`** (flagship streaming dialogue TTS), **`nari-labs/Dia2-1B`** (fast lightweight variant), and **`nari-labs/Dia-1.6B-0626`** (via native 🤗 `transformers` `DiaForConditionalGeneration` + `AutoProcessor`) with dual-speaker prefix audio conditioning (`prefix_speaker_1`, `prefix_speaker_2`).
+- **`Kokoro-82M_Colab.ipynb` (`P1` `Kokoro-82M-v1.1-zh` 103 Voices)**:
+  - Added model version selector for `hexgrad/Kokoro-82M-v1.1-zh` (103 voices: `af_maple`, `af_sol`, `bf_vale` + 100 Mandarin voices `zf_001`–`zf_099` / `zm_009`–`zm_100`) alongside `hexgrad/Kokoro-82M` v1.0, installed `misaki[en,ja,zh]>=0.8.2`, and wired `en_callable` for inline English pronunciation inside Chinese pipelines.
+- **`IndicF5_Colab.ipynb` (`P1` AI4Bharat's `bodhan-ai/indic-speak` + `IndicF5`)**:
+  - Added **`bodhan-ai/indic-speak`** (ungated 3.3B Speech Foundation Model covering **all 22 scheduled Indian languages + English** with 8 speakers and 5 emotion tags) alongside **`ai4bharat/IndicF5`** (zero-shot reference cloning).
+- **`dots.tts-soar_Colab.ipynb` (`P2` 4-Step MeanFlow `dots.tts-mf`)**:
+  - Added model variant selector for **`rednote-hilab/dots.tts-mf`** (4-step MeanFlow distilled variant with fused CFG for ~4× faster inference) alongside **`rednote-hilab/dots.tts-soar`** (16-step ODE).
+- **`MOSS-TTS_Colab.ipynb` (`P2` 4-Tab OpenMOSS Audio Studio)**:
+  - Expanded into a 4-tab studio supporting **`OpenMOSS-Team/MOSS-TTS-v1.5`** (8B 31-language TTS & cloning), **`OpenMOSS-Team/MOSS-VoiceGenerator`** (1.7B text-described voice design with 1-click transfer to Tab 1), **`OpenMOSS-Team/MOSS-TTSD-v1.0`** (8B multi-speaker `[S1]`/`[S2]` dialogue), and **`OpenMOSS-Team/MOSS-SoundEffect`** (8B text-to-SFX).
+- **`Audio_PostProcessor_Colab.ipynb` (`P2` Vocal/Stem Separation & 48 kHz FlashSR Super-Resolution)**:
+  - Added **`isolate_vocals`** (`audio-separator` `Kim_Vocal_2.onnx` / `torchaudio` Hybrid Demucs `HDEMUCS_HIGH_MUSDB_PLUS`) and **`flashsr_upsample`** (200–400× real-time 16/24 kHz $\rightarrow$ 48 kHz neural audio super-resolution via `YatharthS/FlashSR`), plus `vocal_clone_prep` & `flashsr_48k` presets and a dedicated **Vocal Isolation & 48k Super-Res** Gradio tab.
+- **`TTS_Model_Loader.ipynb` (`P2` Expanded Pre-Cache Checklist)**:
+  - Added pre-cache toggles and `snapshot_download` entries for `openbmb/VoxCPM2`, `BreezeBlue/Breeze-TTS-2`, `nari-labs/Dia2-2B`, `hexgrad/Kokoro-82M-v1.1-zh`, `bodhan-ai/indic-speak`, `OpenMOSS-Team/MOSS-VoiceGenerator`, and `rednote-hilab/dots.tts-mf`.
+
 ### New notebook: InfiniteTalk — Sparse-Frame Audio-Driven Video Generation & Dubbing (14B)
 
 Adds **InfiniteTalk_Colab.ipynb**, a self-contained Colab studio for

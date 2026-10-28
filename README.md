@@ -76,8 +76,9 @@ State-of-the-art image-to-3D generation by **Tencent ARC Lab** (SIGGRAPH 2026). 
 
 ### What You Get
 
+- **Single-Image & Multi-View to 3D**: Supports both **Single-Image to 3D** (`Pixal3DImageTo3DPipeline`) and **Multi-View Images to 3D** (`Pixal3DMVImageTo3DPipeline`, 2–4+ views with optional `transforms.json` camera extrinsics and feature averaging)
 - **GLB mesh output** with 4-channel PBR texture atlas (up to 4096×4096)
-- **Gradio web UI** — interactive generation with preview renders
+- **Gradio web UI** — tabbed interactive generation (Single-Image & Multi-View tabs) with preview renders
 - **Batch processing** — process entire directories of images, resume-aware
 - **Manual FOV control** — override camera field-of-view when auto-detection gets it wrong
 - **HDRI preview renders** — forest, sunset, and courtyard lighting for turntable previews
@@ -250,8 +251,8 @@ API usage is governed by Tencent's terms. Model output is yours to use in your o
 
 A self-contained wrapper around [Tencent's Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) — the official Tencent Hugging Face Space turned into a 7-step Colab notebook with a Drive cache. The pipeline turns a single image (or several views) into a clean, optionally textured `.glb` mesh in seconds.
 
-- **Shape generation (DiT flow-matching)** — five model variants covering the 0.6 B mini shape expert through the 1.1 B full model, with and without step-distillation (`-Turbo`) and multi-view (`-mv`).
-- **Texture synthesis (Hunyuan3D-Paint)** — paints a high-resolution diffuse texture onto a white mesh using a stable-diffusion-style multi-view pipeline. Optional: requires building a small CUDA extension (`custom_rasterizer`) on Step 1. If the build fails, the rest of the notebook still works; the Paint tab will tell you so.
+- **Shape generation (DiT flow-matching)** — all **9 official model variants** covering the 0.6 B mini shape expert (`2mini-turbo`, `2mini-fast`, `2mini`), 1.1 B multi-view (`2mv-turbo`, `2mv-fast`, `2mv`), and 1.1 B full model (`2-turbo`, `2-fast`, `2`), plus **FlashVDM Turbo VAE** (`hunyuan3d-vae-v2-0-turbo` / `hunyuan3d-vae-v2-mini-turbo` via `enable_flashvdm()`) for up to 32× faster shape decoding.
+- **Texture synthesis (`hunyuan3d-paint-v2-0-turbo` & `hunyuan3d-paint-v2-0` + `hunyuan3d-delight-v2-0`)** — paints a high-resolution diffuse texture onto a white mesh using a multi-view diffusion pipeline (defaulting to the fast `hunyuan3d-paint-v2-0-turbo` variant with automatic `hunyuan3d-delight-v2-0` image delighting). Optional: requires building a small CUDA extension (`custom_rasterizer`) on Step 1. If the build fails, the rest of the notebook still works; the Paint tab will tell you so.
 - **Mesh cleanup** — `FloaterRemover`, `DegenerateFaceRemover`, and `FaceReducer` are wired in so the output is a low-poly, watertight mesh you can drop into a game engine or Three.js.
 - **Texture an existing mesh** — there's a dedicated tab where you upload any `.glb / .obj / .ply` mesh + a reference image and Paint handles the rest. Useful for re-texturing outputs from Cube 3D, CubePart, or any other source.
 
@@ -387,9 +388,11 @@ The notebook auto-detects GPU and warns if VRAM is below 20 GB.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/NoPoSplat_Colab.ipynb)
 
-**[NoPoSplat](https://noposplat.github.io/)** (Botao Ye et al., NVIDIA + ETH Zurich, ICLR 2025 Oral) is a feed-forward 3DGS reconstruction model: **upload 2-3 unposed, uncalibrated photos of a scene → get a complete 3D Gaussian Splat scene back in ~10 seconds**. No COLMAP, no bundle adjustment, no per-scene optimization. The closest open-source equivalent to a Luma-style "upload photos, get 3DGS" workflow.
+Unified pose-free feed-forward 3DGS reconstruction notebook combining **[YoNoSplat](https://github.com/cvg/YoNoSplat)** (Botao Ye et al., ETH Zurich CVG, **ICLR 2026** official successor — **2 to 32 arbitrary unposed, uncalibrated views** with a Pi3 backbone and intrinsic prediction) and **[NoPoSplat](https://noposplat.github.io/)** (ICLR 2025 Oral — **2 to 3 unposed views** at up to 512×512). **Upload 2–32 uncalibrated photos or a video clip of a scene → get a complete 3D Gaussian Splat scene back in seconds**. No COLMAP, no bundle adjustment, no per-scene optimization.
 
-The model is a ViT-L encoder (built on the MASt3R backbone) with four heads: a 3D point head (DPT), a Gaussian parameter head (DPT-GS), a second-view head, and a **Unified Gaussian Adapter** that fuses both views' predictions into a single 3DGS scene in a canonical frame. Critically, NoPoSplat is **pose-free**: it does not require camera extrinsics or intrinsics as input.
+### Two Engines in One Notebook
+- **YoNoSplat (ICLR 2026, default)** — scales feed-forward pose-free 3DGS from 2 views up to **32 arbitrary views** (`dl3dv_224x224_ctx2to32.ckpt` & `re10k_224x224_ctx2to32.ckpt` from [`botaoye/YoNoSplat`](https://huggingface.co/botaoye/YoNoSplat)), predicting camera poses, intrinsics (`Free_Pose`), scale head, and 3D Gaussians jointly.
+- **NoPoSplat (ICLR 2025 Oral)** — ViT-L MASt3R-based encoder with Unified Gaussian Adapter for high-resolution 2–3 view capture (`mixRe10kDl3dv_512x512.ckpt`, `re10k_3views.ckpt`, `re10k.ckpt`, `acid.ckpt` from [`botaoye/NoPoSplat`](https://huggingface.co/botaoye/NoPoSplat)).
 
 ### When to use NoPoSplat vs TripoSplat
 * **TripoSplat** — single image → 3DGS via a learned generative prior. Best for imagined/photographic scenes where you only have one photo. ~30-60s.
@@ -536,8 +539,8 @@ gsplat (1-3 min training on T4)
 * **Per-scene runtime:** ~20-60 seconds for 10 images at 518² on T4 (one forward pass)
 
 ### License
-* **Notebook + code + weights:** **Apache 2.0** — fully commercial-OK.
-* **Source:** [facebookresearch/map-anything](https://github.com/facebookresearch/map-anything) (Apache 2.0); weights from [🤗&nbsp;facebook/map-anything-apache](https://huggingface.co/facebook/map-anything-apache) (Apache 2.0 variant — Meta also publishes a CC-BY-NC variant at `facebook/map-anything` which we deliberately do not use)
+* **Notebook + code:** **Apache 2.0** (upstream [facebookresearch/map-anything](https://github.com/facebookresearch/map-anything), auto-updated via `git pull --ff-only` to include the Aug 2026 commits that eliminate the redundant 1.1 GB `torch.hub` DINOv2-giant download)
+* **Checkpoint Variant Selector:** defaults to [🤗&nbsp;facebook/map-anything-apache](https://huggingface.co/facebook/map-anything-apache) (**Apache 2.0**, fully commercial-OK), with an optional toggle in Steps 1–7 to switch to [🤗&nbsp;facebook/map-anything](https://huggingface.co/facebook/map-anything) (**CC-BY-NC 4.0**, higher-accuracy research checkpoint).
 
 ### Related notebooks
 * **NoPoSplat** — 2-3 photos → 3DGS in ~10s (MIT, but slower for >3 images)
@@ -588,7 +591,7 @@ gsplat (1-3 min training on T4)
 
 ### Key parameters
 * **`use_multimodal=False`** (default) — disables conditioning on pose/intrinsics/depth and frees ~2 GB GPU. Recommended for unordered video frames.
-* **`edge_mask=True`** — masks out edge artifacts using normal/depth consistency, improving 3DGS quality.
+* **`edge_mask=True`** (with tunable `edge_rtol=0.03`, `edge_normal_tol_deg=5.0`, `conf_threshold=0.1`) — masks out depth-discontinuity floaters using upstream `pi3.utils.geometry.depth_normal_edge` consistency filtering before writing COLMAP and `.glb` outputs.
 * **`use_amp=True`** — bf16 on Ampere+, fp16 fallback, ~2x speedup.
 * **`max_frames=64`** — Pi3X is permutation-equivariant, so all frames are weighted equally; the model handles 200+ frames gracefully.
 
@@ -808,29 +811,15 @@ MIT License (Copyright © 2026 Nicolas von Lützow). Fully compatible with our s
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/InfiniSplat_Colab.ipynb)
 
-A Colab port of [InfiniSplat](https://github.com/zju3dv/InfiniSplat) (SIGGRAPH Asia 2026 Journal Track). InfiniSplat reconstructs a 3D Gaussian Splat scene from a **single RGB image** using a ViT-L/16 backbone + implicit Gaussian decoder.
+A Colab port of [zju3dv/InfiniSplat](https://github.com/zju3dv/InfiniSplat) supporting both **InfiniSplat v2** ([`Edisoneh/InfiniSplat-v2`](https://huggingface.co/Edisoneh/InfiniSplat-v2) — **Multi-View 2–32+ unposed/posed images & calibrated 360° equirectangular panorama $\rightarrow$ 3DGS**) and **InfiniSplat v1** ([`PLUS-WAVE/InfiniSplat`](https://huggingface.co/PLUS-WAVE/InfiniSplat), SIGGRAPH Asia 2026 Journal Track — **Single RGB image + optional LiDAR depth $\rightarrow$ 3DGS**).
 
-### How it differs from our other 3DGS notebooks
+### Two Versions & Three Modes in One Notebook
 
-| | InfiniSplat | MapAnything | NoPoSplat | TripoSplat | GaussianGPT |
-|--|-------------|-------------|-----------|------------|--------------|
-| **Input** | 1 image | 1-100 images | 2-3 photos | text/image | None (generative) |
-| **Method** | ViT + implicit decoder | Feed-forward | Feed-forward | TripoSR + gsplat | Autoregressive GPT |
-| **Output** | 3DGS .ply + video | 3DGS .ply + GLB | 3DGS .ply | 3DGS .ply/.splat | 3DGS .ply + GIF |
-| **Speed** | 10-30s | ~10s | ~10s | ~30s | 5-15s |
-| **License** | Apache 2.0 | Apache 2.0 | MIT | MIT | MIT |
-| **Model size** | ~3 GB | ~3-5 GB | ~1-2 GB | ~1-2 GB | ~5.5 GB |
-| **Custom builds** | None | None | None | None | gsplat + pytorch3d from source |
-| **Use for** | Single-image 3DGS | Multi-image 3DGS | Pose-free 3DGS | Text/image 3DGS | Generative 3DGS |
-
-InfiniSplat is the simplest notebook in the suite — no custom CUDA builds, small model, fits on T4, Apache 2.0. Best for indoor scenes (trained on HyperSim).
-
-### Two modes
-
-| Mode | Input | Checkpoint | Use case |
+| Version / Mode | Input | Checkpoint | Use case |
 |---|---|---|---|
-| **RGB-only** | 1 image | `infinisplat_rgb.ckpt` (2.93 GB) | Monocular 3DGS from a single image |
-| **Depth-guided** | RGB + depth file | `infinisplat_lidar.ckpt` (2.49 GB) | Higher-accuracy 3DGS with depth sensor input |
+| **InfiniSplat v2 — Multi-View** *(default)* | 2–32+ images (unposed or posed) | `Edisoneh/InfiniSplat-v2` (`model_v2.safetensors`) | Feed-forward multi-view 3DGS reconstruction |
+| **InfiniSplat v2 — 360° Panorama** | 1 equirectangular 360° panorama | `model_v2.safetensors` + `equi2pers_grid.pt` | Full 360° indoor/outdoor room & scene 3DGS |
+| **InfiniSplat v1 — Single RGB / LiDAR** | 1 RGB image (+ optional depth) | `PLUS-WAVE/InfiniSplat` (`pretrained_model.pth`) | Monocular or depth-guided single-image 3DGS |
 
 ### Pipeline
 
@@ -987,15 +976,8 @@ preserving the seamless wraparound.
 
 ## Why these models
 
-* **[Marigold v1.1](https://huggingface.co/prs-eth/marigold-depth-v1-1)** (PRS-ETH,
-  CVPR 2024 Oral, Best Paper Candidate) — Apache-2.0 code, RAIL++-M weights.
-  One unified `diffusers` API for depth + surface normals + intrinsic image
-  decomposition (albedo + roughness + metallic). Already in the diffusers core.
-* **[LOTUS v1](https://lotus3d.github.io/)** (EnVision Research, ICLR 2025) —
-  Apache-2.0 code + weights. The depth + normal model the
-  [PBRFusion4DepthDemo-InstNorm](https://huggingface.co/spaces/NightRaven109/PBRFusion4DepthDemo-InstNorm)
-  space uses. Comparable quality to Marigold, different architecture.
-  Single-step inference = ~5x faster than standard diffusion-based methods.
+* **[Marigold v1.1](https://huggingface.co/prs-eth/marigold-depth-v1-1), [Marigold High-Res v1.1 (`marigold-depth-hr-v1-1`)](https://huggingface.co/prs-eth/marigold-depth-hr-v1-1) & [Marigold v2.0](https://huggingface.co/huawei-bayerlab/marigold-v2-0)** (PRS-ETH / Huawei Bayer Lab) — Apache-2.0 code, RAIL++-M weights. Unified `diffusers` API for high-resolution depth (`processing_resolution=1024` in `marigold-hr`), surface normals, and intrinsic image decomposition (albedo + roughness + metallic).
+* **[LOTUS v1](https://lotus3d.github.io/) & [Lotus-2](https://huggingface.co/jingheya/Lotus-2)** (EnVision Research, ICLR 2025 / 2026) — Apache-2.0 code + weights. Single-step deterministic dense geometry prediction (~5× faster than multi-step diffusion methods) with sharper fine-detail preservation in Lotus-2.
 * **[FLUX 2-klein-4B](https://huggingface.co/black-forest-labs/FLUX.2-klein-4B) +
   [NightRaven109/kleinalbedo4B5ksteps](https://huggingface.co/NightRaven109/kleinalbedo4B5ksteps)**
   (Apache-2.0) — the optional Albedo path from
@@ -1106,7 +1088,7 @@ The **missing piece** for shipping 3DGS assets to a game engine. Takes the raw 3
 - **Step 1** — install Node 22+ and `splat-transform` from npm
 - **Step 2** — Drive cache + GPU check (WebGPU optional for most steps; SOG SH k-means benefits from GPU)
 - **Step 2b (Engine Preset)** — optional toggle, default OFF. When ON, biases STEP 3's output formats + SH strip defaults for a WebGPU/PlayCanvas engine consumer (SOG-only by default, DC-only SH, grounding off for props). See "Engine Preset" below for the prop-vs-environment distinction.
-- **Step 3** — batch convert a folder of TripoSplat PLYs into all 4 game formats (SOG, SPZ, GLB, PLY) with size + compression-ratio reports. **New batch-hardening params:** `PARALLEL_WORKERS` (default 2) runs K conversions concurrently via `ThreadPoolExecutor`; `RESUME` (default True) + `FORCE_REDO` skip sources whose outputs already exist (survives Colab disconnects); `VALIDATE_OUTPUTS` re-opens each SOG to confirm it parses; `EMIT_MANIFEST` (default True) writes `<output_dir>/manifest.json` with per-source paths/sizes/ratios/splat-counts/assetClass + a top-level summary.
+- **Step 3** — batch convert a folder of 3DGS inputs (`.ply`, `.compressed.ply`, Niantic `.spz` v2–v4, `.sog` v2 bundled/unbundled `meta.json`, `.ksplat`, `.splat`) into game formats (`.sog` v2 bundled & unbundled, `.spz` v3/v4, `.compressed.ply`, `.glb`, `.ply`, standalone `.html` viewer) with size + compression-ratio reports, **2DGS / mip-antialiasing metadata inspection & preservation** (`SPLAT_RENDER_MODE`), and optional **360° equirectangular panorama rendering** (`--projection equirect`). **Batch-hardening params:** `PARALLEL_WORKERS` (default 2) runs K conversions concurrently via `ThreadPoolExecutor`; `RESUME` (default True) + `FORCE_REDO` skip sources whose outputs already exist (survives Colab disconnects); `VALIDATE_OUTPUTS` re-opens each SOG to confirm it parses; `EMIT_MANIFEST` (default True) writes `<output_dir>/manifest.json` with per-source paths/sizes/ratios/splat-counts/assetClass + a top-level summary.
 - **Step 4** — decimate (reduce Gaussian count for web previews / low-LOD) and/or strip SH bands (drop higher-frequency color)
 - **Step 5** — **density chain** (per-tier full-model SOGs, NOT streaming). N full SOGs of decreasing Gaussian counts. Good for object props (engine swaps in/out based on distance).
 - **Step 5b** — **streamed-SOG octree** (native `lod-meta.json`, for environment captures). Generates N decimated SOGs in a temp dir, then bundles them via `splat-transform -l 0..N lodN.sog out/lod-meta.json -C 512 -X 16`. The engine progressively streams chunks from low to high LOD. Tunable `LOD_COUNTS` + `LOD_CHUNK_COUNT` + `LOD_CHUNK_EXTENT`. Optional pre-grounding (`APPLY_GROUNDING=True` for environments; keep OFF for props to avoid double-application).
@@ -1168,7 +1150,7 @@ Automated **skeleton generation + skinning weight prediction** for any 3D mesh, 
 4. The keep-alive cell 6 keeps the runtime alive for 12 h so the Gradio UI stays reachable
 
 ### Sampling parameters
-All match the official demo's defaults: `top_k=5`, `top_p=0.95`, `temperature=1.0`, `repetition_penalty=2.0`, `num_beams=10`, `max_length=2048`. Plus three pipeline toggles:
+All match the official demo's defaults: `top_k=5`, `top_p=0.95`, `temperature=1.0`, `repetition_penalty=2.0`, `num_beams=10`, `max_length=2048`, plus checkpoint selection (`grpo_1400.ckpt` RL-aligned default vs `last.ckpt`), k-NN (`k=8`) post-sampling skin weight refinement, and skeleton export controls (`group_per_vertex`, `connect_tail_to_unique_child`, `add_root`). Plus three pipeline toggles:
 * **Use existing skeleton** — if your mesh already has a rig, predict skinning only (faster, cleaner)
 * **Preserve original texture & scale** — transfer the predicted rig back onto the un-preprocessed mesh
 * **Voxel skin post-processing** — apply a voxel-based mask to the predicted skin weights (slower)
@@ -1565,13 +1547,14 @@ After generating, the only thing left to do is open the new notebook, replace th
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/LTX-2-5_ComfyUI_Colab.ipynb)
 
-High-performance, joint **Audio-Video (AV)** generation pipeline powered by **Lightricks' LTX-2.5 (22B)** inside a headless ComfyUI backend on Google Colab. Supports photorealistic text-to-video, image-to-video (first frame and last frame conditioning), and two-stage distilled 2x spatial upscaling.
+High-performance, joint **Audio-Video (AV)** generation pipeline powered by **Lightricks' LTX-2.5 (22B)** inside a headless ComfyUI backend on Google Colab. Supports photorealistic text-to-video, image-to-video (first frame and last frame conditioning), two-stage distilled 2x spatial upscaling, and the full suite of **6 official LTX-2.5 IC-LoRAs** (`Layout-To-Render`, `Ingredients`, `Refine-Details`, `Alpha-Gen`, `SDR-To-HDR`, and `Pixel-Spatial-Upscaler`).
 
 - **Joint AV Synthesis**: Produces synchronized 24 fps video with matching ambient audio in a single denoise pass
+- **Official LTX-2.5 IC-LoRA Suite**: Select and strength-tune any of Lightricks' 6 official IC-LoRAs across Step 2, Step 4 Gradio UI, Step 7 JSON batch, and Step 9 ReDetail upscaler
 - **Gradio Web UI (Step 4)**: Interactive generation with text-to-video, image upload conditioning, canvas presets, seed controls, and integrated video player with audio
 - **Two-Stage Distilled Pipeline**: 1-stage fast generation (8 steps) or 2-stage spatial upscale with LTXVLatentUpsampler and 3-step refiner
 - **Batch Processing (Step 7)**: Sequential scene generation from JSON prompt files with resume capability
-- **Video Upscaler (Step 9)**: Dedicated latent video upscaler with VHS audio passthrough
+- **Video Upscaler (Step 9)**: Dedicated latent video upscaler with IC-LoRA selector and VHS audio passthrough
 - **Hardware Support**: Runs on L4 (24 GB) and A100 (40 GB) with GGUF / int8-convrot quantization
 
 ---
@@ -1653,16 +1636,17 @@ Headless ComfyUI workflow for **MiniMax-H3 (33B)** video generation with `--disa
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Wan2.2_Colab.ipynb)
 
-A self-contained Colab wrapper around [Tencent / Wan-AI's Wan 2.2](https://github.com/Wan-Video/Wan2.2) video model. **Two officially-released variants in one notebook**, plus a layer of prompt-enhancement features borrowed from the `ginigen/Wan-2.2-Enhanced` Space (preset style buttons, resolution dropdown, negative prompt, auto-enhance, smart resolution).
+A self-contained Colab wrapper around [Tencent / Wan-AI's Wan 2.2](https://github.com/Wan-Video/Wan2.2) video model. **Three officially-released variants in one notebook** (`5B-TI2V`, `14B-I2V`, and `14B-T2V`), **4-Step / 8-Step Lightning LoRA acceleration** ([`lightx2v/Wan2.2-Distill-Loras`](https://huggingface.co/lightx2v/Wan2.2-Distill-Loras)), `torchao` INT8 quantization + Diffusers block-level group offloading (`enable_group_offload`), plus prompt-enhancement features from the `ginigen/Wan-2.2-Enhanced` Space.
 
-- **Two variants in one notebook**:
-  - **`5B-TI2V`** (default, 10 GB on disk, fits 24 GB GPUs with sequential CPU offload) — fast, recommended for most Colab users
-  - **`14B-A14B`** (heavy, 27 GB on disk, needs 40+ GB VRAM) — highest-quality MoE, slow. Downloads on demand when you pick it in the UI.
-- **Two modes per variant**: Text-to-Video (T2V) and Image-to-Video (I2V)
+- **Three variants in one notebook**:
+  - **`5B-TI2V`** (`Wan-AI/Wan2.2-TI2V-5B-Diffusers`, default, 10 GB on disk) — fast unified Text-to-Video & Image-to-Video, fits comfortably on L4 (24 GB) and T4 (16 GB at 480p)
+  - **`14B-I2V`** (`Wan-AI/Wan2.2-I2V-A14B-Diffusers`, 27 GB on disk) — flagship MoE Image-to-Video; runs on L4 (24 GB) with `torchao` INT8 + block-level group offload or natively on A100 (40 GB)
+  - **`14B-T2V`** (`Wan-AI/Wan2.2-T2V-A14B-Diffusers`, 27 GB on disk) — flagship MoE Text-to-Video; runs on L4 (24 GB) with `torchao` INT8 + block-level group offload or natively on A100 (40 GB)
+- **⚡ 4-Step & 8-Step Lightning LoRA Toggle**: Optional high-noise + low-noise dual-expert rank-64 LoRAs from [`lightx2v/Wan2.2-Distill-Loras`](https://huggingface.co/lightx2v/Wan2.2-Distill-Loras) (`guidance_scale=1.0`) for up to **~7× faster generation**
 - **720p @ 24 fps output**, up to 5 seconds (121 frames) per call
-- **Apache 2.0 license** on both variants
-- **Official diffusers port** — uses `WanPipeline` + `AutoencoderKLWan` from the `diffusers` main branch (installed from git, not PyPI, because the Wan classes aren't in a stable release yet)
-- **Drive-cached weights** — 10 GB (5B) or 27 GB (14B) on first run, then instant
+- **Apache 2.0 license** on all variants
+- **Official diffusers port** — uses `WanPipeline`, `WanImageToVideoPipeline`, and `AutoencoderKLWan` with `enable_group_offload(offload_type="block_level", use_stream=True)`
+- **Drive-cached weights** — cached to Google Drive on first run, then instant
 - **Step 7 batch** reads a `.txt` of prompts and generates one `.mp4` per line
 
 ### Enhancement features (from `ginigen/Wan-2.2-Enhanced`)
@@ -1706,31 +1690,24 @@ Apache 2.0 — the most permissive of all the Wan 2.2 sub-models. Outputs are yo
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Wan2.2_Animate_Colab.ipynb)
 
-A self-contained Colab wrapper around [Tencent / Wan-AI's Wan 2.2 Animate](https://huggingface.co/Wan-AI/Wan2.2-Animate-14B) — the **14 B MoE** model for **character animation and replacement**. The model takes **two inputs**: a **character image** (the subject) and a **reference video** (the motion), and produces a video in either **Move** mode (animate the character to mimic the video's motion) or **Mix** mode (replace the character in the video with the one in the image). Apache 2.0.
+A self-contained Colab wrapper around **Wan-Animate-2** ([`Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers`](https://huggingface.co/Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers) & [`Wan-AI/Wan2.2-Animate-2-14B-Diffusers`](https://huggingface.co/Wan-AI/Wan2.2-Animate-2-14B-Diffusers)) and **Wan 2.2 Animate v1** ([`Wan-AI/Wan2.2-Animate-14B-Diffusers`](https://huggingface.co/Wan-AI/Wan2.2-Animate-14B-Diffusers)) — Wan-AI's **14B** models for **character animation and replacement**. Takes a **character image** (the subject) and a **reference video** (the motion), and animates or replaces the character. Apache 2.0.
 
 - **Two execution paths in one notebook**:
-  - **🌐 Cloud API (default)** — uses Alibaba's DashScope API. No GPU needed, ~$0.10-0.50/call, works on any Colab runtime. **Same backend the [official HF Space](https://huggingface.co/spaces/Wan-AI/Wan2.2-Animate) uses.**
-  - **💻 Local inference (heavy)** — clones the [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) repo, downloads 28 GB of weights, runs preprocessing + inference locally on an A100.
-- **Two task modes**:
-  - **Move**: animate the character image with the motion from the reference video
-  - **Mix**: replace the character in the video with the one in the image
-- **Two quality levels**:
-  - `wan-pro` — 25 fps, 720p
-  - `wan-std` — 15 fps, 720p (cheaper)
+  - **💻 Local GPU Inference (Diffusers + TorchAO INT8 + Block-Level Group Offload)** — runs locally on **L4 (24 GB)**, **A100 (40 GB)**, or **T4 (15 GB)** using:
+    - **`Wan2.2-Animate-2-14B-Distilled` (10-Step Fast Default)** — end-to-end character animation in **10 Euler steps** with `guidance_scale=1.0` (no CFG overhead) and **no external DWPose preprocessor required**
+    - **`Wan2.2-Animate-2-14B` (40-Step Standard)** — full-step Animate-2 quality
+    - **`Wan2.2-Animate-14B` (Classic v1)** — Move (animate character image with reference motion) and Mix (replace character in video) modes
+  - **🌐 Cloud API (DashScope)** — optional Alibaba DashScope API (`wan2.2-animate-move` / `wan2.2-animate-mix`) requiring no local GPU VRAM (~$0.10–0.50/call).
 
-### Quick Start (cloud path, recommended)
+### Quick Start (Local GPU Path — L4 / A100 / T4)
 
-1. **Sign up for Alibaba Cloud's DashScope** at [dashscope.aliyun.com](https://dashscope.aliyun.com/) and activate the **wan2.2-animate-move** and **wan2.2-animate-mix** services.
-2. **Add your API key** to Colab secrets (left sidebar → 🔑) as `DASHSCOPE_API_KEY`.
-3. Run Steps 1-4 in order — Step 1 installs requests, Step 2 reads the key, Step 3 defines the client, Step 4 launches the Gradio UI.
-4. Open the public URL, upload a character image + a reference video, pick a mode (move or mix) and a quality (pro or std), click **Generate**. ~$0.10-0.50 per request, billed to your DashScope account.
+1. Run Steps 1–4 in order — Step 1 installs `diffusers` from main + `torchao`, Step 2 configures the persistent Google Drive cache (`AEI_3D_Cache/Wan2.2-Animate`), Step 3 defines `WanAnimateLocalEngine` (with `Int8WeightOnlyConfig` + `enable_group_offload`), Step 4 launches the Gradio UI.
+2. Select **💻 Local GPU**, choose **`Wan2.2-Animate-2-14B-Distilled (10-step Fast)`**, upload a character portrait + driving motion video, and click **Generate**.
 
-### Quick Start (local path, A100 only)
+### Quick Start (Cloud API Path)
 
-1. Switch the **Mode** dropdown to **💻 Local** at the top of Step 4.
-2. Click **Pre-load local engine** — clones the official repo + downloads 28 GB of weights. This takes 10-30 minutes.
-3. Pick the **A100 (40 GB)** runtime. The local path needs 40+ GB of VRAM.
-4. Same UI — the local tab does the actual inference on the loaded weights.
+1. Sign up for Alibaba Cloud's DashScope at [dashscope.aliyun.com](https://dashscope.aliyun.com/) and add `DASHSCOPE_API_KEY` to Colab secrets (🔑).
+2. Switch the **Mode** dropdown to **🌐 Cloud API (DashScope)** in Step 4, upload a character image + reference video, pick Move or Mix, and click **Generate**.
 
 ### License
 
@@ -1745,27 +1722,23 @@ Apache 2.0 — the model weights are yours to use commercially. The cloud API is
 A self-contained Colab wrapper around [Tencent / Wan-AI's Wan 2.2 S2V](https://huggingface.co/Wan-AI/Wan2.2-S2V-14B) — the **14 B MoE** audio-driven video generation model. Take a **character image** + **audio clip** and produce a cinematic video of the character speaking, singing, or reacting to the audio. Apache 2.0.
 
 - **Two execution paths in one notebook**:
-  - **🌐 Cloud API (default)** — uses Alibaba's DashScope API. No GPU needed, ~$0.10-0.50/call, works on any Colab runtime. **Same backend the [official HF Space](https://huggingface.co/spaces/Wan-AI/Wan2.2-S2V) uses** (the cloud runs a distilled model, so it's cheaper than the full 14B).
-  - **💻 Local inference (heavy)** — clones the [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) repo, downloads 27 GB of weights, runs locally. Needs **A100 (80 GB)** or H100.
+  - **💻 Local Single-GPU Inference (L4 24GB / A100 40GB)** — clones [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2), caches `Wan-AI/Wan2.2-S2V-14B` to Google Drive, and runs `WanS2V` locally on a single Colab GPU using CPU initialization, `t5_cpu=True`, `convert_model_dtype=True`, `offload_model=True`, `torchao` `Int8WeightOnlyConfig()` DiT quantization, PyTorch SDPA fallback, and optional **4-Step Lightning LoRA** ([`lightx2v/Wan2.2-Distill-Loras`](https://huggingface.co/lightx2v/Wan2.2-Distill-Loras)) acceleration.
+  - **🌐 Cloud API (DashScope)** — uses Alibaba's DashScope API (`wan2.2-s2v`). No GPU needed, ~$0.10-0.50/call, works on any Colab runtime.
 - **Two required inputs**: character image + audio clip
 - **Optional advanced inputs**: text prompt (describes the scene), pose video (for pose-driven generation, drives body motion)
-- **Two resolution levels**: 480P (cheaper, faster) and 720P (higher quality)
+- **Two resolution levels**: 480P (faster, fits L4 24 GB) and 720P (higher quality)
 - **Audio length determines video length** — the output video is as long as the input audio
-- **Trained for both speech and singing** — the paper specifically benchmarks against Hunyuan-Avatar and Omnihuman on cinematic character animation
+- **Trained for both speech and singing** — benchmarks against Hunyuan-Avatar and OmniHuman on cinematic character animation
 
-### Quick Start (cloud path, recommended)
+### Quick Start (Local GPU Path — L4 24GB / A100 40GB)
 
-1. **Sign up for Alibaba Cloud's DashScope** at [dashscope.aliyun.com](https://dashscope.aliyun.com/) and activate the **wan2.2-s2v** service.
-2. **Add your API key** to Colab secrets (left sidebar → 🔑) as `DASHSCOPE_API_KEY`.
-3. Run Steps 1-4 in order — Step 1 installs requests, Step 2 reads the key, Step 3 defines the client, Step 4 launches the Gradio UI.
-4. Open the public URL, upload a character image + an audio clip, pick 480P or 720P, click **Generate**. The video length is determined by the audio length.
+1. Run Steps 1–4 in order — Step 1 clones `Wan-Video/Wan2.2` with single-GPU CPU-init & SDPA patches and installs `torchao`, Step 2 caches weights to Google Drive (`AEI_3D_Cache/Wan2.2-S2V`), Step 3 defines `WanS2VLocalEngine`, Step 4 launches the Gradio UI.
+2. In Step 4, select **💻 Local GPU**, enable **4-Step Lightning LoRA** and **INT8 Quantization**, upload a character image + audio clip, and click **Generate**.
 
-### Quick Start (local path, A100 80GB or H100 only)
+### Quick Start (Cloud API Path)
 
-1. Switch the **Mode** dropdown to **💻 Local** at the top of Step 4.
-2. Click **Pre-load local engine** — clones the official repo + downloads 27 GB of weights. This takes 10-30 minutes.
-3. Pick the **A100 (80 GB)** runtime. Local S2V needs 80+ GB of VRAM (this is the heaviest of all the Wan 2.2 sub-models).
-4. Same UI — the local tab does the actual inference on the loaded weights.
+1. Sign up for Alibaba Cloud's DashScope at [dashscope.aliyun.com](https://dashscope.aliyun.com/) and add `DASHSCOPE_API_KEY` to Colab secrets (🔑).
+2. Switch the **Mode** dropdown to **🌐 Cloud API** in Step 4, upload a character image + audio clip, pick 480P or 720P, and click **Generate**.
 
 ### License
 
@@ -1921,19 +1894,23 @@ Inline vocal events in the text: `(laugh)`, `(sigh)`, `(cough)`, `(clears throat
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Dia_Colab.ipynb)
 
-`nari-labs/Dia-1.6B-0626` (1.6B) — ultra-realistic multi-speaker dialogue with **21 non-verbal tags** (`(laughs)`, `(coughs)`, `(sighs)`, `(gasps)`, etc.) and 5–10s voice cloning. English only. Apache 2.0.
+`nari-labs/Dia2-2B` (2B flagship), `nari-labs/Dia2-1B` (1B fast), and `nari-labs/Dia-1.6B-0626` (1.6B v1 via native 🤗 `transformers` `DiaForConditionalGeneration`) — ultra-realistic streaming multi-speaker `[S1]`/`[S2]` dialogue TTS with **21 non-verbal tags** (`(laughs)`, `(coughs)`, `(sighs)`, `(gasps)`, etc.) and dual-speaker prefix audio voice cloning (`prefix_speaker_1`, `prefix_speaker_2`). English only. Apache 2.0.
 
 ### IndicF5
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/IndicF5_Colab.ipynb)
 
-`ai4bharat/IndicF5` (400M) — polyglot TTS for **11 Indian languages** (Hindi, Tamil, Bengali, Marathi, Punjabi, Kannada, Malayalam, Telugu, Odia, Gujarati, Assamese) with cross-language zero-shot voice cloning. **Gated — needs `HF_TOKEN` in Colab secrets** (see Step 1). MIT.
+Unified Indian-language TTS notebook supporting both **`bodhan-ai/indic-speak`** (AI4Bharat's ungated 3.3B Llama-3.2 + Vocos Speech Foundation Model covering **all 22 scheduled Indian languages + English** with 8 built-in voices and 5 emotion/style tags `NEUTRAL`, `HAPPY`, `SAD`, `ANGER`, `FEAR`) and **`ai4bharat/IndicF5`** (400M polyglot zero-shot voice cloning across 11 Indian languages; gated on HF). MIT / Apache 2.0.
 
 ### MOSS-TTS v1.5
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MOSS-TTS_Colab.ipynb)
 
-`OpenMOSS-Team/MOSS-TTS-v1.5` (8B) — 31 languages, voice cloning, **duration control** (specify target token count), **IPA / Pinyin input** for pronunciation, inline `[pause X.Ys]` markers, and code-switching. Apache 2.0.
+4-tab **OpenMOSS Audio Studio** covering:
+- **`OpenMOSS-Team/MOSS-TTS-v1.5` (8B)** — 31 languages, zero-shot voice cloning, **duration control** (target token count), **IPA / Pinyin input**, inline `[pause X.Ys]` markers, and code-switching.
+- **`OpenMOSS-Team/MOSS-VoiceGenerator` (1.7B)** — text-described voice design from natural-language persona instructions (with a 1-click button to send designed voices directly into Tab 1 for 31-language cloning).
+- **`OpenMOSS-Team/MOSS-TTSD-v1.0` (8B)** — multi-speaker `[S1]`/`[S2]` conversational dialogue synthesis with dual-speaker reference continuation.
+- **`OpenMOSS-Team/MOSS-SoundEffect` (8B)** — text-to-SFX and environmental ambience synthesis with duration control. Apache 2.0.
 
 > **numpy 2.x compatibility patch (Colab Runtime 2026.01)**: Colab Runtime 2026.01 ships numpy 2.0.x where the string ufuncs (`_center`, `_ljust`, `_rjust`, `_zfill`, `_strip_*`, `_lstrip_*`, `_rstrip_*`, `_partition*`, `_rpartition*`, `_slice`, `_expandtabs*`, `_replace`, `is*`, `find`/`index`, `startswith`/`endswith`, `str_len`, etc.) are not yet exposed in `numpy._core.umath`. The first import of `numpy._core.strings` (triggered by `import torchaudio`, `import librosa`, `import soundfile`, MOSS-TTS' `AutoProcessor`, or any access to `np.strings`) then fails with `ImportError: cannot import name '_center' from 'numpy._core.umath'`. MOSS-TTS pulls all of these as transitive deps, so a fresh runtime is unusable without intervention. STEP 1 of the notebook applies a small monkeypatch right after `import numpy` that injects pure-Python ufuncs into `numpy._core.umath` for every name `numpy._core.strings` needs. Real implementations for the 19 most-called names (`_center`, `_ljust`, `_rjust`, `_zfill`, the strip/lstrip/rstrip family, and the boolean `is*` predicates); passthrough stubs for the rest. MOSS-TTS itself never actually calls any of these on string arrays during inference — the patch is only needed so the `from numpy._core.umath import ...` line in `numpy/_core/strings.py` succeeds at import time. The patch is a no-op on newer numpy versions (numpy 2.0.2+ already has all the ufuncs), so the same notebook runs unchanged on current and future runtimes.
 
@@ -1941,7 +1918,7 @@ Inline vocal events in the text: `(laugh)`, `(sigh)`, `(cough)`, `(clears throat
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/dots.tts-soar_Colab.ipynb)
 
-`rednote-hilab/dots.tts-soar` (2B) — **fully continuous** autoregressive TTS (no discrete tokens anywhere in the pipeline) with **48 kHz studio-quality output** and a frozen AudioVAE + BigVGAN-style decoder. Achieves the **best SIM on the 24-language MiniMax multilingual benchmark** (83.9 average). Continuation cloning (with transcript) and x-vector-only cloning (without). Apache 2.0.
+`rednote-hilab/dots.tts-soar` (2B, 16-step ODE) & `rednote-hilab/dots.tts-mf` (2B, **4-step MeanFlow distilled variant** for ~4× faster inference with fused CFG) — **fully continuous** autoregressive TTS (no discrete tokens anywhere in the pipeline) with **48 kHz studio-quality output** and a frozen AudioVAE + BigVGAN-style decoder. Achieves the **best SIM on the 24-language MiniMax multilingual benchmark** (83.9 average). Continuation cloning (with transcript) and x-vector-only cloning (without). Apache 2.0.
 
 ### Fish S2 Pro
 
@@ -1953,7 +1930,7 @@ Inline vocal events in the text: `(laugh)`, `(sigh)`, `(cough)`, `(clears throat
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Kokoro-82M_Colab.ipynb)
 
-`hexgrad/Kokoro-82M` (82M) — Apache 2.0, **runs comfortably on CPU** (GPU optional), 54 voices across 9 languages (English 🇺🇸🇬🇧, Spanish 🇪🇸, French 🇫🇷, Hindi 🇮🇳, Italian 🇮🇹, Brazilian Portuguese 🇧🇷, Japanese 🇯🇵, Mandarin 🇨🇳). Six tabs:
+`hexgrad/Kokoro-82M` (v1.0, 54 voices) & `hexgrad/Kokoro-82M-v1.1-zh` (v1.1-zh, **103 voices** including `af_maple`, `af_sol`, `bf_vale`, and 100 Mandarin Chinese voices `zf_001`–`zf_099` / `zm_009`–`zm_100` with `misaki[en,ja,zh]` and inline English `en_callable` fallback) — 82M parameters, Apache 2.0, **runs comfortably on CPU** (GPU optional), across 9 languages (English 🇺🇸🇬🇧, Spanish 🇪🇸, French 🇫🇷, Hindi 🇮🇳, Italian 🇮🇹, Brazilian Portuguese 🇧🇷, Japanese 🇯🇵, Mandarin 🇨🇳). Six tabs:
 
 - **Generate** — text + voice + speed; **Random Quote / Gatsby / Frankenstein** one-click fill buttons
 - **Stream** — long texts auto-chunked and concatenated; each chunk saved individually
@@ -2046,16 +2023,16 @@ Curated reference voice clips with transcripts, ready to drop into the voice-clo
 | **Higgs-Audio** | Higgs-Audio v3 | 4B | 100+ | Research / Non-Commercial |
 | **MisoTTS** | MisoTTS 8B | 8B | English | Other (see card) |
 | **Supertonic-3** | Supertonic-3 | 99M (ONNX) | 31 | MIT code · OpenRAIL-M model |
-| **Dia** | Dia 1.6B | 1.6B | English | Apache 2.0 |
-| **IndicF5** | IndicF5 | 400M | 11 Indian | MIT (gated) |
-| **MOSS-TTS v1.5** | MOSS-TTS v1.5 | 8B | 31 | Apache 2.0 |
-| **dots.tts-soar** | dots.tts-soar | 2B | 24+ | Apache 2.0 |
+| **Dia** | Dia2-2B / Dia2-1B / Dia-1.6B | 1B / 1.6B / 2B | English | Apache 2.0 |
+| **IndicF5** | Indic-Speak / IndicF5 | 3.3B / 400M | 22 Indian + EN | Apache 2.0 / MIT |
+| **MOSS-TTS v1.5** | MOSS-TTS v1.5 + VoiceGenerator + TTSD + SFX | 1.7B / 8B | 31 | Apache 2.0 |
+| **dots.tts-soar** | dots.tts-soar / dots.tts-mf | 2B | 24+ | Apache 2.0 |
 | **Fish S2 Pro** | Fish S2 Pro | 4B + 400M (Dual-AR) | 80+ | Fish Audio Research (non-commercial) |
 | **VoxCPM2** | VoxCPM2 | 2B | 30 (+ 9 ZH dialects) | Apache 2.0 |
-| **Kokoro-82M** | Kokoro-82M | 82M | 9 | Apache 2.0 |
+| **Kokoro-82M** | Kokoro-82M v1.0 & v1.1-zh | 82M | 9 (103 voices) | Apache 2.0 |
 | **OpenVoice V2** | OpenVoiceV2 | — | 7 (cross-lingual VC) | MIT |
 | **Mesh Optimizer** | trimesh + pyfqmr + pymeshlab + Open3D | — | — | MIT (all deps) |
-| **Audio Post-Processor** | pydub + imageio-ffmpeg + soundfile + librosa + pyloudnorm + noisereduce + resemble-enhance | — | — | MIT/BSD/ISC (all deps) |
+| **Audio Post-Processor** | pydub + imageio-ffmpeg + soundfile + librosa + pyloudnorm + noisereduce + resemble-enhance + Kim_Vocal_2 / HDemucs + FlashSR | — | — | MIT/BSD/ISC (all deps) |
 
 ---
 
@@ -2071,16 +2048,18 @@ The companion to every TTS / VC / voice-cloning pipeline: takes the **raw audio 
 > - `pedalboard` is GPL-3.0. This notebook is MIT. The `pedalboard` library is used as a `pip install`-ed dependency, not as a linked/embedded library, so the GPL's copyleft provisions don't extend to the notebook code. You can use the notebook and the resulting audio commercially; the `pedalboard` source itself remains under GPL-3.0 (relevant only if you redistribute `pedalboard`'s source or a modified version of it).
 > - `resemble-enhance` is MIT. The AI speech model (`Enhancer` + `Denoiser`) is also MIT. ~500 MB of model weights are downloaded on first use and cached locally.
 
-### Eight pipeline stages (all optional, all tunable)
+### Ten pipeline stages (all optional, all tunable)
 
 1. **Load** — auto-detect format from extension. 8 input formats.
-2. **Auto-trim silence** — remove leading/trailing silence from TTS output using pydub silence detection (configurable threshold in dBFS and minimum silence length in ms). Applied *first* so all subsequent steps operate only on the speech region. Default off; the **TTS Polish** preset enables it.
-3. **High-pass filter** — cut rumble & mic handling noise (configurable cutoff, default 0=off).
-4. **Denoise** — two backends: spectral gate (`noisereduce`, fast, no model) or Resemble AI denoiser (slow, better for speech). Tunable strength for the spectral gate.
-5. **AI Enhance (Resemble Enhance)** — optional 44.1 kHz PyTorch model that does denoise + bandwidth extension + artifact reduction in one pass. 4 hyperparameters exposed.
-6. **LUFS normalize** — broadcast-standard ITU-R BS.1770-4 loudness target (default -16 LUFS for podcast).
-7. **Peak limit** — guard against clipping (default -1 dBFS).
-8. **Export** — 8 output formats with configurable bitrate & sample rate.
+2. **Vocal / Stem Separation (`isolate_vocals`)** — strip background music, room reverb, and accompaniment from speech or singing clips using `Kim_Vocal_2.onnx` (`audio-separator`), `torchaudio` Hybrid Demucs (`HDEMUCS_HIGH_MUSDB_PLUS`), or spectral voice isolation before feeding clips into TTS voice-cloning or `InfiniteTalk` / `LongCat-Avatar`.
+3. **Auto-trim silence** — remove leading/trailing silence from TTS output using pydub silence detection (configurable threshold in dBFS and minimum silence length in ms). Applied *first* so all subsequent steps operate only on the speech region. Default off; the **TTS Polish** and **Vocal Clone Prep** presets enable it.
+4. **High-pass filter** — cut rumble & mic handling noise (configurable cutoff, default 0=off).
+5. **Denoise** — two backends: spectral gate (`noisereduce`, fast, no model) or Resemble AI denoiser (slow, better for speech). Tunable strength for the spectral gate.
+6. **AI Enhance (Resemble Enhance)** — optional 44.1 kHz PyTorch model that does denoise + bandwidth extension + artifact reduction in one pass. 4 hyperparameters exposed.
+7. **48 kHz Audio Super-Resolution (`FlashSR`)** — ultra-fast (200–400× real-time) neural bandwidth extension from 16/24 kHz TTS outputs to crisp 48 kHz broadcast audio via `YatharthS/FlashSR`.
+8. **LUFS normalize** — broadcast-standard ITU-R BS.1770-4 loudness target (default -16 LUFS for podcast).
+9. **Peak limit** — guard against clipping (default -1 dBFS).
+10. **Export** — 8 output formats with configurable bitrate & sample rate.
 
 Plus a full **Effects Chain** powered by `pedalboard` (Spotify Audio Intelligence Lab, GPL-3.0): **Gain**, **Compressor**, **Limiter**, **HighpassFilter**, **LowpassFilter**, **LadderFilter** (Moog-style 4-mode), **Reverb**, **Delay**, **Chorus**, **Phaser**, **Distortion**, **Clipping**, **PitchShift**, **Bitcrush**, **Resample**, **MP3Compressor** — every parameter exposed in the UI.
 
@@ -2166,11 +2145,11 @@ Every model in this repo is the work of its respective authors. We just wrap the
 
 | Notebook | Upstream repo | Hugging Face | Paper |
 |----------|---------------|--------------|-------|
-| LTX-Video 2.5 (ComfyUI) | [Lightricks/LTX-Video](https://github.com/Lightricks/LTX-Video) · [Lightricks/ComfyUI-LTXVideo](https://github.com/Lightricks/ComfyUI-LTXVideo) | [Lightricks/LTX-Video](https://huggingface.co/Lightricks/LTX-Video) | [arXiv 2501.00103](https://arxiv.org/abs/2501.00103) |
+| LTX-Video 2.5 (ComfyUI + IC-LoRAs) | [Lightricks/LTX-Video](https://github.com/Lightricks/LTX-Video) · [Lightricks/ComfyUI-LTXVideo](https://github.com/Lightricks/ComfyUI-LTXVideo) | [Lightricks/LTX-2.5](https://huggingface.co/Lightricks/LTX-2.5) · [Lightricks/LTX-Video](https://huggingface.co/Lightricks/LTX-Video) | [arXiv 2501.00103](https://arxiv.org/abs/2501.00103) |
 | MiniMax-H3 (Direct & ComfyUI) | [MiniMax-AI](https://github.com/MiniMax-AI) | — | — |
-| Wan 2.2 (5B + 14B) | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-TI2V-5B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B-Diffusers) · [Wan-AI/Wan2.2-I2V-A14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-I2V-A14B-Diffusers) | [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
-| Wan 2.2 Animate | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-Animate-14B](https://huggingface.co/Wan-AI/Wan2.2-Animate-14B) | [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
-| Wan 2.2 S2V | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-S2V-14B](https://huggingface.co/Wan-AI/Wan2.2-S2V-14B) | [arXiv 2508.18621](https://arxiv.org/abs/2508.18621) · [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
+| Wan 2.2 (5B + 14B T2V/I2V + Lightning LoRA) | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-TI2V-5B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B-Diffusers) · [Wan-AI/Wan2.2-T2V-A14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B-Diffusers) · [Wan-AI/Wan2.2-I2V-A14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-I2V-A14B-Diffusers) · [lightx2v/Wan2.2-Distill-Loras](https://huggingface.co/lightx2v/Wan2.2-Distill-Loras) | [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
+| Wan 2.2 Animate (Animate-2 Distilled & v1) | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers) · [Wan-AI/Wan2.2-Animate-2-14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-Animate-2-14B-Diffusers) · [Wan-AI/Wan2.2-Animate-14B-Diffusers](https://huggingface.co/Wan-AI/Wan2.2-Animate-14B-Diffusers) | [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
+| Wan 2.2 S2V (Local Single-GPU + Cloud) | [Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) | [Wan-AI/Wan2.2-S2V-14B](https://huggingface.co/Wan-AI/Wan2.2-S2V-14B) · [lightx2v/Wan2.2-Distill-Loras](https://huggingface.co/lightx2v/Wan2.2-Distill-Loras) | [arXiv 2508.18621](https://arxiv.org/abs/2508.18621) · [arXiv 2503.20314](https://arxiv.org/abs/2503.20314) |
 | LongCat-Video-Avatar 1.5 | [meituan-longcat/LongCat-Video](https://github.com/meituan-longcat/LongCat-Video) | [meituan-longcat/LongCat-Video-Avatar](https://huggingface.co/meituan-longcat/LongCat-Video-Avatar) · [spaces/victor/LongCat-Video-Avatar-1.5](https://huggingface.co/spaces/victor/LongCat-Video-Avatar-1.5) | [arXiv 2510.22200](https://arxiv.org/abs/2510.22200) |
 | InfiniteTalk | [MeiGen-AI/InfiniteTalk](https://github.com/MeiGen-AI/InfiniteTalk) | [MeiGen-AI/InfiniteTalk](https://huggingface.co/MeiGen-AI/InfiniteTalk) · [Wan-AI/Wan2.1-I2V-14B-480P](https://huggingface.co/Wan-AI/Wan2.1-I2V-14B-480P) | [arXiv 2508.14033](https://arxiv.org/abs/2508.14033) |
 
@@ -2178,42 +2157,43 @@ Every model in this repo is the work of its respective authors. We just wrap the
 
 | Notebook | Upstream repo | Hugging Face | Paper |
 |----------|---------------|--------------|-------|
-| Pixal3D | [TencentARC/Pixal3D](https://github.com/TencentARC/Pixal3D) | [TencentARC/Pixal3D](https://huggingface.co/spaces/TencentARC/Pixal3D) | [arXiv 2605.10922](https://arxiv.org/abs/2605.10922) |
-| Cube 3D + CubePart | [Roblox/cube](https://github.com/Roblox/cube) | [tencent/cubepart](https://huggingface.co/Roblox/cubepart) | — |
-| Hunyuan3D-2 | [Tencent-Hunyuan/Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) | [tencent/Hunyuan3D-2](https://huggingface.co/tencent/Hunyuan3D-2) | [arXiv 2501.12202](https://arxiv.org/abs/2501.12202) |
+| Pixal3D (Single-Image & Multi-View) | [TencentARC/Pixal3D](https://github.com/TencentARC/Pixal3D) | [TencentARC/Pixal3D](https://huggingface.co/TencentARC/Pixal3D) | [arXiv 2605.10922](https://arxiv.org/abs/2605.10922) |
+| Cube 3D + CubePart | [Roblox/cube](https://github.com/Roblox/cube) | [Roblox/cubepart](https://huggingface.co/Roblox/cubepart) | — |
+| Hunyuan3D-2 (+ FlashVDM & Paint-Turbo) | [Tencent-Hunyuan/Hunyuan3D-2](https://github.com/Tencent-Hunyuan/Hunyuan3D-2) | [tencent/Hunyuan3D-2](https://huggingface.co/tencent/Hunyuan3D-2) · [tencent/Hunyuan3D-2mini](https://huggingface.co/tencent/Hunyuan3D-2mini) · [tencent/Hunyuan3D-2mv](https://huggingface.co/tencent/Hunyuan3D-2mv) | [arXiv 2501.12202](https://arxiv.org/abs/2501.12202) |
 | Hunyuan3D-2.1 | [Tencent-Hunyuan/Hunyuan3D-2.1](https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1) | [tencent/Hunyuan3D-2.1](https://huggingface.co/tencent/Hunyuan3D-2.1) | [arXiv 2506.15442](https://arxiv.org/abs/2506.15442) |
 | Hunyuan3D 3.0 (API) | [Tencent Cloud](https://www.tencentcloud.com/document/product/1665/119114) (Cloud API v3) | — | — |
 | **TripoSplat** | [VAST-AI-Research/TripoSplat](https://github.com/VAST-AI-Research/TripoSplat) | [VAST-AI/TripoSplat](https://huggingface.co/VAST-AI/TripoSplat) | [arXiv 2605.16355](https://arxiv.org/abs/2605.16355) |
-| NoPoSplat | [cvg/NoPoSplat](https://github.com/cvg/NoPoSplat) | [botaoye/NoPoSplat](https://huggingface.co/botaoye/NoPoSplat) | [arXiv 2410.24207](https://arxiv.org/abs/2410.24207) |
+| NoPoSplat + YoNoSplat | [cvg/YoNoSplat](https://github.com/cvg/YoNoSplat) · [cvg/NoPoSplat](https://github.com/cvg/NoPoSplat) | [botaoye/YoNoSplat](https://huggingface.co/botaoye/YoNoSplat) · [botaoye/NoPoSplat](https://huggingface.co/botaoye/NoPoSplat) | [arXiv 2410.24207](https://arxiv.org/abs/2410.24207) |
 | Wild Gaussian Splatting | [naver/mast3r](https://github.com/naver/mast3r) · [graphdeco-inria/gaussian-splatting](https://github.com/graphdeco-inria/gaussian-splatting) | — | [arXiv 2406.09756](https://arxiv.org/abs/2406.09756) |
-| MapAnything | [facebookresearch/map-anything](https://github.com/facebookresearch/map-anything) | [facebook/map-anything](https://huggingface.co/facebook/map-anything) | — |
-| Pi3X | [yyfz/Pi3](https://github.com/yyfz/Pi3) | [yyfz233/Pi3](https://huggingface.co/yyfz233/Pi3) | — |
-| HY-World 2.0 (WorldMirror 2.0) | [Tencent-Hunyuan/HunyuanWorld-Mirror](https://github.com/Tencent-Hunyuan/HunyuanWorld-Mirror) | [tencent/HunyuanWorld-Mirror-2.0](https://huggingface.co/tencent/HunyuanWorld-Mirror-2.0) | — |
-| GaussianGPT | [TencentARC/GaussianGPT](https://github.com/TencentARC/GaussianGPT) | [TencentARC/GaussianGPT](https://huggingface.co/TencentARC/GaussianGPT) | — |
-| InfiniSplat | [VAST-AI-Research/InfiniSplat](https://github.com/VAST-AI-Research/InfiniSplat) | [VAST-AI/InfiniSplat](https://huggingface.co/VAST-AI/InfiniSplat) | — |
-| SkinTokens (TokenRig) | [VAST-AI-Research/TokenRig](https://github.com/VAST-AI-Research/TokenRig) | [VAST-AI/TokenRig](https://huggingface.co/VAST-AI/TokenRig) | — |
+| MapAnything | [facebookresearch/map-anything](https://github.com/facebookresearch/map-anything) | [facebook/map-anything-apache](https://huggingface.co/facebook/map-anything-apache) · [facebook/map-anything](https://huggingface.co/facebook/map-anything) | — |
+| Pi3X | [yyfz/Pi3](https://github.com/yyfz/Pi3) | [yyfz233/Pi3X](https://huggingface.co/yyfz233/Pi3X) | — |
+| HY-World 2.0 (WorldMirror 2.0) | [Tencent-Hunyuan/HY-World-2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0) | [tencent/HY-World-2.0](https://huggingface.co/tencent/HY-World-2.0) | — |
+| GaussianGPT | [nicolasvonluetzow/GaussianGPT](https://github.com/nicolasvonluetzow/GaussianGPT) | — | — |
+| InfiniSplat (v2 Multi-View/360° & v1) | [zju3dv/InfiniSplat](https://github.com/zju3dv/InfiniSplat) | [Edisoneh/InfiniSplat-v2](https://huggingface.co/Edisoneh/InfiniSplat-v2) · [PLUS-WAVE/InfiniSplat](https://huggingface.co/PLUS-WAVE/InfiniSplat) | — |
+| TextureMapPrep | [prs-eth/Marigold](https://github.com/prs-eth/Marigold) · [EnVision-Research/Lotus](https://github.com/EnVision-Research/Lotus) | [prs-eth/marigold-depth-hr-v1-1](https://huggingface.co/prs-eth/marigold-depth-hr-v1-1) · [jingheya/Lotus-2](https://huggingface.co/jingheya/Lotus-2) · [huawei-bayerlab/marigold-v2-0](https://huggingface.co/huawei-bayerlab/marigold-v2-0) | — |
+| SkinTokens (TokenRig) | [VAST-AI-Research/SkinTokens](https://github.com/VAST-AI-Research/SkinTokens) | [VAST-AI/SkinTokens](https://huggingface.co/VAST-AI/SkinTokens) | — |
 | SuGaR | [Anttwo/SuGaR](https://github.com/Anttwo/SuGaR) | — | [arXiv 2311.12775](https://arxiv.org/abs/2311.12775) |
 | GauStudio | [GAP-LAB-CUHK-SZ/gaustudio](https://github.com/GAP-LAB-CUHK-SZ/gaustudio) | — | [arXiv 2403.19632](https://arxiv.org/abs/2403.19632) |
-| SplatTransform | [playcanvas/splat-transform](https://github.com/playcanvas/splat-transform) | — | — |
+| SplatTransform (v3.10+) | [playcanvas/splat-transform](https://github.com/playcanvas/splat-transform) | — | — |
 | Mesh Optimizer | [mikedh/trimesh](https://github.com/mikedh/trimesh) · [Kramer84/pyfqmr](https://github.com/Kramer84/pyfqmr-Fast-quadric-Mesh-Reduction) · [cnr-isti-vclab/PyMeshLab](https://github.com/cnr-isti-vclab/PyMeshLab) · [isl-org/Open3D](https://github.com/isl-org/Open3D) | — | — |
-| Audio Post-Processor | [jiaaro/pydub](https://github.com/jiaaro/pydub) · [imageio/imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) · [bastibe/python-soundfile](https://github.com/bastibe/python-soundfile) · [librosa/librosa](https://github.com/librosa/librosa) · [csteinmetz1/pyloudnorm](https://github.com/csteinmetz1/pyloudnorm) · [timsainb/noisereduce](https://github.com/timsainb/noisereduce) · [spotify/pedalboard](https://github.com/spotify/pedalboard) · [resemble-ai/resemble-enhance](https://github.com/resemble-ai/resemble-enhance) | — | — |
+| Audio Post-Processor | [jiaaro/pydub](https://github.com/jiaaro/pydub) · [imageio/imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) · [bastibe/python-soundfile](https://github.com/bastibe/python-soundfile) · [librosa/librosa](https://github.com/librosa/librosa) · [csteinmetz1/pyloudnorm](https://github.com/csteinmetz1/pyloudnorm) · [timsainb/noisereduce](https://github.com/timsainb/noisereduce) · [spotify/pedalboard](https://github.com/spotify/pedalboard) · [resemble-ai/resemble-enhance](https://github.com/resemble-ai/resemble-enhance) · [nomadkaraoke/python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | [YatharthS/FlashSR](https://huggingface.co/YatharthS/FlashSR) | — |
 
 ### TTS Models
 
 | Notebook | Upstream repo | Hugging Face | Paper |
 |----------|---------------|--------------|-------|
 | Qwen3-TTS | (Alibaba) | [Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice) | — |
-| Breeze TTS 2 | [BreezeBlue/Breeze-TTS-2](https://huggingface.co/BreezeBlue/Breeze-TTS-2) | [BreezeBlue/Breeze-TTS-2](https://huggingface.co/BreezeBlue/Breeze-TTS-2) | — |
+| Breeze TTS 2 | [breezeblue-ai/breeze-tts](https://github.com/breezeblue-ai/breeze-tts) | [BreezeBlue/Breeze-TTS-2](https://huggingface.co/BreezeBlue/Breeze-TTS-2) | — |
 | Higgs-Audio | [boson-ai/higgs-audio](https://github.com/boson-ai/higgs-audio) | [bosonai/higgs-audio-v2-tokenizer](https://huggingface.co/bosonai/higgs-audio-v2-tokenizer) | — |
 | MisoTTS | (Miso Labs) | [MisoLabs/MisoTTS](https://huggingface.co/MisoLabs/MisoTTS) | — |
 | Supertonic-3 | [Supertone/supertonic](https://github.com/Supertone/supertonic) | [Supertone/supertonic-3](https://huggingface.co/Supertone/supertonic-3) | — |
-| Dia | [nari-labs/dia](https://github.com/nari-labs/dia) | [nari-labs/Dia-1.6B-0626](https://huggingface.co/nari-labs/Dia-1.6B-0626) | — |
-| IndicF5 | [AI4Bharat/IndicF5](https://github.com/AI4Bharat/IndicF5) | [ai4bharat/IndicF5](https://huggingface.co/ai4bharat/IndicF5) | — |
-| MOSS-TTS v1.5 | [OpenMOSS/MOSS-TTS](https://github.com/OpenMOSS/MOSS-TTS) | [OpenMOSS-Team/MOSS-TTS-v1.5](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5) | — |
-| dots.tts-soar | [rednote-hilab/dots.tts](https://github.com/rednote-hilab/dots.tts) | [rednote-hilab/dots.tts-soar](https://huggingface.co/rednote-hilab/dots.tts-soar) | — |
+| Dia (Dia2-2B / Dia2-1B / Dia-1.6B) | [nari-labs/dia](https://github.com/nari-labs/dia) | [nari-labs/Dia2-2B](https://huggingface.co/nari-labs/Dia2-2B) · [nari-labs/Dia2-1B](https://huggingface.co/nari-labs/Dia2-1B) · [nari-labs/Dia-1.6B-0626](https://huggingface.co/nari-labs/Dia-1.6B-0626) | — |
+| IndicF5 + Indic-Speak | [AI4Bharat/IndicF5](https://github.com/AI4Bharat/IndicF5) | [bodhan-ai/indic-speak](https://huggingface.co/bodhan-ai/indic-speak) · [ai4bharat/IndicF5](https://huggingface.co/ai4bharat/IndicF5) | — |
+| MOSS-TTS Studio (v1.5 + VoiceGenerator + TTSD + SFX) | [OpenMOSS/MOSS-TTS](https://github.com/OpenMOSS/MOSS-TTS) | [OpenMOSS-Team/MOSS-TTS-v1.5](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5) · [OpenMOSS-Team/MOSS-VoiceGenerator](https://huggingface.co/OpenMOSS-Team/MOSS-VoiceGenerator) · [OpenMOSS-Team/MOSS-TTSD-v1.0](https://huggingface.co/OpenMOSS-Team/MOSS-TTSD-v1.0) · [OpenMOSS-Team/MOSS-SoundEffect](https://huggingface.co/OpenMOSS-Team/MOSS-SoundEffect) | — |
+| dots.tts-soar + dots.tts-mf | [rednote-hilab/dots.tts](https://github.com/rednote-hilab/dots.tts) | [rednote-hilab/dots.tts-soar](https://huggingface.co/rednote-hilab/dots.tts-soar) · [rednote-hilab/dots.tts-mf](https://huggingface.co/rednote-hilab/dots.tts-mf) | — |
 | Fish S2 Pro | [fishaudio/fish-speech](https://github.com/fishaudio/fish-speech) | [fishaudio/s2-pro](https://huggingface.co/fishaudio/s2-pro) | — |
 | VoxCPM2 | [OpenBMB/VoxCPM](https://github.com/OpenBMB/VoxCPM) | [openbmb/VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) | [arXiv 2509.24650](https://arxiv.org/abs/2509.24650) |
-| Kokoro-82M | [hexgrad/kokoro](https://github.com/hexgrad/kokoro) | [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) | [arXiv 2306.07691](https://arxiv.org/abs/2306.07691) (StyleTTS 2) · [arXiv 2203.02395](https://arxiv.org/abs/2203.02395) (iSTFTNet) |
+| Kokoro-82M (v1.0 & v1.1-zh) | [hexgrad/kokoro](https://github.com/hexgrad/kokoro) | [hexgrad/Kokoro-82M-v1.1-zh](https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh) · [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) | [arXiv 2306.07691](https://arxiv.org/abs/2306.07691) (StyleTTS 2) · [arXiv 2203.02395](https://arxiv.org/abs/2203.02395) (iSTFTNet) |
 
 ### Music Models
 
