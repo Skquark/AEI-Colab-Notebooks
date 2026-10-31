@@ -5,6 +5,17 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added Multi-Modal Post-Production ("AEI Director Studio") & Sub-Second 3D Character Auto-Rigging / Motion Retargeting (`Make-It-Animatable` v2 & v1) (Suite Now at 67 Notebooks)
+
+- **`Video_PostProcessor_Director_Colab.ipynb` (*AEI Director Studio — Multi-Modal Timeline Assembler, Auto-Ducking 4-Stem Audio Mixer & Word-Highlighted Subtitle Studio*)**:
+  - **Cross-Notebook Drive Asset Scanner**: Automatically indexes generated video clips, TTS/dialogue audio, synchronized foley/SFX, and BGM songs across `/content/drive/MyDrive/AEI_3D_Out` and `/content/drive/MyDrive/AEI_TTS_Out`.
+  - **4-Stem Sidechain Auto-Ducking Audio Mixer & ITU-R BS.1770-4 Master Bus**: Mixes **Video Audio** + **Voiceover** (`80 Hz` HPF, offset `ms`) + **Foley/SFX** (`±2000 ms` sync offset) + **BGM** (auto-looping with crossfade) using a vocal-band (`120–4200 Hz`) RMS envelope follower with tunable attack (`45 ms`), hold (`250 ms`), and release (`650 ms`) smoothing to duck BGM under speech, mastered to `-14 LUFS` / `-16 LUFS` (`-1.0 dBTP`) with a dark-mode 3-panel diagnostic waveform/ducking plot.
+  - **AI Word-Level Subtitle & Karaoke Caption Studio (`faster-whisper` + `stable-ts` + `libass`)**: Stabilizes word-level timestamps (`deepdml/faster-whisper-large-v3-turbo-ct2`) into an interactive editable subtitle table and burns/exports `.srt` and `.ass` subtitles across 6 presets including **Viral Reels Karaoke (`{\kf}` active-word highlight)**.
+  - **Multi-Clip Timeline Sequencer & Color Finisher**: Normalizes resolution/FPS (`16:9 1080p`, `9:16 Vertical` with frosted glass blurred backdrop, `1:1 Square`, `4K`) and stitches 2–12 scenes via `ffmpeg xfade` + `acrossfade` with 6 cinematic color grades.
+- **`Make-It-Animatable_Colab.ipynb` (`jasongzy/Make-It-Animatable` v2 & v1, CVPR 2025 Highlight, MIT)**:
+  - **MIA v2 (`Hunyuan3D-2.1 ShapeVAE` Backbone)**: Sub-second (`<1s` neural inference) feed-forward 52-bone Mixamo skeleton localization (`joints_coarse.pth`), 32,768-point hierarchical surface + 50% hand-focused sampling, 100k-vertex chunked skinning weight prediction (`bw_joints.pth`) with sparse 6-ring topological conflict removal, and `ortho6d` Pose-to-Rest T-pose straightening (`pose.pth`).
+  - **Zero-Token Mixamo Motion Retargeting & Game Engine Locomotion Pack Exporter**: Includes 7 built-in Mixamo `.fbx` locomotion clips (`Standard Run`, `Idle Breathing`, `Walk Cycle`, `Heroic Wave`, `Victory Jump`, `Combat Guard`, `Dance Groove`) + custom `.fbx` upload, retargeting motions in an isolated `app_blender.py` (`bpy`) subprocess and exporting both animated `.glb` (`FBX2glTF`) and `.fbx` files, plus a 1-click **Multi-Animation Locomotion `.zip` Pack Exporter** and **MIA v1 3D Gaussian Splatting (`.ply`) Rigger**.
+
 ### Added 6 Sound Effects, Foley & Windows 10/11 Sound Event Pack Notebooks (Suite Now at 65 Notebooks)
 
 Implemented 6 new self-contained Google Colab notebooks dedicated to Sound Effects (`SFX`), Video/Multimodal Foley, UI Audio Design, and automated **Windows 10/11 Sound Event Pack** creation:

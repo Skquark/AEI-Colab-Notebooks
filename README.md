@@ -29,6 +29,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [TextureMapPrep — Seamless PBR Maps for Game Assets](#texturemapprep--seamless-pbr-maps-for-game-assets)
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
+- [Make-It-Animatable (MIA v2 & v1) — Sub-Second 3D Character & 3DGS Auto-Rigging, Skinning & Mixamo Motion Studio (MIT)](#make-it-animatable-mia-v2--v1--sub-second-3d-character--3dgs-auto-rigging-skinning--mixamo-motion-studio-mit)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
 - [GauStudio — 3DGS to Mesh via TSDF (MIT + INRIA mixed)](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed)
 - [Asset Library Browser — browse, tag, preview, export your 200+ assets](#asset-library-browser)
@@ -83,6 +84,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [LivePortrait — Fast Portrait Animation, Facial Reenactment & Expression Editor](#liveportrait--fast-portrait-animation-facial-reenactment--expression-editor)
 - [FramePack — 60-Second Constant-VRAM Next-Frame Video Generation](#framepack--60-second-constant-vram-next-frame-video-generation)
 - [SeedVR2 — 1-Step Diffusion Video Super-Resolution & Restoration (1080p/4K)](#seedvr2--1-step-diffusion-video-super-resolution--restoration-1080p4k)
+- [AEI Director Studio — Multi-Modal Timeline Assembler, Auto-Ducking 4-Stem Audio Mixer & Karaoke Subtitle Studio](#aei-director-studio--multi-modal-timeline-assembler-auto-ducking-4-stem-audio-mixer--karaoke-subtitle-studio)
 
 ---
 
@@ -923,6 +925,34 @@ Self-contained Colab studio for **Alibaba XR Lab's** [`aigc3d/LHM-plusplus`](htt
   - **`3DAIGC/LHMPP-700M` (Default)**: Feed-forward 1–8 view character reconstruction with optional neural refinement (`neural_render`) or direct Gaussian splat rendering (`gs_render`).
   - **`3DAIGC/LHM-1B` / `LHM-500M-HF` / `LHM-MINI`**: Single-photo animatable 3DGS human reconstruction that fits comfortably on T4 (16 GB) and L4 (24 GB).
 - **Outputs**: Canonical T-pose / posed **3D Gaussian Splatting `.ply`**, interactive **3D `.glb` preview**, and **animated character `.mp4` video** driven by built-in or custom SMPL-X motion sequences. **Apache 2.0 License.**
+
+---
+
+## Make-It-Animatable (MIA v2 & v1) — Sub-Second 3D Character & 3DGS Auto-Rigging, Skinning & Mixamo Motion Studio (MIT)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Make-It-Animatable_Colab.ipynb)
+
+Self-contained Colab studio for **[`jasongzy/Make-It-Animatable`](https://github.com/jasongzy/Make-It-Animatable)** ([Hugging Face](https://huggingface.co/jasongzy/Make-It-Animatable) · [arXiv 2411.18197](https://arxiv.org/abs/2411.18197), **CVPR 2025 Highlight**, **MIT License**), featuring both **MIA v2** (upgraded **`Hunyuan3D-2.1 ShapeVAE`** backbone) and **MIA v1** (supporting **3D Gaussian Splatting `.ply`** characters). Converts any static 3D humanoid/character mesh (`.glb`, `.obj`, `.ply`) from `TRELLIS-2`, `Hunyuan3D-2.1`, `Hunyuan3D-3`, `TripoSplat`, or `Mesh_Optimizer` into a **52-bone Mixamo-rigged, T-pose normalized, animated `.glb` & `.fbx` character** in **under 1 second** of neural inference.
+
+- **4-Tab Studio**:
+  1. **💃 MIA v2 Character Auto-Rigging & Mixamo Animation (`Hunyuan3D-2.1 ShapeVAE` Backbone)**: Predicts coarse & fine 52-bone Mixamo skeletons (`joints_coarse.pth`, `bw_joints.pth`), per-vertex blend weights with sparse 6-ring topological conflict removal (`bw_post_process`), and `ortho6d` Pose-to-Rest straightening (`pose.pth`), then binds the rig and retargets any Mixamo `.fbx` animation via headless Blender (`bpy`) + `FBX2glTF`.
+  2. **🎮 Game Engine Multi-Animation Locomotion Pack Exporter (`.glb` + `.fbx` `.zip` Bundle)**: Batch-retargets multiple Mixamo motion clips (`Standard Run`, `Idle Breathing`, `Walk Cycle`, `Heroic Wave`, `Victory Jump`, `Combat Guard`, `Dance Groove`, or custom `.fbx` uploads) onto your cached character rig in seconds without re-running neural inference.
+  3. **🔮 52-Bone Skinning Weight Heatmap Explorer & MIA v1 3D Gaussian Splatting (`.ply`) Rigger**: Inspect `plasma` vertex-influence heatmaps for any Mixamo bone, or rig 3DGS `.ply` characters using MIA v1 (`input_normal=False`).
+  4. **📦 Batch Folder Character Auto-Rigger**.
+
+---
+
+## AEI Director Studio — Multi-Modal Timeline Assembler, Auto-Ducking 4-Stem Audio Mixer & Karaoke Subtitle Studio
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Video_PostProcessor_Director_Colab.ipynb)
+
+Unified **Multi-Modal Post-Production, Scoring, Subtitling & Timeline Assembly Studio** (`Video_PostProcessor_Director_Colab.ipynb`) that scans your generated assets across `/content/drive/MyDrive/AEI_3D_Out/` and `/content/drive/MyDrive/AEI_TTS_Out/` and combines video clips (`Wan2.2`, `Wan-VACE`, `FramePack`, `InfiniteTalk`, `LongCat-Avatar`, `SeedVR2`), dialogue (`Ming-3-TTS`, `Qwen3-TTS`, `VoxCPM2`), foley (`HunyuanVideo-Foley`, `MMAudio`, `Stable-Audio-3`), and BGM (`ACE-Step`, `MiniMax-Music3`) into finished broadcast-ready videos.
+
+- **4-Tab Studio**:
+  1. **🎬 Single-Scene 4-Stem Scorer & Sidechain Auto-Ducking Mixer**: Mixes **Video Audio** + **Voiceover** + **Foley/SFX** (`±2000 ms` sync offset) + **BGM** with a **Vocal-Band (`120–4200 Hz`) RMS Envelope Follower** that smoothly ducks BGM under speech (`attack`/`hold`/`release` smoothing), masters the stereo bus to ITU-R BS.1770-4 (`-14 LUFS` / `-16 LUFS`, `-1.0 dBTP`), and plots the 4-stem waveform & ducking curve.
+  2. **💬 AI Word-Level Subtitle & Karaoke Caption Studio (`faster-whisper` + `stable-ts` + `libass`)**: Stabilizes word-level timestamps into an editable subtitle table and exports/burns `.srt` and `.ass` subtitles across **6 styles** (*Viral Reels Karaoke `{\kf}` Active-Word Highlight*, *Cinema Classic*, *Documentary Yellow*, *Translucent Pill Box*, *Cyberpunk Neon*, *Top Banner*).
+  3. **🎞️ Multi-Clip Timeline Sequencer, `xfade` Transitions & Aspect-Ratio Finisher**: Stitches 2–12 clips with `ffmpeg xfade` + `acrossfade` (`fade`, `dissolve`, `wipeleft`, `wiperight`, `slideup`, `circleopen`, `pixelize`), aspect-ratio normalization (`16:9 1080p`, `9:16 Vertical` with frosted glass blurred backdrop, `1:1 Square`, `4K`), and **6 Cinematic Color Grade Presets** (*Teal & Orange*, *Golden Hour*, *Kodak Film*, *Cyberpunk Neon*, *Noir B&W*).
+  4. **📦 JSON Timeline Project Manifest & Batch Mastering Queue**.
 
 ---
 
@@ -2427,6 +2457,7 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | LivePortrait | [KwaiVGI/LivePortrait](https://github.com/KwaiVGI/LivePortrait) | [KwaiVGI/LivePortrait](https://huggingface.co/KwaiVGI/LivePortrait) | [arXiv 2407.03168](https://arxiv.org/abs/2407.03168) |
 | FramePack (F1 & Original) | [lllyasviel/FramePack](https://github.com/lllyasviel/FramePack) | [lllyasviel/FramePack_F1_I2V_HY_20250503](https://huggingface.co/lllyasviel/FramePack_F1_I2V_HY_20250503) · [lllyasviel/FramePackI2V_HY](https://huggingface.co/lllyasviel/FramePackI2V_HY) | [arXiv 2504.12626](https://arxiv.org/abs/2504.12626) |
 | SeedVR2 (3B & 7B Video Upscaler) | [ByteDance-Seed/SeedVR](https://github.com/ByteDance-Seed/SeedVR) · [numz/ComfyUI-SeedVR2_VideoUpscaler](https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler) | [ByteDance-Seed/SeedVR2-3B](https://huggingface.co/ByteDance-Seed/SeedVR2-3B) · [ByteDance-Seed/SeedVR2-7B](https://huggingface.co/ByteDance-Seed/SeedVR2-7B) · [numz/SeedVR2_comfyUI](https://huggingface.co/numz/SeedVR2_comfyUI) | [arXiv 2506.05301](https://arxiv.org/abs/2506.05301) |
+| AEI Director Studio (Timeline, Auto-Duck Mixer & Karaoke ASS) | [SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper) · [jianfch/stable-ts](https://github.com/jianfch/stable-ts) · [csteinmetz1/pyloudnorm](https://github.com/csteinmetz1/pyloudnorm) · [spotify/pedalboard](https://github.com/spotify/pedalboard) | [deepdml/faster-whisper-large-v3-turbo-ct2](https://huggingface.co/deepdml/faster-whisper-large-v3-turbo-ct2) | — |
 
 ### 3D Models
 
@@ -2449,7 +2480,8 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | InfiniSplat (v2 Multi-View/360° & v1) | [zju3dv/InfiniSplat](https://github.com/zju3dv/InfiniSplat) | [Edisoneh/InfiniSplat-v2](https://huggingface.co/Edisoneh/InfiniSplat-v2) · [PLUS-WAVE/InfiniSplat](https://huggingface.co/PLUS-WAVE/InfiniSplat) | — |
 | LHM / LHM++ (Animatable 3DGS Human) | [aigc3d/LHM-plusplus](https://github.com/aigc3d/LHM-plusplus) · [aigc3d/LHM](https://github.com/aigc3d/LHM) | [3DAIGC/LHMPP-700M](https://huggingface.co/3DAIGC/LHMPP-700M) · [3DAIGC/LHM-1B](https://huggingface.co/3DAIGC/LHM-1B) | [arXiv 2503.10625](https://arxiv.org/abs/2503.10625) |
 | TextureMapPrep | [prs-eth/Marigold](https://github.com/prs-eth/Marigold) · [EnVision-Research/Lotus](https://github.com/EnVision-Research/Lotus) | [prs-eth/marigold-depth-hr-v1-1](https://huggingface.co/prs-eth/marigold-depth-hr-v1-1) · [jingheya/Lotus-2](https://huggingface.co/jingheya/Lotus-2) · [huawei-bayerlab/marigold-v2-0](https://huggingface.co/huawei-bayerlab/marigold-v2-0) | — |
-| SkinTokens (TokenRig) | [VAST-AI-Research/SkinTokens](https://github.com/VAST-AI-Research/SkinTokens) | [VAST-AI/SkinTokens](https://huggingface.co/VAST-AI/SkinTokens) | — |
+| SkinTokens (TokenRig) | [VAST-AI-Research/SkinTokens](https://github.com/VAST-AI-Research/SkinTokens) | [VAST-AI/SkinTokens](https://huggingface.co/VAST-AI/SkinTokens) | [arXiv 2602.04805](https://arxiv.org/abs/2602.04805) |
+| Make-It-Animatable (MIA v2 & v1) | [jasongzy/Make-It-Animatable](https://github.com/jasongzy/Make-It-Animatable) | [jasongzy/Make-It-Animatable](https://huggingface.co/jasongzy/Make-It-Animatable) | [arXiv 2411.18197](https://arxiv.org/abs/2411.18197) |
 | SuGaR | [Anttwo/SuGaR](https://github.com/Anttwo/SuGaR) | — | [arXiv 2311.12775](https://arxiv.org/abs/2311.12775) |
 | GauStudio | [GAP-LAB-CUHK-SZ/gaustudio](https://github.com/GAP-LAB-CUHK-SZ/gaustudio) | — | [arXiv 2403.19632](https://arxiv.org/abs/2403.19632) |
 | SplatTransform (v3.10+) | [playcanvas/splat-transform](https://github.com/playcanvas/splat-transform) | — | — |
