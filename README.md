@@ -59,10 +59,16 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [OpenVoice V2](#openvoice-v2)
 - [Seed-VC — Zero-Shot Speech & 44.1 kHz Singing Voice Conversion](#seed-vc--zero-shot-speech--441-khz-singing-voice-conversion)
 
-### Music & Foley
+### Music, Sound Effects & Foley
 - [MiniMax-Music3 — Lyrics + Caption-to-Music (Qwen3 + DiT, ⚠️ ≥24 GB VRAM)](#minimax-music3--lyrics--caption-to-music)
 - [ACE-Step — Ultra-Fast Full-Song Generation, Lyric Editing & Repainting (3.5B, Apache 2.0)](#ace-step--ultra-fast-full-song-generation-lyric-editing--repainting-35b-apache-20)
 - [MMAudio — Synchronized Video-to-Audio Foley & Sound Effects (MIT)](#mmaudio--synchronized-video-to-audio-foley--sound-effects-mit)
+- [Stable Audio 3 — Ultra-Fast 44.1 kHz Stereo SFX, Audio-to-Audio, Inpainting & Windows Sound Pack Studio](#stable-audio-3--ultra-fast-441-khz-stereo-sfx-audio-to-audio-inpainting--windows-sound-pack-studio)
+- [MOSS-SoundEffect v2.0 — 48 kHz Multi-Layered SFX, Ambience & Windows Sound Pack Studio (Apache 2.0)](#moss-soundeffect-v20--48-khz-multi-layered-sfx-ambience--windows-sound-pack-studio-apache-20)
+- [AudioX-Turbo — 4-Step Multimodal Any-to-Audio, Video Foley & Wallpaper-to-Windows Sound Pack Studio (Apache 2.0)](#audiox-turbo--4-step-multimodal-any-to-audio-video-foley--wallpaper-to-windows-sound-pack-studio-apache-20)
+- [Xiaomi MiDashengLM-Gen & Dasheng-AudioGen — Auto-Stop SFX, Voice+SFX Assistant & Windows Sound Pack Studio (Apache 2.0)](#xiaomi-midashenglm-gen--dasheng-audiogen--auto-stop-sfx-voicesfx-assistant--windows-sound-pack-studio-apache-20)
+- [Tencent HunyuanVideo-Foley — 48 kHz Cinema-Grade Video-to-Foley & Windows Sound Pack Studio (Apache 2.0)](#tencent-hunyuanvideo-foley--48-khz-cinema-grade-video-to-foley--windows-sound-pack-studio-apache-20)
+- [TangoFlux + EzAudio-ControlNet — CRPO Stereo SFX, Envelope-Controlled UI Chimes & Windows Sound Pack Studio (MIT)](#tangoflux--ezaudio-controlnet--crpo-stereo-sfx-envelope-controlled-ui-chimes--windows-sound-pack-studio-mit)
 
 ### Video
 - [LTX-Video 2.5 — ComfyUI Audio/Video Generation](#ltx-video-25--comfyui-audiovideo-generation)
@@ -1035,6 +1041,90 @@ Self-contained Colab studio for **Sony AI + UIUC's** [`hkchengrex/MMAudio`](http
   2. **Text-to-Audio Sound Effects & Ambience**: Visual-free 44.1 kHz SFX and ambient soundbed generation from text prompts alone.
   3. **Multi-Variation Foley Explorer**: Generates up to 4 candidate soundtracks with distinct seeds in parallel for side-by-side auditioning.
 - **License**: **MIT License** (commercial-OK).
+
+---
+
+## Stable Audio 3 — Ultra-Fast 44.1 kHz Stereo SFX, Audio-to-Audio, Inpainting & Windows Sound Pack Studio
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Stable-Audio-3_Colab.ipynb)
+
+Self-contained Colab studio for **Stability AI's** [`Stability-AI/stable-audio-3`](https://github.com/Stability-AI/stable-audio-3) ([`stabilityai/stable-audio-3-small-sfx`](https://huggingface.co/stabilityai/stable-audio-3-small-sfx), [`stabilityai/stable-audio-3-medium`](https://huggingface.co/stabilityai/stable-audio-3-medium), and [`stabilityai/stable-audio-open-small`](https://huggingface.co/stabilityai/stable-audio-open-small)). Powered by **Presto Rectified Flow distillation (8 steps)** and the **SAME-L 44.1 kHz stereo autoencoder** (`10.77 Hz` latent frame rate), Stable Audio 3 generates crisp **0.25s–30s 44.1 kHz stereo sound effects, UI chimes, and foley in ~60 ms on GPU** (`~1.7 GB VRAM` for `small-sfx`, `~5.1 GB VRAM` for `medium`).
+
+- **4-Tab Studio**:
+  1. **⚡ Text-to-SFX Studio (`small-sfx` 433M & `medium` 1.4B)**: Instant 8-step 44.1 kHz stereo generation with optional custom LoRA adapter loading (`load_lora` + `set_lora_strength`) and zero-latency UI transient mastering (`-52 dBFS` onset snap, `0.3 ms` click-free micro-fade, S-curve reverb tail, and ITU-R BS.1770-4 `-16 LUFS` / `-1.0 dBFS` peak ceiling).
+  2. **🎛️ Audio-to-Audio Restyling & Multi-Region Inpainting**: Upload an existing Windows `.wav` or reference sound to restyle it (`init_audio` + `init_noise_level=0.1..1.0`) while preserving exact transient timing, or regenerate/extend masked time windows (`inpaint_mask_start_seconds`, `inpaint_mask_end_seconds`).
+  3. **🪟 Windows 10/11 Sound Event Pack Studio**: Generates a complete **21-event Windows 10/11 Sound Scheme** across **8 curated themes** (*Fluent Glass*, *Cyberpunk Neon HUD*, *Organic Wood & Kalimba*, *Retro 16-Bit Arcade*, *Sci-Fi Starship Bridge*, *Minimal Tactile ASMR*, *Steampunk Clockwork*, *Fantasy Arcane Crystal*) with `Install_<SchemeId>.ps1` (auto-backs up your previous Windows scheme to `.reg`, registers `HKCU:\AppEvents\Schemes\Names\<SchemeId>`, and plays a confirmation chime), `Uninstall_<SchemeId>.ps1`, `.reg` registry file, **Single-Event Re-Roll & Pitch Customizer (`-6..+6 st`)**, and self-contained HTML5 audition board ZIP with a **`▶ Play All Events Sequentially`** sequencer.
+  4. **📦 Custom JSON Batch & Game/Stream Deck SFX Pack Builder**.
+
+---
+
+## MOSS-SoundEffect v2.0 — 48 kHz Multi-Layered SFX, Ambience & Windows Sound Pack Studio (Apache 2.0)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MOSS-SoundEffect-v2_Colab.ipynb)
+
+Self-contained Colab studio for **OpenMOSS Team's** [`OpenMOSS-Team/MOSS-SoundEffect-v2.0`](https://huggingface.co/OpenMOSS-Team/MOSS-SoundEffect-v2.0) ([GitHub](https://github.com/OpenMOSS/MOSS-TTS/tree/main/moss_soundeffect_v2), **Apache 2.0 License**). Replaces the discrete RVQ token architecture of v1 with a **1.3B Flow-Matching Diffusion Transformer (`DiT`)**, a frozen **`Qwen3-1.7B`** bilingual (English + Chinese) semantic text encoder, and a continuous **48 kHz DAC Autoencoder (`vae_128d_48k.pth`)** for ultra-clean high-frequency transients and complex multi-layered soundscapes (`1s–30s`, `~8–10 GB VRAM` in BF16 on T4/L4/A100).
+
+- **4-Tab Studio**:
+  1. **🔊 48 kHz Text-to-SFX & Ambience Studio**: Bilingual (EN/ZH) prompt conditioning with controllable `seconds`, `num_inference_steps` (default 100), `cfg_scale` (4.0), and `sigma_shift` (5.0).
+  2. **🎚️ 3-Layer Composite 48 kHz Stereo Soundscape Mixer**: Synthesizes up to 3 independent 48 kHz sound layers (**Foreground Transient** + **Midground Foley** + **Background Ambience**) and mixes them with per-layer **Gain (`dB`)**, **Stereo Constant-Power Panning (`-1.0 L .. +1.0 R`)**, and **Time Offset (`ms`)** controls.
+  3. **🪟 Windows 10/11 Sound Event Pack Studio (48 kHz 24-bit / 16-bit PCM)**: Full 21-event Windows sound scheme builder with zero-latency transient mastering, **Single-Event Re-Roll & Pitch Customizer**, PowerShell/Registry installer scripts (with prior-scheme `.reg` auto-backup), and interactive HTML5 soundboard export.
+  4. **📦 Batch Prompt & JSON Sound Library Builder**.
+
+---
+
+## AudioX-Turbo — 4-Step Multimodal Any-to-Audio, Video Foley & Wallpaper-to-Windows Sound Pack Studio (Apache 2.0)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/AudioX-Turbo_Colab.ipynb)
+
+Self-contained Colab studio for **HKUST Audio & NoizAI's** [`HKUSTAudio/AudioX-Turbo`](https://huggingface.co/HKUSTAudio/AudioX-Turbo) ([GitHub](https://github.com/NoizAI/AudioX-Turbo), **Apache 2.0 License**). Distills the multimodal `AudioX` diffusion transformer via **Distribution Matching Distillation (DMD)** into a **4-step, CFG-free (`cfg_scale=1.0`) 44.1 kHz stereo generator** (`~10×–20×` faster than standard AudioX) that accepts **Text**, **Video** (via `Synchformer`), **Image**, and **Audio** prompts jointly or individually (`~6–8 GB VRAM` on T4).
+
+- **4-Tab Studio**:
+  1. **🎬 4-Step Multimodal Any-to-Audio & Video Foley (`Text + Video + Audio`)**: Upload a silent video clip (`read_video` + `encode_video_with_synchformer`), reference audio (`load_and_process_audio`), and/or text prompt to generate synchronized 44.1 kHz stereo foley with automatic `.mp4` muxing (`ffmpeg`).
+  2. **🖼️ Desktop Wallpaper Image → Windows 10/11 Sound Event Pack**: Upload your **Windows desktop wallpaper image** (or a screen recording of a window animation) alongside a theme preset — the studio converts your wallpaper into a subtle zoom/pan visual conditioning clip so `AudioX-Turbo`'s visual encoder harmonizes the acoustic texture of all **21 Windows system events** with the visual aesthetic of your desktop!
+  3. **🪟 Standard Windows 10/11 Sound Event Pack Studio**: Ultra-fast 4-step generation of all 21 Windows sound events in seconds with **Single-Event Re-Roll & Pitch Customizer**, PowerShell/Registry installer bundle, and HTML5 soundboard.
+  4. **📦 Cross-Notebook Video Foley Picker & Batch Studio**: Scans Google Drive videos from `Wan2.2`, `Wan-VACE`, `FramePack`, `LTX-Video-2.5`, `InfiniteTalk`, and `LongCat-Avatar` for 1-click foley scoring.
+
+---
+
+## Xiaomi MiDashengLM-Gen & Dasheng-AudioGen — Auto-Stop SFX, Voice+SFX Assistant & Windows Sound Pack Studio (Apache 2.0)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/MiDashengLM-Gen_Colab.ipynb)
+
+Self-contained Colab studio for **Xiaomi MiSpeech's** [`mispeech/midashenglm-gen`](https://huggingface.co/mispeech/midashenglm-gen), [`mispeech/Dasheng-AudioGen`](https://huggingface.co/mispeech/Dasheng-AudioGen), and [`mispeech/Dasheng-AudioGen-Multilingual`](https://huggingface.co/mispeech/Dasheng-AudioGen-Multilingual) ([GitHub](https://github.com/xiaomi-research/midashenglm-gen) · [arXiv 2608.11804](https://arxiv.org/abs/2608.11804), **Apache 2.0 License**). Features a **Unified Multimodal Autoregressive Flow-Matching** architecture with a **learned binary Stop Head (`stop_threshold`, `min_stop_step`)** that automatically terminates generation at the exact natural end of a sound effect without padding silence — and uniquely combines `<|caption|>` (acoustic scene/SFX), `<|asr|>` (spoken words), and `<|sfx|>`/`<|speech|>`/`<|music|>`/`<|env|>` tags in a single pass.
+
+- **4-Tab Studio**:
+  1. **🎯 Auto-Stop SFX & Ambience (`Dasheng-AudioGen` & `midashenglm-gen`)**: Variable-length SFX generation (`0.2s–30s`) with learned Stop-Head controls and polyphase 44.1 / 48 kHz stereo upsampling + subtle high-shelf harmonic air excitation.
+  2. **🗣️ Hybrid Voice + SFX AI Assistant Designer**: Combines `<|caption|>...<|asr|>...<|speech|><|sfx|>` in one prompt to synthesize spoken Sci-Fi / Cyberpunk OS assistant notifications (*"Battery critically low"*, *"Device connected"*, *"Intruder alert"*) fused with matching holographic UI chimes and environment acoustics.
+  3. **🪟 Windows 10/11 Sound Event Pack Studio (Pure Chimes OR Talking AI Assistant OS Pack)**: Switch between a **Pure Instrumental Chime Pack** or a **Talking Sci-Fi AI Assistant + Chime Pack** across all 21 Windows system events with **Single-Event Re-Roll & Pitch Customizer** and PowerShell/Registry installer scripts.
+  4. **📦 Batch Prompt & JSON Sound Pack Generator**.
+
+---
+
+## Tencent HunyuanVideo-Foley — 48 kHz Cinema-Grade Video-to-Foley & Windows Sound Pack Studio (Apache 2.0)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/HunyuanVideo-Foley_Colab.ipynb)
+
+Self-contained Colab studio for **Tencent Hunyuan's** [`Tencent-Hunyuan/HunyuanVideo-Foley`](https://github.com/Tencent-Hunyuan/HunyuanVideo-Foley) ([`tencent/HunyuanVideo-Foley`](https://huggingface.co/tencent/HunyuanVideo-Foley), **Apache 2.0 License**). Combines **SigLIP-2** spatial visual semantics, **Synchformer** temporal frame synchronization, **CLAP** text conditioning, and a **48 kHz DAC VAE** to synthesize cinema-grade 48 kHz sound effects. Supports both **`HunyuanVideo-Foley-XL` (default, ~8 GB VRAM with `--enable_offload` on T4 16 GB)** and **`HunyuanVideo-Foley-XXL` (flagship, ~12 GB VRAM with offload on L4/A100)**.
+
+- **4-Tab Studio**:
+  1. **🎥 48 kHz Cinema Video-to-Foley (`XL` & `XXL`)**: Upload any video clip (or pick a recent video from your Google Drive `AEI_3D_Out` folders) + optional text prompt and negative prompt to synthesize frame-accurate 48 kHz foley with automatic `.mp4` audio muxing (Replace or Blend original video audio).
+  2. **🔊 Standalone 48 kHz Text-to-SFX (Visual-Free Canvas Helper)**: Automatically constructs a synthetic visual pacing canvas matching your target duration (`0.5s–15s`) and transient envelope so `HunyuanVideo-Foley`'s 48 kHz DAC decoder can be driven purely from text prompts without requiring an input video.
+  3. **🪟 Windows 10/11 48 kHz Cinema Sound Event Pack Studio**: Generates a 21-event 48 kHz Windows sound scheme with **Single-Event Re-Roll & Pitch Customizer**, PowerShell/Registry installer scripts, and interactive HTML5 audition board.
+  4. **📦 Batch Video Folder Foley & SFX Queue**.
+
+---
+
+## TangoFlux + EzAudio-ControlNet — CRPO Stereo SFX, Envelope-Controlled UI Chimes & Windows Sound Pack Studio (MIT)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/TangoFlux-EzAudio_Colab.ipynb)
+
+Dual-engine Sound Effects & UI Audio Design studio combining **[`declare-lab/TangoFlux`](https://huggingface.co/declare-lab/TangoFlux)** ([GitHub](https://github.com/declare-lab/TangoFlux) — 515M FluxTransformer + CLAP-Ranked Preference Optimization `CRPO` + Stable Audio 44.1 kHz stereo VAE, ~3.5s for 10s audio) and **[`OpenSound/EzAudio`](https://huggingface.co/OpenSound/EzAudio)** ([GitHub](https://github.com/haidog-yaqub/EzAudio) — `s3_xl` / `s3_l` 24 kHz WaveVAE + **`EzAudio-ControlNet` Energy Envelope Adapter** & audio inpainting). Both models fit comfortably on a free **16 GB T4 GPU (`~4–6 GB VRAM`)**.
+
+- **4-Tab Studio**:
+  1. **⚡ TangoFlux 44.1 kHz Stereo CRPO Text-to-SFX**: High-prompt-adherence 44.1 kHz stereo SFX generation (`1s–30s`, `steps=25–50`, `guidance_scale=3.5–4.5`).
+  2. **📈 EzAudio-ControlNet Energy/Rhythm Envelope Designer & Audio Inpainting**: Shape the **exact millisecond rhythm and amplitude contour** of a sound effect! Either upload a reference `.wav` (even tapping a rhythm on your desk or humming a two-note chime) OR pick a built-in **Mathematical UI Rhythm Curve Preset** (`Single Sharp Ping`, `Two-Note Ascending Connect`, `Two-Note Descending Disconnect`, `Double Notification Pulse`, `Triple Critical Alert`, `Smooth Logon Swell`) — `EzAudio_ControlNet` locks the generated texture to that exact energy envelope. Also supports `editing_audio` time-window inpainting.
+  3. **🪟 Windows 10/11 Sound Event Pack Studio (`TangoFlux` Stereo OR `EzAudio-ControlNet` Envelope-Locked)**: Generates all 21 Windows sound events (using event-specific mathematical rhythm envelopes in `EzAudio-ControlNet` mode so `DeviceConnect` is guaranteed to be a rising two-pulse cadence and `DeviceDisconnect` is a falling two-pulse cadence!) with **Single-Event Re-Roll & Pitch Customizer**, PowerShell/Registry installer scripts, and HTML5 soundboard.
+  4. **📦 Batch SFX & Envelope Pack Builder**.
 
 ---
 
@@ -2206,6 +2296,12 @@ Curated reference voice clips with transcripts, ready to drop into the voice-clo
 | **Seed-VC** | Seed-VC Speech & 44.1kHz Singing | ~200M DiT | Multilingual | GPL-3.0 |
 | **ACE-Step** | ACE-Step-v1-3.5B | 3.5B | 19 (Music & Lyrics) | Apache 2.0 |
 | **MMAudio** | MMAudio large_44k_v2 | 1.03B | Video/Text-to-Foley | MIT |
+| **Stable Audio 3** | stable-audio-3-small-sfx & medium | 433M / 1.4B | 44.1 kHz Stereo SFX & Windows Sound Packs | Stability AI Community License |
+| **MOSS-SoundEffect v2.0** | MOSS-SoundEffect-v2.0 (Qwen3-1.7B + DiT + 48k DAC) | 1.3B | EN / ZH 48 kHz SFX & Windows Sound Packs | Apache 2.0 |
+| **AudioX-Turbo** | AudioX-Turbo (4-Step DMD Any-to-Audio) | ~1.1B | Text/Video/Image/Audio → 44.1 kHz SFX | Apache 2.0 |
+| **MiDashengLM-Gen** | midashenglm-gen & Dasheng-AudioGen | 7B | Multilingual SFX + Voice/SFX Assistant | Apache 2.0 |
+| **HunyuanVideo-Foley** | HunyuanVideo-Foley XL & XXL (48k DAC) | XL / XXL | Video/Text → 48 kHz Cinema Foley | Apache 2.0 |
+| **TangoFlux + EzAudio** | TangoFlux (CRPO) + EzAudio-ControlNet | 515M + s3_xl | 44.1 kHz Stereo SFX & Envelope Control | MIT |
 | **Mesh Optimizer** | trimesh + pyfqmr + pymeshlab + Open3D | — | — | MIT (all deps) |
 | **Audio Post-Processor** | pydub + imageio-ffmpeg + soundfile + librosa + pyloudnorm + noisereduce + resemble-enhance + Kim_Vocal_2 / HDemucs + FlashSR | — | — | MIT/BSD/ISC (all deps) |
 
@@ -2296,7 +2392,7 @@ Two Python scripts in `tools/` keep the notebooks consistent:
 Both run from the repo root with no dependencies:
 
 ```bash
-python3 tools/validate.py    # OK: all 58 notebook(s) parse cleanly.
+python3 tools/validate.py    # OK: all 65 notebook(s) parse cleanly.
 python3 tools/qa_check.py    # OK: all authored notebooks pass the polish audit.
 ```
 
@@ -2379,13 +2475,19 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | VoxCPM2 | [OpenBMB/VoxCPM](https://github.com/OpenBMB/VoxCPM) | [openbmb/VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) | [arXiv 2509.24650](https://arxiv.org/abs/2509.24650) |
 | Kokoro-82M (v1.0 & v1.1-zh) | [hexgrad/kokoro](https://github.com/hexgrad/kokoro) | [hexgrad/Kokoro-82M-v1.1-zh](https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh) · [hexgrad/Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) | [arXiv 2306.07691](https://arxiv.org/abs/2306.07691) (StyleTTS 2) · [arXiv 2203.02395](https://arxiv.org/abs/2203.02395) (iSTFTNet) |
 
-### Music & Foley Models
+### Music, Sound Effects & Foley Models
 
 | Notebook | Upstream repo | Hugging Face | Paper |
 |----------|---------------|--------------|-------|
 | MiniMax-Music3 | [MiniMax-AI](https://github.com/MiniMax-AI) | — | — |
 | ACE-Step (3.5B Music Studio) | [ace-step/ACE-Step](https://github.com/ace-step/ACE-Step) | [ACE-Step/ACE-Step-v1-3.5B](https://huggingface.co/ACE-Step/ACE-Step-v1-3.5B) | [arXiv 2506.00045](https://arxiv.org/abs/2506.00045) |
 | MMAudio (Synchronized Foley) | [hkchengrex/MMAudio](https://github.com/hkchengrex/MMAudio) | [hkchengrex/MMAudio](https://huggingface.co/hkchengrex/MMAudio) | [arXiv 2412.15322](https://arxiv.org/abs/2412.15322) |
+| Stable Audio 3 (`small-sfx` & `medium`) | [Stability-AI/stable-audio-3](https://github.com/Stability-AI/stable-audio-3) | [stabilityai/stable-audio-3-small-sfx](https://huggingface.co/stabilityai/stable-audio-3-small-sfx) · [stabilityai/stable-audio-3-medium](https://huggingface.co/stabilityai/stable-audio-3-medium) · [stabilityai/stable-audio-open-small](https://huggingface.co/stabilityai/stable-audio-open-small) | — |
+| MOSS-SoundEffect v2.0 (48 kHz DiT) | [OpenMOSS/MOSS-TTS](https://github.com/OpenMOSS/MOSS-TTS/tree/main/moss_soundeffect_v2) | [OpenMOSS-Team/MOSS-SoundEffect-v2.0](https://huggingface.co/OpenMOSS-Team/MOSS-SoundEffect-v2.0) | — |
+| AudioX-Turbo (4-Step DMD Any-to-Audio) | [NoizAI/AudioX-Turbo](https://github.com/NoizAI/AudioX-Turbo) | [HKUSTAudio/AudioX-Turbo](https://huggingface.co/HKUSTAudio/AudioX-Turbo) | [arXiv 2503.10522](https://arxiv.org/abs/2503.10522) |
+| Xiaomi MiDashengLM-Gen & Dasheng-AudioGen | [xiaomi-research/midashenglm-gen](https://github.com/xiaomi-research/midashenglm-gen) | [mispeech/midashenglm-gen](https://huggingface.co/mispeech/midashenglm-gen) · [mispeech/Dasheng-AudioGen](https://huggingface.co/mispeech/Dasheng-AudioGen) · [mispeech/Dasheng-AudioGen-Multilingual](https://huggingface.co/mispeech/Dasheng-AudioGen-Multilingual) | [arXiv 2608.11804](https://arxiv.org/abs/2608.11804) |
+| Tencent HunyuanVideo-Foley (48 kHz XL & XXL) | [Tencent-Hunyuan/HunyuanVideo-Foley](https://github.com/Tencent-Hunyuan/HunyuanVideo-Foley) | [tencent/HunyuanVideo-Foley](https://huggingface.co/tencent/HunyuanVideo-Foley) | [arXiv 2508.16930](https://arxiv.org/abs/2508.16930) |
+| TangoFlux + EzAudio-ControlNet | [declare-lab/TangoFlux](https://github.com/declare-lab/TangoFlux) · [haidog-yaqub/EzAudio](https://github.com/haidog-yaqub/EzAudio) | [declare-lab/TangoFlux](https://huggingface.co/declare-lab/TangoFlux) · [OpenSound/EzAudio](https://huggingface.co/OpenSound/EzAudio) | [arXiv 2412.21037](https://arxiv.org/abs/2412.21037) · [arXiv 2409.04819](https://arxiv.org/abs/2409.04819) |
 
 ### Voice Conversion Models
 
