@@ -30,9 +30,10 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
 - [Make-It-Animatable (MIA v2 & v1) — Sub-Second 3D Character & 3DGS Auto-Rigging, Skinning & Mixamo Motion Studio (MIT)](#make-it-animatable-mia-v2--v1--sub-second-3d-character--3dgs-auto-rigging-skinning--mixamo-motion-studio-mit)
+- [Qwen-Image-2.1 & Turbo + BiRefNet-HR — 8-Step 2K Text-to-Image, Native RGBA, Multi-Reference Editing & 3D/Avatar Turnaround Studio](#qwen-image-21--turbo--birefnet-hr--8-step-2k-text-to-image-native-rgba-multi-reference-editing--3davatar-turnaround-studio)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
 - [GauStudio — 3DGS to Mesh via TSDF (MIT + INRIA mixed)](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed)
-- [Asset Library Browser — browse, tag, preview, export your 200+ assets](#asset-library-browser)
+- [Asset Library Browser — Universal Multi-Modal AEI Asset Browser (`AEI_3D_Out` + `AEI_TTS_Out`)](#asset-library-browser)
 - [Game engine integration — Three.js / WebGPU loader for the grounded assets](#game-engine-integration--loading-the-assets-into-threejs--webgpu)
 - [Mesh Optimizer — post-process for game-ready assets](#mesh-optimizer--post-process-for-game-ready-assets)
 - [Notebook Generator — scaffold new model notebooks](#notebook-generator--scaffold-new-model-notebooks)
@@ -70,6 +71,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [Xiaomi MiDashengLM-Gen & Dasheng-AudioGen — Auto-Stop SFX, Voice+SFX Assistant & Windows Sound Pack Studio (Apache 2.0)](#xiaomi-midashenglm-gen--dasheng-audiogen--auto-stop-sfx-voicesfx-assistant--windows-sound-pack-studio-apache-20)
 - [Tencent HunyuanVideo-Foley — 48 kHz Cinema-Grade Video-to-Foley & Windows Sound Pack Studio (Apache 2.0)](#tencent-hunyuanvideo-foley--48-khz-cinema-grade-video-to-foley--windows-sound-pack-studio-apache-20)
 - [TangoFlux + EzAudio-ControlNet — CRPO Stereo SFX, Envelope-Controlled UI Chimes & Windows Sound Pack Studio (MIT)](#tangoflux--ezaudio-controlnet--crpo-stereo-sfx-envelope-controlled-ui-chimes--windows-sound-pack-studio-mit)
+- [Windows 10/11 `.deskthemepack` & Stream Deck / OBS Interactive Soundboard Studio](#windows-1011-deskthemepack--stream-deck--obs-interactive-soundboard-studio)
 
 ### Video
 - [LTX-Video 2.5 — ComfyUI Audio/Video Generation](#ltx-video-25--comfyui-audiovideo-generation)
@@ -2412,6 +2414,34 @@ Plus 8 export formats: `.wav` (lossless), `.flac` (lossless compressed), `.aiff`
 
 ---
 
+## Qwen-Image-2.1 & Turbo + BiRefNet-HR — 8-Step 2K Text-to-Image, Native RGBA, Multi-Reference Editing & 3D/Avatar Turnaround Studio
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Qwen-Image-2.1_Colab.ipynb)
+
+Unified **2K Visual Asset, Native Transparent RGBA Cutout, Multi-Reference Instruction Editing & 4-View Character Turnaround Studio** powered by Alibaba Tongyi Lab's [`Qwen/Qwen-Image-2.1-Turbo`](https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo) (8-step distilled 7B Single-Stream DiT with `Qwen3VL` multimodal conditioning and `use_kv_cache=True`), [`Qwen/Qwen-Image-2.1`](https://huggingface.co/Qwen/Qwen-Image-2.1) (40-step full model), and [`ZhengPeng7/BiRefNet_HR-matting`](https://huggingface.co/ZhengPeng7/BiRefNet_HR-matting) (`2048×2048` hair/fur-precision alpha matting, MIT).
+
+- **4-Tab Gradio Studio**:
+  1. **8-Step 2K Text-to-Image & Native Transparent RGBA Studio**: Official 2K (`2048×2048`, `2752×1536`, `1536×2752`, `1792×2400`) & 1K resolution presets, native RGBA transparency prompt wrapper, optional `BiRefNet_HR-matting` edge refinement, and 8 pipeline presets (3D Character A-Pose, 3D Game Prop, Talking Avatar Portrait, Windows 11 2K Wallpaper, etc.).
+  2. **Instruction Image Editing & Multi-Reference Composition (1–6 Images)**: Edit portraits (e.g., close mouth into a neutral expression for `InfiniteTalk` / `LivePortrait`, delight shadows for 3D albedo, convert pose to symmetrical A-pose) or compose up to 6 reference subjects into a unified 2K scene.
+  3. **3D & Avatar 4-View Orthographic Turnaround Sheet Generator (`Front / Left / Right / Back`)**: Synthesizes consistent `front.png`, `left.png`, `right.png`, and `back.png` orthographic RGBA cutouts + a stitched `1×4` turnaround sheet + `.zip` pack ready for multi-view 3D reconstruction in `LHM_Colab.ipynb` (`LHM++`), `Pixal3D_Colab.ipynb`, and `Hunyuan3D-2_Colab.ipynb` (`2mv`).
+  4. **Standalone BiRefNet-HR 2048px Alpha Matting & Backdrop Studio**: High-resolution foreground extraction with feathering and studio backdrop replacement (`Transparent RGBA`, `#808080` 3D Studio Gray, `Pure White`, `Dark Studio Gradient`, `Chroma Green`).
+
+---
+
+## Windows 10/11 `.deskthemepack` & Stream Deck / OBS Interactive Soundboard Studio
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Windows_ThemePack_Studio_Colab.ipynb)
+
+Dedicated **Windows 10/11 Desktop Theme Packager, Dominant Accent Color Extractor, OBS Browser-Source HTML5 Soundboard Generator & Elgato Stream Deck Asset Bundler** that combines `.wav` / `.zip` sound schemes from our 6 SFX notebooks (`Stable-Audio-3`, `MOSS-SoundEffect-v2`, `AudioX-Turbo`, `MiDashengLM-Gen`, `HunyuanVideo-Foley`, `TangoFlux-EzAudio`) with 2K desktop wallpapers from `Qwen-Image-2.1`:
+
+- **4-Tab Gradio Studio**:
+  1. **Windows 10/11 `.deskthemepack` & `.theme` Builder**: Automatically extracts the dominant vibrant `ColorizationColor=0xAARRGGBB` accent color from your wallpaper, maps all 21 official Windows `[AppEvents\Schemes\Apps\.Default\*]` sound events (with 5 built-in 44.1 kHz stereo procedural acoustic palettes to fill any unmapped events), renders a live Windows 11 desktop & taskbar mockup, and exports a `.deskthemepack` cabinet + `.theme` INI + `Install_Complete_Theme.ps1` + `.reg` installer bundle.
+  2. **OBS HTML5 Soundboard & Elgato Stream Deck Packager**: Generates a zero-dependency single-file `obs_soundboard.html` (with base64-embedded WebAudio buffers, real-time FFT spectrum visualizer, `F13–F24` / `Numpad` hotkeys, loop toggles, and `Esc` panic stop) alongside `72×72` and `144×144` (`@2x`) neon glass Stream Deck key icons.
+  3. **1080p Desktop Theme & Sound Scheme Video Showcase Renderer (`.mp4`)**: Renders an `ffmpeg` 1080p showcase video playing through your Windows sound events with synchronized toast notifications.
+  4. **Batch Drive Sound Pack $\rightarrow$ `.deskthemepack` & Soundboard Converter**.
+
+---
+
 ## Tools
 
 Two Python scripts in `tools/` keep the notebooks consistent:
@@ -2422,7 +2452,7 @@ Two Python scripts in `tools/` keep the notebooks consistent:
 Both run from the repo root with no dependencies:
 
 ```bash
-python3 tools/validate.py    # OK: all 65 notebook(s) parse cleanly.
+python3 tools/validate.py    # OK: all 69 notebook(s) parse cleanly.
 python3 tools/qa_check.py    # OK: all authored notebooks pass the polish audit.
 ```
 
@@ -2482,6 +2512,7 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | TextureMapPrep | [prs-eth/Marigold](https://github.com/prs-eth/Marigold) · [EnVision-Research/Lotus](https://github.com/EnVision-Research/Lotus) | [prs-eth/marigold-depth-hr-v1-1](https://huggingface.co/prs-eth/marigold-depth-hr-v1-1) · [jingheya/Lotus-2](https://huggingface.co/jingheya/Lotus-2) · [huawei-bayerlab/marigold-v2-0](https://huggingface.co/huawei-bayerlab/marigold-v2-0) | — |
 | SkinTokens (TokenRig) | [VAST-AI-Research/SkinTokens](https://github.com/VAST-AI-Research/SkinTokens) | [VAST-AI/SkinTokens](https://huggingface.co/VAST-AI/SkinTokens) | [arXiv 2602.04805](https://arxiv.org/abs/2602.04805) |
 | Make-It-Animatable (MIA v2 & v1) | [jasongzy/Make-It-Animatable](https://github.com/jasongzy/Make-It-Animatable) | [jasongzy/Make-It-Animatable](https://huggingface.co/jasongzy/Make-It-Animatable) | [arXiv 2411.18197](https://arxiv.org/abs/2411.18197) |
+| Qwen-Image-2.1 & Turbo + BiRefNet-HR | [QwenLM/Qwen-Image](https://github.com/QwenLM) · [ZhengPeng7/BiRefNet](https://github.com/ZhengPeng7/BiRefNet) | [Qwen/Qwen-Image-2.1-Turbo](https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo) · [Qwen/Qwen-Image-2.1](https://huggingface.co/Qwen/Qwen-Image-2.1) · [ZhengPeng7/BiRefNet_HR-matting](https://huggingface.co/ZhengPeng7/BiRefNet_HR-matting) | — |
 | SuGaR | [Anttwo/SuGaR](https://github.com/Anttwo/SuGaR) | — | [arXiv 2311.12775](https://arxiv.org/abs/2311.12775) |
 | GauStudio | [GAP-LAB-CUHK-SZ/gaustudio](https://github.com/GAP-LAB-CUHK-SZ/gaustudio) | — | [arXiv 2403.19632](https://arxiv.org/abs/2403.19632) |
 | SplatTransform (v3.10+) | [playcanvas/splat-transform](https://github.com/playcanvas/splat-transform) | — | — |
@@ -2520,6 +2551,7 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | Xiaomi MiDashengLM-Gen & Dasheng-AudioGen | [xiaomi-research/midashenglm-gen](https://github.com/xiaomi-research/midashenglm-gen) | [mispeech/midashenglm-gen](https://huggingface.co/mispeech/midashenglm-gen) · [mispeech/Dasheng-AudioGen](https://huggingface.co/mispeech/Dasheng-AudioGen) · [mispeech/Dasheng-AudioGen-Multilingual](https://huggingface.co/mispeech/Dasheng-AudioGen-Multilingual) | [arXiv 2608.11804](https://arxiv.org/abs/2608.11804) |
 | Tencent HunyuanVideo-Foley (48 kHz XL & XXL) | [Tencent-Hunyuan/HunyuanVideo-Foley](https://github.com/Tencent-Hunyuan/HunyuanVideo-Foley) | [tencent/HunyuanVideo-Foley](https://huggingface.co/tencent/HunyuanVideo-Foley) | [arXiv 2508.16930](https://arxiv.org/abs/2508.16930) |
 | TangoFlux + EzAudio-ControlNet | [declare-lab/TangoFlux](https://github.com/declare-lab/TangoFlux) · [haidog-yaqub/EzAudio](https://github.com/haidog-yaqub/EzAudio) | [declare-lab/TangoFlux](https://huggingface.co/declare-lab/TangoFlux) · [OpenSound/EzAudio](https://huggingface.co/OpenSound/EzAudio) | [arXiv 2412.21037](https://arxiv.org/abs/2412.21037) · [arXiv 2409.04819](https://arxiv.org/abs/2409.04819) |
+| Windows ThemePack & OBS Soundboard Studio | [bastibe/python-soundfile](https://github.com/bastibe/python-soundfile) · [csteinmetz1/pyloudnorm](https://github.com/csteinmetz1/pyloudnorm) | — | — |
 
 ### Voice Conversion Models
 

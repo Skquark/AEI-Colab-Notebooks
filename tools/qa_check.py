@@ -69,6 +69,7 @@ NOTEBOOKS = [
     ('Pi3X_Colab.ipynb',             'authored'),
     ('Pixal3D_Colab.ipynb',          'preexisting'),
     ('Pixal3D_Wheel_Builder.ipynb',  'preexisting'),
+    ('Qwen-Image-2.1_Colab.ipynb',   'authored'),
     ('Qwen3-TTS_Colab.ipynb',        'authored'),
     ('Seed-VC_Colab.ipynb',          'authored'),
     ('SeedVR2_Colab.ipynb',          'authored'),
@@ -89,6 +90,7 @@ NOTEBOOKS = [
     ('Wan2.2_Colab.ipynb',           'authored'),
     ('Wan2.2_S2V_Colab.ipynb',        'authored'),
     ('WildGaussianSplatting_Colab.ipynb', 'authored'),
+    ('Windows_ThemePack_Studio_Colab.ipynb', 'authored'),
     ('dots.tts-soar_Colab.ipynb',    'authored'),
 ]
 
