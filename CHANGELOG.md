@@ -5,6 +5,14 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added Semantic 3D Mesh Part Segmentation, Amodal Part Completion & Exploded-View Kitbashing Studio (`Hunyuan3D-Part_Colab.ipynb`) (Suite Now at 70 Notebooks)
+
+- **`Hunyuan3D-Part_Colab.ipynb` (*Hunyuan3D-Part (`P3-SAM` + `X-Part`) & `PartCrafter` — Semantic 3D Mesh Part Segmentation, Amodal Part Completion & Exploded-View Kitbashing Studio*)**:
+  - **Stage 1 — `P3-SAM` Native 3D Part Segmentation (`tencent/Hunyuan3D-Part` `p3sam/p3sam.safetensors` + `facebook/sonata`, `arXiv:2509.06784`)**: Predicts per-face semantic part masks (`face_id.npy`), color-coded part meshes (`segment_mesh.glb`), and 3D Axis-Aligned Bounding Boxes (`aabb`) on any `.glb`/`.obj`/`.ply`/`.stl` mesh (including direct selection from Google Drive `AEI_3D_Out`), plus **Direct Topological Submesh Splitting** with automatic hole capping and a CPU-safe topological + spectral normal-crease clustering fallback.
+  - **Stage 2 — `X-Part` Generative Amodal Part Decomposition (`PartFormerPipeline`, `arXiv:2509.08643`)**: Runs a `bfloat16` PartFormer DiT + Hunyuan ShapeVAE (`octree_resolution=256/384/512`) conditioned on holistic surface points and `P3-SAM` bounding boxes to reconstruct complete, watertight individual part meshes (filling in occluded interior contact geometry) and exports a `.zip` bundle containing standalone `part_00.glb` ... `part_K.glb` files, `face_id.npy`, and `parts_manifest.json`.
+  - **Interactive Exploded-View Animator, Part Filter, Material Styler & Multi-Mesh Kitbashing Studio**: Real-time (`<0.2s`) radial and linear axis (`X / Y / Z`) explosion controller, comma-separated part ID isolation filter, 5 curated CAD/Cyberpunk/Mecha material color palettes, a **Multi-Mesh Kitbashing Combiner** (`[X, Y, Z]` translation + uniform scale for attaching external parts), and a **360° Exploding Assembly Turntable Video Renderer (`.mp4`)**.
+  - **Single 2D Image $\rightarrow$ Decomposed 3D Parts (`wgsxm/PartCrafter` & `wgsxm/PartCrafter-Scene`, NeurIPS 2025, MIT)**: Synthesizes 2 to 16 separated 3D part meshes directly from a single 2D reference image in one diffusion pass.
+
 ### Added 2K Text-to-Image / Multi-Ref Editing Studio (`Qwen-Image-2.1`), Windows 10/11 `.deskthemepack` & Stream Deck Studio, and Universal Multi-Modal Asset Browser Upgrades (Suite Now at 69 Notebooks)
 
 - **`Qwen-Image-2.1_Colab.ipynb` (*Qwen-Image-2.1 & Turbo + BiRefNet-HR — 8-Step 2K Text-to-Image, Native RGBA, Multi-Reference Editing & 3D/Avatar Turnaround Studio*)**:

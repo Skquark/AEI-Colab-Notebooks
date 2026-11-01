@@ -30,6 +30,7 @@ See [LICENSE](LICENSE) for terms. [CONTRIBUTING.md](CONTRIBUTING.md) for how to 
 - [SplatTransform — 3DGS post-processor (PlayCanvas, MIT)](#splattransform--3dgs-post-processor-playcanvas-mit)
 - [SkinTokens — Mesh to Rig with TokenRig (VAST-AI, MIT)](#skintokens--mesh-to-rig-with-tokenrig-vast-ai-mit)
 - [Make-It-Animatable (MIA v2 & v1) — Sub-Second 3D Character & 3DGS Auto-Rigging, Skinning & Mixamo Motion Studio (MIT)](#make-it-animatable-mia-v2--v1--sub-second-3d-character--3dgs-auto-rigging-skinning--mixamo-motion-studio-mit)
+- [Hunyuan3D-Part (`P3-SAM` + `X-Part`) & `PartCrafter` — Semantic 3D Mesh Part Segmentation, Amodal Part Completion & Exploded-View Kitbashing Studio](#hunyuan3d-part-p3-sam--x-part--partcrafter--semantic-3d-mesh-part-segmentation-amodal-part-completion--exploded-view-kitbashing-studio)
 - [Qwen-Image-2.1 & Turbo + BiRefNet-HR — 8-Step 2K Text-to-Image, Native RGBA, Multi-Reference Editing & 3D/Avatar Turnaround Studio](#qwen-image-21--turbo--birefnet-hr--8-step-2k-text-to-image-native-rgba-multi-reference-editing--3davatar-turnaround-studio)
 - [SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)](#sugar--surface-aligned-3dgs-to-mesh-inria-non-commercial)
 - [GauStudio — 3DGS to Mesh via TSDF (MIT + INRIA mixed)](#gaustudio--3dgs-to-mesh-via-tsdf-mit--inria-mixed)
@@ -1385,6 +1386,24 @@ And two Colab / T4 toggles:
 
 ---
 
+## Hunyuan3D-Part (`P3-SAM` + `X-Part`) & `PartCrafter` — Semantic 3D Mesh Part Segmentation, Amodal Part Completion & Exploded-View Kitbashing Studio
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/Hunyuan3D-Part_Colab.ipynb)
+
+Decompose any fused 3D mesh (`.glb`, `.obj`, `.ply`, `.stl`) or 2D reference image into clean, watertight semantic sub-parts, interactive exploded-view CAD assemblies, kitbashed multi-part assets, and 360° exploding turntable videos.
+
+- **Upstream Models Integrated**:
+  1. **`P3-SAM` (`tencent/Hunyuan3D-Part` `p3sam/p3sam.safetensors` + `facebook/sonata`, [`arXiv:2509.06784`](https://arxiv.org/abs/2509.06784))**: Native 3D point-promptable & automatic part segmentation trained on 3.7M 3D models (`~4–6 GB VRAM`, `~5s` runtime). Predicts per-face semantic masks (`face_id.npy`), color-coded part meshes (`segment_mesh.glb`), and 3D Axis-Aligned Bounding Boxes (`aabb`), with built-in **Direct Topological Submesh Splitting**.
+  2. **`X-Part` (`PartFormerPipeline`, [`arXiv:2509.08643`](https://arxiv.org/abs/2509.08643))**: Generative 3D shape decomposition and **amodal part completion** via a 50-step `bfloat16` PartFormer DiT + Hunyuan ShapeVAE (`octree_resolution=256/384/512`). Reconstructs complete, watertight individual part meshes including hidden internal contact geometry.
+  3. **`PartCrafter` ([`wgsxm/PartCrafter`](https://huggingface.co/wgsxm/PartCrafter) & [`wgsxm/PartCrafter-Scene`](https://huggingface.co/wgsxm/PartCrafter-Scene), NeurIPS 2025, MIT)**: Synthesizes 2 to 16 separated 3D part meshes directly from a single 2D RGB/RGBA image in one diffusion pass.
+- **4-Tab Gradio 5.49.1 Studio**:
+  - **Tab 1 — `P3-SAM` + `X-Part` Mesh Decomposition**: Cross-notebook Drive mesh picker (`TRELLIS-2`, `Hunyuan3D-2.1`, `TripoSplat`) + 4 interactive `gr.Model3D` views (Color-Coded Segmentation, Completed Multi-Node Parts, Parts + 3D BBox Cages, Exploded View) + downloadable `.zip` part pack (`part_00.glb` ... `part_K.glb`, `face_id.npy`, `parts_manifest.json`).
+  - **Tab 2 — Exploded-View Animator, Part Filter & Kitbasher**: Instantaneous (`<0.2s`) radial and axial (`X / Y / Z`) explosion controller, part isolation filter (`keep_part_ids`), 5 CAD/Cyberpunk/Mecha material palettes, **Multi-Mesh Kitbashing Combiner** (attach external parts with `[X, Y, Z]` translation & scale), and a **360° Exploding Assembly Turntable Video Renderer (`.mp4`)**.
+  - **Tab 3 — `PartCrafter` Single 2D Image $\rightarrow$ 3D Parts**: Pick any 2D render from `Qwen-Image-2.1` or upload an image to synthesize multi-part 3D `.glb` scenes.
+  - **Tab 4 — Batch Folder Mesh Segmentation & Kitbash Library Builder**.
+
+---
+
 ## SuGaR — Surface-Aligned 3DGS to Mesh (INRIA, non-commercial)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Skquark/AEI-Colab-Notebooks/blob/main/SuGaR_Colab.ipynb)
@@ -2512,6 +2531,7 @@ Every model in this repo is the work of its respective authors. We just wrap the
 | TextureMapPrep | [prs-eth/Marigold](https://github.com/prs-eth/Marigold) · [EnVision-Research/Lotus](https://github.com/EnVision-Research/Lotus) | [prs-eth/marigold-depth-hr-v1-1](https://huggingface.co/prs-eth/marigold-depth-hr-v1-1) · [jingheya/Lotus-2](https://huggingface.co/jingheya/Lotus-2) · [huawei-bayerlab/marigold-v2-0](https://huggingface.co/huawei-bayerlab/marigold-v2-0) | — |
 | SkinTokens (TokenRig) | [VAST-AI-Research/SkinTokens](https://github.com/VAST-AI-Research/SkinTokens) | [VAST-AI/SkinTokens](https://huggingface.co/VAST-AI/SkinTokens) | [arXiv 2602.04805](https://arxiv.org/abs/2602.04805) |
 | Make-It-Animatable (MIA v2 & v1) | [jasongzy/Make-It-Animatable](https://github.com/jasongzy/Make-It-Animatable) | [jasongzy/Make-It-Animatable](https://huggingface.co/jasongzy/Make-It-Animatable) | [arXiv 2411.18197](https://arxiv.org/abs/2411.18197) |
+| Hunyuan3D-Part (`P3-SAM` + `X-Part`) & `PartCrafter` | [Tencent-Hunyuan/Hunyuan3D-Part](https://github.com/Tencent-Hunyuan/Hunyuan3D-Part) · [wgsxm/PartCrafter](https://github.com/wgsxm/PartCrafter) | [tencent/Hunyuan3D-Part](https://huggingface.co/tencent/Hunyuan3D-Part) · [facebook/sonata](https://huggingface.co/facebook/sonata) · [wgsxm/PartCrafter](https://huggingface.co/wgsxm/PartCrafter) | [arXiv 2509.06784](https://arxiv.org/abs/2509.06784) · [arXiv 2509.08643](https://arxiv.org/abs/2509.08643) |
 | Qwen-Image-2.1 & Turbo + BiRefNet-HR | [QwenLM/Qwen-Image](https://github.com/QwenLM) · [ZhengPeng7/BiRefNet](https://github.com/ZhengPeng7/BiRefNet) | [Qwen/Qwen-Image-2.1-Turbo](https://huggingface.co/Qwen/Qwen-Image-2.1-Turbo) · [Qwen/Qwen-Image-2.1](https://huggingface.co/Qwen/Qwen-Image-2.1) · [ZhengPeng7/BiRefNet_HR-matting](https://huggingface.co/ZhengPeng7/BiRefNet_HR-matting) | — |
 | SuGaR | [Anttwo/SuGaR](https://github.com/Anttwo/SuGaR) | — | [arXiv 2311.12775](https://arxiv.org/abs/2311.12775) |
 | GauStudio | [GAP-LAB-CUHK-SZ/gaustudio](https://github.com/GAP-LAB-CUHK-SZ/gaustudio) | — | [arXiv 2403.19632](https://arxiv.org/abs/2403.19632) |

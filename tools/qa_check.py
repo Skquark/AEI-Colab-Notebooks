@@ -43,6 +43,7 @@ NOTEBOOKS = [
     ('InfiniteTalk_Colab.ipynb',     'authored'),
     ('Hunyuan3D-2_Colab.ipynb',      'authored'),
     ('Hunyuan3D-3_Colab.ipynb',      'authored'),
+    ('Hunyuan3D-Part_Colab.ipynb',   'authored'),
     ('HunyuanVideo-Foley_Colab.ipynb', 'authored'),
     ('IndicF5_Colab.ipynb',          'authored'),
     ('Kokoro-82M_Colab.ipynb',       'authored'),
